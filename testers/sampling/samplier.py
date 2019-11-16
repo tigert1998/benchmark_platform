@@ -9,6 +9,6 @@ class Sampler:
     @staticmethod
     def get_samples():
         """get testing samples for a certain operator
-        Returns: A generator of sample tuples
+        Returns: A generator of sample lists
         """
         pass

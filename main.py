@@ -1,10 +1,14 @@
-import testers.tester
+import testers.tester_impls.test_fc
 import testers.inference_sdks.hiai
-import testers.sampling.dwconv_sampler
+import testers.sampling.fc_sampler
 
 
-testers.tester.Tester()
+def main():
+    tester = testers.tester_impls.test_fc.TestFc(
+        adb_device_id="AQH7N17B14007975",
+        inference_sdk=testers.inference_sdks.hiai.Hiai(),
+        sampler=testers.sampling.fc_sampler.FcSampler())
+    tester.run({}, {})
 
-testers.inference_sdks.hiai.Hiai()
-
-print(list(testers.sampling.dwconv_sampler._get_dwconv_profiles()))
+if __name__ == '__main__':
+    main()

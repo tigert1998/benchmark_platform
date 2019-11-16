@@ -49,9 +49,12 @@ class Hiai(InferenceSdk):
                     model_folder, model_basename, model_folder, model_basename),
                 'mv {}.cambricon ../../{}'.format(model_basename, model_folder)
             ])
+            convert_cmd = "bash -c \"{}\"".format(convert_cmd)
 
             print("convert_cmd = \"{}\"".format(convert_cmd))
-            container.exec_run(convert_cmd)
+            result = container.exec_run(convert_cmd)
+            assert(result.exit_code == 0)
+            print(result.output.decode('utf-8'))
 
     @staticmethod
     def fetch_results(adb_device_id, model_path, flags) -> InferenceResult:

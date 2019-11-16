@@ -7,6 +7,44 @@ from .sampling.samplier import Sampler
 from .utils import camel_case_to_snake_case
 
 
+class CSVWriter:
+    def __init__(self):
+        self.fd = None
+        self.previous_filename = None
+
+    def _write_titles(self, titles):
+        self.fd.write(','.join(titles) + '\n')
+        self.fd.flush()
+
+    def _write_data(self, data):
+        self.fd.write(','.join(map(str, data)) + '\n')
+        self.fd.flush()
+
+    def _close(self):
+        if self.fd is not None:
+            self.fd.close()
+
+    def update_data(self, filename, is_resume, titles, data):
+        if self.previous_filename is None:
+            if is_resume:
+                self.fd = open(filename, 'a')
+            else:
+                self.fd = open(filename, 'w')
+                self._write_titles(titles)
+            self._write_data(data)
+        elif self.previous_filename != filename:
+            self._close()
+            self.fd = open(filename, 'w')
+            self._write_titles(titles)
+            self._write_data(data)
+        else:
+            self._write_data(data)
+        self.previous_filename = filename
+
+    def __del__(self):
+        self._close()
+
+
 class Tester:
     def __init__(self, adb_device_id: str,
                  inference_sdk: InferenceSdk, sampler: Sampler):
@@ -14,14 +52,14 @@ class Tester:
         self.inference_sdk = inference_sdk
         self.sampler = sampler
 
-    def get_dir_name(self):
+    def _get_dir_name(self):
         return "{}_{}_{}".format(
             camel_case_to_snake_case(type(self).__name__),
             camel_case_to_snake_case(type(self.inference_sdk).__name__),
             self.adb_device_id)
 
     def _chdir_in(self):
-        dir_name = self.get_dir_name()
+        dir_name = self._get_dir_name()
         if not os.path.isdir(dir_name):
             if os.path.exists(dir_name):
                 print("os.path.exists(\"{}\")".format(dir_name))
@@ -34,8 +72,15 @@ class Tester:
     def _chdir_out():
         os.chdir("..")
 
-    def test_sample(self, sample):
-        pass
+    def _get_csv_filename(self, sample):
+        return "data.csv"
+
+    @staticmethod
+    def _get_metrics_titles():
+        return []
+
+    def _test_sample(self, sample):
+        return []
 
     def run(self, settings, benchmark_model_flags):
         self.settings = settings
@@ -50,14 +95,20 @@ class Tester:
 
         bar = progressbar.ProgressBar(max_value=len(
             samples), redirect_stderr=True, redirect_stdout=True)
+        csv_writer = CSVWriter()
 
         resumed = False
         bar.update(0)
         for i, sample in enumerate(samples):
-            if self.settings['resume_from'] is not None and not resumed:
+            if self.settings.get('resume_from') is not None and not resumed:
                 resumed = (sample == self.settings['resume_from'])
                 continue
-            self.test_sample(sample)
+
+            results = self._test_sample(sample)
+            csv_writer.update_data(self._get_csv_filename(sample), resumed,
+                                   self.sampler.get_sample_titles() + self._get_metrics_titles(),
+                                   sample + results)
+
             bar.update(i)
 
         self._chdir_out()
