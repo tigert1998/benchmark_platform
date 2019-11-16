@@ -4,7 +4,7 @@ import os
 
 from .inference_sdk import InferenceSdk, InferenceResult
 from .utils import concatenate_flags, rfind_assign_float
-from ..utils import adb_push, adb_shell
+from testers.utils import adb_push, adb_shell
 
 
 class Hiai(InferenceSdk):
@@ -47,15 +47,6 @@ class Hiai(InferenceSdk):
 
     @staticmethod
     def fetch_results(adb_device_id, flags) -> InferenceResult:
-        """push model to an android device and fetch results
-        Args:
-            adb_device_id: adb device ID
-            flags: Flag dict for hiai_benchmark_model
-
-        Returns:
-            InferenceResult
-        """
-
         model_folder = "/mnt/sdcard/channel_benchmark"
         benchmark_model_folder = "/data/local/tmp/hiai_benchmark_model"
         for ext in ["pb", "txt", "cambricon"]:

@@ -1,4 +1,4 @@
-from .inference_sdks import InferenceSdk
+from .inference_sdks.inference_sdk import InferenceSdk
 
 class Tester:
     def __init__(self):

@@ -2,7 +2,7 @@ import tensorflow as tf
 
 from .inference_sdk import InferenceSdk, InferenceResult
 from .utils import concatenate_flags, rfind_assign_float, table_try_float
-from ..utils import adb_push, adb_shell
+from testers.utils import adb_push, adb_shell
 
 
 class Tflite(InferenceSdk):
@@ -17,15 +17,6 @@ class Tflite(InferenceSdk):
 
     @staticmethod
     def fetch_results(adb_device_id, flags) -> InferenceResult:
-        """push model to an android device and fetch results
-        Args:
-            adb_device_id: adb device ID
-            flags: Flag dict for benchmark_model
-
-        Returns:
-            InferenceResult
-        """
-
         model_folder = "/mnt/sdcard/channel_benchmark"
         adb_push(adb_device_id, "model.tflite", model_folder)
 

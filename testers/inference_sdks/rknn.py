@@ -2,11 +2,9 @@ import os
 
 import tensorflow as tf
 
-from rknn.api import RKNN
-
 from .inference_sdk import InferenceSdk, InferenceResult
 from .utils import concatenate_flags, rfind_assign_float
-from ..utils import adb_push, adb_shell
+from testers.utils import adb_push, adb_shell
 
 
 class Rknn(InferenceSdk):
@@ -22,7 +20,9 @@ class Rknn(InferenceSdk):
             with tf.gfile.FastGFile(os.path.splitext(path)[0] + '.pb', mode='wb') as f:
                 f.write(constant_graph.SerializeToString())
 
-            # remember to modify code
+            from rknn.api import RKNN
+
+            # take care to modify RKNN.__init__
             rknn = RKNN(verbose=True)
             rknn.config(batch_size=1)
             assert(0 == rknn.load_tensorflow(
@@ -38,15 +38,6 @@ class Rknn(InferenceSdk):
 
     @staticmethod
     def fetch_results(adb_device_id, flags) -> InferenceResult:
-        """push model to an android device and fetch results
-        Args:
-            adb_device_id: adb device ID
-            flags: Flag dict for rknn_benchmark_model
-
-        Returns:
-            InferenceResult
-        """
-
         model_folder = "/mnt/sdcard/channel_benchmark"
         benchmark_model_folder = "/data/local/tmp/rknn_benchmark_model"
         adb_push(adb_device_id, "model.rknn", model_folder)

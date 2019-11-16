@@ -1,2 +1,4 @@
 class Sampler:
-    pass
+    @staticmethod
+    def get_samples():
+        pass
