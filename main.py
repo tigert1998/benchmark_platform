@@ -10,5 +10,6 @@ def main():
         sampler=testers.sampling.fc_sampler.FcSampler())
     tester.run({}, {})
 
+
 if __name__ == '__main__':
     main()

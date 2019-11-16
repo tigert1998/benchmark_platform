@@ -1,6 +1,8 @@
 import os
+import datetime
 
 import progressbar
+import json
 
 from .inference_sdks.inference_sdk import InferenceSdk
 from .sampling.samplier import Sampler
@@ -82,11 +84,25 @@ class Tester:
     def _test_sample(self, sample):
         return []
 
+    def _dump_snapshot(self):
+        dic = {
+            'time': '{0:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()),
+            'class_name': type(self).__name__,
+            'inference_sdk': type(self.inference_sdk).__name__,
+            'adb_device_id': self.adb_device_id,
+            'sampler': type(self.sampler).__name__,
+            'settings': self.settings,
+            'benchmark_model_flags': self.benchmark_model_flags
+        }
+        with open('snapshot.json', 'w') as f:
+            f.write(json.dumps(dic, indent=4))
+
     def run(self, settings, benchmark_model_flags):
         self.settings = settings
         self.benchmark_model_flags = benchmark_model_flags
 
         self._chdir_in()
+        self._dump_snapshot()
 
         samples = self.sampler.get_samples()
         if self.settings.get('filter') is not None:
