@@ -51,10 +51,10 @@ def merge_profiles(profiles):
     return res
 
 
-def opname_to_modelname(opname):
-    if 'mobilenetv2' in opname:
+def op_name_to_model_name(op_name):
+    if 'mobilenetv2' in op_name:
         return 'MobileNetV2'
-    elif 'shufflenetv1' in opname:
+    elif 'shufflenetv1' in op_name:
         return 'ShuffleNetV1'
-    elif 'shufflenetv2' in opname:
+    elif 'shufflenetv2' in op_name:
         return 'ShuffleNetV2'

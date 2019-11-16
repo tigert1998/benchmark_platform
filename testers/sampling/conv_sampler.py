@@ -2,7 +2,7 @@ import itertools
 
 import tensorflow as tf
 
-from .utils import shufflenetv2_stages, merge_profiles, opname_to_modelname
+from .utils import shufflenetv2_stages, merge_profiles, op_name_to_model_name
 from .samplier import Sampler
 
 import mobilenet.mobilenet_v2 as mobilenet_v2
@@ -68,11 +68,16 @@ def _get_conv_profiles():
 
 class ConvSampler(Sampler):
     @staticmethod
+    def get_sample_titles():
+        return ["model", "op", "input_imsize", "current_cin", "current_cout",
+                "original_cin", "original_cout", "stride", "kernel_size"]
+
+    @staticmethod
     def get_samples():
         for profiles in _get_conv_profiles():
             hash_set = set()
             input_imsize, cin, _, cout, stride, names = profiles
-            for op_name, model_name in zip(names, map(opname_to_modelname, names)):
+            for op_name, model_name in zip(names, map(op_name_to_model_name, names)):
                 if '1st' in op_name:
                     hash_set_key = (model_name, '1st')
                     cin_cout_range = itertools.product([cin], range(

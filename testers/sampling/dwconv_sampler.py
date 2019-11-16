@@ -1,6 +1,6 @@
 from .samplier import Sampler
 
-from .utils import shufflenetv1_stages, shufflenetv2_stages, merge_profiles, opname_to_modelname
+from .utils import shufflenetv1_stages, shufflenetv2_stages, merge_profiles, op_name_to_model_name
 
 import mobilenet.mobilenet_v2 as mobilenet_v2
 import mobilenet.conv_blocks as ops
@@ -21,8 +21,8 @@ def _get_dwconv_profiles():
                 ops.expanded_conv,)]['expansion_size'])
             expanded_num_outputs = expansion_size(current_shape[1])
             profiles.append((
-                current_shape[0], expanded_num_outputs,
-                3, stride, ["mobilenet_bottleneck_dwconv_" + str(i)]))
+                current_shape[0], expanded_num_outputs, 3, stride,
+                ["mobilenetv2_bottleneck_dwconv_" + str(i)]))
         current_shape[0] //= stride
         current_shape[1] = op.params['num_outputs']
 
@@ -58,9 +58,15 @@ def _get_dwconv_profiles():
 
 class DwconvSampler(Sampler):
     @staticmethod
+    def get_sample_titles():
+        return ["model", "op", "input_imsize", "current_cin", "current_cout",
+                "original_cin", "original_cout", "stride", "kernel_size"]
+
+    @staticmethod
     def get_samples():
         for profiles in _get_dwconv_profiles():
             input_imsize, cin, _, stride, names = profiles
-            for model_name in list(set(map(opname_to_modelname, names))):
+            for model_name in list(set(map(op_name_to_model_name, names))):
                 for current_cin in range(int(0.2 * cin), int(2 * cin), 4):
-                    yield (model_name, "DWConv", input_imsize, current_cin, current_cin, cin, cin, stride)
+                    for ksize in [3, 5, 7]:
+                        yield (model_name, "DWConv", input_imsize, current_cin, current_cin, cin, cin, stride, ksize)
