@@ -1,5 +1,7 @@
 import tensorflow as tf
 
+import os
+
 from .inference_sdk import InferenceSdk, InferenceResult
 from .utils import concatenate_flags, rfind_assign_float, table_try_float
 from testers.utils import adb_push, adb_shell
@@ -8,22 +10,27 @@ from testers.utils import adb_push, adb_shell
 class Tflite(InferenceSdk):
     @staticmethod
     def generate_model(path, inputs, outputs):
+        path = os.path.splitext(path)[0]
+
         with tf.Session() as sess:
             sess.run(tf.global_variables_initializer())
             converter = tf.lite.TFLiteConverter.from_session(
                 sess, inputs, outputs)
             tflite_model = converter.convert()
-            open(path, 'wb').write(tflite_model)
+            open(path + '.tflite', 'wb').write(tflite_model)
 
     @staticmethod
-    def fetch_results(adb_device_id, flags) -> InferenceResult:
+    def fetch_results(adb_device_id: str, model_path: str, flags) -> InferenceResult:
+        model_path = os.path.splitext(model_path)[0]
+        model_basename = os.path.basename(model_path)
+
         model_folder = "/mnt/sdcard/channel_benchmark"
-        adb_push(adb_device_id, "model.tflite", model_folder)
+        adb_push(adb_device_id, model_path + ".tflite", model_folder)
 
         result_str = adb_shell(adb_device_id, "taskset f0 /data/local/tmp/master-20191015/benchmark_model {}".format(
             concatenate_flags(
                 {
-                    "graph": "{}/model.tflite".format(model_folder),
+                    "graph": "{}/{}.tflite".format(model_folder, model_basename),
                     **flags
                 })
         ))
