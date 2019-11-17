@@ -78,7 +78,10 @@ class Hiai(InferenceSdk):
                 **flags
             })))
 
-        std_ms = rfind_assign_float(result_str, 'std')
-        avg_ms = rfind_assign_float(result_str, 'avg')
-
+        if flags.get("num_runs") is None or flags.get("num_runs") >= 2:
+            std_ms = rfind_assign_float(result_str, 'std')
+            avg_ms = rfind_assign_float(result_str, 'avg')
+        else:
+            std_ms = 0
+            avg_ms = rfind_assign_float(result_str, 'curr')
         return InferenceResult(avg_ms=avg_ms, std_ms=std_ms, op_profiling=None)

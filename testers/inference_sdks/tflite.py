@@ -35,8 +35,12 @@ class Tflite(InferenceSdk):
                 })
         ))
 
-        std_ms = rfind_assign_float(result_str, 'std') / 1e3
-        avg_ms = rfind_assign_float(result_str, 'avg') / 1e3
+        if flags.get("num_runs") is None or flags.get("num_runs") >= 2:
+            std_ms = rfind_assign_float(result_str, 'std') / 1e3
+            avg_ms = rfind_assign_float(result_str, 'avg') / 1e3
+        else:
+            std_ms = 0
+            avg_ms = rfind_assign_float(result_str, 'curr') / 1e3
 
         use_delegate = flags.get("use_nnapi", False) or flags.get(
             "use_gpu", False) or flags.get("use_legacy_nnapi", False)
