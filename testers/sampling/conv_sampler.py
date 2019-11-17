@@ -16,8 +16,8 @@ def _get_conv_profiles():
     """
 
     profiles = [
-        (224, 3, 3, 24, 2, ["shufflenetv1_conv_0", "shufflenetv2_conv_0"]),
-        (7, 704, 1, 1024, 1, ["shufflenetv2_conv_5"])
+        [224, 3, 3, 24, 2, ["shufflenetv1_conv_0", "shufflenetv2_conv_0"]],
+        [7, 704, 1, 1024, 1, ["shufflenetv2_conv_5"]]
     ]
 
     idx = 1

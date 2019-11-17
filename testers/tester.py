@@ -6,7 +6,7 @@ import json
 
 from .inference_sdks.inference_sdk import InferenceSdk
 from .sampling.samplier import Sampler
-from .utils import camel_case_to_snake_case
+from .utils import camel_case_to_snake_case, regularize_for_json
 
 
 class CSVWriter:
@@ -95,7 +95,7 @@ class Tester:
             'benchmark_model_flags': self.benchmark_model_flags
         }
         with open('snapshot.json', 'w') as f:
-            f.write(json.dumps(dic, indent=4))
+            f.write(json.dumps(regularize_for_json(dic), indent=4))
 
     def run(self, settings, benchmark_model_flags):
         self.settings = settings

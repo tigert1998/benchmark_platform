@@ -1,5 +1,7 @@
 import os
 import subprocess
+import types
+import inspect
 
 
 def adb_push(adb_device_id, host_path, guest_path):
@@ -21,3 +23,20 @@ def camel_case_to_snake_case(s):
             last = i - 1
     ans.append(s[last + 1:])
     return '_'.join(map(lambda s: s.lower(), ans))
+
+
+def regularize_for_json(obj):
+    if isinstance(obj, list):
+        new_obj = []
+        for i in range(len(obj)):
+            new_obj.append(regularize_for_json(obj[i]))
+        return new_obj
+    elif isinstance(obj, dict):
+        new_obj = {}
+        for key, value in obj.items():
+            new_obj[key] = regularize_for_json(value)
+        return new_obj
+    elif isinstance(obj, types.FunctionType):
+        return inspect.getsource(obj).strip()
+    else:
+        return obj

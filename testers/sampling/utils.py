@@ -40,14 +40,17 @@ def merge_profiles(profiles):
     dic = {}
     for i in profiles:
         names = i[-1]
+        assert(isinstance(i, list))
         assert(isinstance(names, list))
-        if dic.get(i[:-1]) is None:
-            dic[i[:-1]] = names
+        # for hashable
+        key = tuple(i[:-1])
+        if dic.get(key) is None:
+            dic[key] = names
         else:
-            dic[i[:-1]] = names + dic[i[:-1]]
+            dic[key] = names + dic[key]
     res = []
     for key, value in sorted(dic.items()):
-        res.append(key + (value, ))
+        res.append(list(key) + [value])
     return res
 
 
