@@ -14,6 +14,12 @@ def adb_shell(adb_device_id, shell):
     return p.communicate(bytes(shell, 'utf-8'))[0].decode('utf-8')
 
 
+def adb_shell_su(adb_device_id, shell):
+    p = subprocess.Popen("adb -s {} shell su".format(adb_device_id),
+                         stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+    return p.communicate(bytes(shell, 'utf-8'))[0].decode('utf-8')
+
+
 def camel_case_to_snake_case(s):
     ans = []
     last = -1

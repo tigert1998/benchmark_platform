@@ -6,7 +6,7 @@ import json
 
 from .inference_sdks.inference_sdk import InferenceSdk
 from .sampling.samplier import Sampler
-from .utils import camel_case_to_snake_case, regularize_for_json
+from .utils import camel_case_to_snake_case, regularize_for_json, adb_shell_su, adb_shell
 
 
 class CSVWriter:
@@ -97,6 +97,12 @@ class Tester:
         with open('snapshot.json', 'w') as f:
             f.write(json.dumps(regularize_for_json(dic), indent=4))
 
+    def _push_to_max_freq(self):
+        if not self.settings.get("push_to_max_freq", False):
+            return
+        adb_shell_su(self.adb_device_id, "source {} && push_to_max_freq".format(
+            self.settings.get("mkshrc", "/system/etc/mkshrc")))
+
     def run(self, settings, benchmark_model_flags):
         self.settings = settings
         self.benchmark_model_flags = benchmark_model_flags
@@ -109,8 +115,10 @@ class Tester:
             samples = filter(self.settings['filter'], samples)
         samples = list(samples)
 
-        bar = progressbar.ProgressBar(max_value=len(
-            samples), redirect_stderr=True, redirect_stdout=True)
+        bar = progressbar.ProgressBar(
+            max_value=len(samples),
+            redirect_stderr=False,
+            redirect_stdout=False)
         csv_writer = CSVWriter()
 
         resumed = False
@@ -120,11 +128,13 @@ class Tester:
                 resumed = (sample == self.settings['resume_from'])
                 continue
 
+            self._push_to_max_freq()
+
             results = self._test_sample(sample)
             csv_writer.update_data(self._get_csv_filename(sample), resumed,
                                    self.sampler.get_sample_titles() + self._get_metrics_titles(),
                                    sample + results)
 
-            bar.update(i)
+            bar.update(i + 1)
 
         self._chdir_out()
