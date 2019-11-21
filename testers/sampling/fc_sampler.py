@@ -1,4 +1,4 @@
-from .samplier import Sampler
+from .sampler import Sampler
 
 
 class FcSampler(Sampler):
@@ -7,8 +7,7 @@ class FcSampler(Sampler):
         return ["model", "op",  "current_cin", "current_cout",
                 "original_cin", "original_cout"]
 
-    @staticmethod
-    def get_samples():
+    def _get_samples_without_filter(self):
         original_cin = 1000
         for cin in range(int(0.2 * original_cin), 2 * original_cin):
             yield ["MobileNetV2", "FC", cin, original_cin, original_cin, original_cin]

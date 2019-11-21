@@ -8,12 +8,11 @@ from testers.utils import adb_push, adb_shell
 
 
 class Tflite(InferenceSdk):
-    def __init__(self, benchmark_model_path, taskset):
-        self.benchmark_model_path = benchmark_model_path
-        self.taskset = taskset
-
     @staticmethod
-    def generate_model(path, inputs, outputs):
+    def default_settings():
+        return {"benchmark_model_path": None, "taskset": None}
+
+    def generate_model(self, path, inputs, outputs):
         path = os.path.splitext(path)[0]
 
         with tf.Session() as sess:
@@ -30,12 +29,14 @@ class Tflite(InferenceSdk):
         model_folder = "/mnt/sdcard/channel_benchmark"
         adb_push(adb_device_id, model_path + ".tflite", model_folder)
 
-        taskset_prefix = "" if self.taskset is None else "taskset {}".format(
-            self.taskset)
+        if self.settings["taskset"] is None:
+            taskset_prefix = ""
+        else:
+            taskset_prefix = "taskset " + self.settings["taskset"].strip()
 
         result_str = adb_shell(adb_device_id, "{} {} {}".format(
             taskset_prefix,
-            self.benchmark_model_path,
+            self.settings["benchmark_model_path"],
             concatenate_flags(
                 {
                     "graph": "{}/{}.tflite".format(model_folder, model_basename),

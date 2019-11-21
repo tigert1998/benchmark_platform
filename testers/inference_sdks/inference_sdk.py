@@ -1,13 +1,14 @@
 import shutil
 from collections import namedtuple
 
+from ..class_with_settings import ClassWithSettings
+
 InferenceResult = namedtuple(
     "InferenceResult", ["avg_ms", "std_ms", "op_profiling"])
 
 
-class InferenceSdk:
-    @staticmethod
-    def generate_model(path: str, inputs, outputs):
+class InferenceSdk(ClassWithSettings):
+    def generate_model(self, path: str, inputs, outputs):
         """Generates a model to path without extension
         Args:
             path: model path without extension
@@ -16,8 +17,7 @@ class InferenceSdk:
         """
         pass
 
-    @staticmethod
-    def fetch_results(adb_device_id: str, model_path: str, flags) -> InferenceResult:
+    def fetch_results(self, adb_device_id: str, model_path: str, flags) -> InferenceResult:
         """push model to an android device and fetch results
         Args:
             adb_device_id: adb device ID

@@ -1,4 +1,4 @@
-from .samplier import Sampler
+from .sampler import Sampler
 
 from .utils import shufflenetv1_stages, shufflenetv2_stages, merge_profiles, op_name_to_model_name
 
@@ -62,8 +62,7 @@ class DwconvSampler(Sampler):
         return ["model", "op", "input_imsize", "current_cin", "current_cout",
                 "original_cin", "original_cout", "stride", "kernel_size"]
 
-    @staticmethod
-    def get_samples():
+    def _get_samples_without_filter(self):
         for profiles in _get_dwconv_profiles():
             input_imsize, cin, _, stride, names = profiles
             for model_name in list(set(map(op_name_to_model_name, names))):

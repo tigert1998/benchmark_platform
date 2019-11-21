@@ -3,7 +3,7 @@ import itertools
 import tensorflow as tf
 
 from .utils import shufflenetv2_stages, merge_profiles, op_name_to_model_name
-from .samplier import Sampler
+from .sampler import Sampler
 
 import mobilenet.mobilenet_v2 as mobilenet_v2
 import mobilenet.conv_blocks as ops
@@ -68,24 +68,36 @@ def _get_conv_profiles():
 
 class ConvSampler(Sampler):
     @staticmethod
+    def default_settings():
+        return {
+            **super(ConvSampler, ConvSampler).default_settings(),
+            "channel_step": 4,
+            "channel_range": (0.2, 2)
+        }
+
+    @staticmethod
     def get_sample_titles():
         return ["model", "op", "input_imsize", "current_cin", "current_cout",
                 "original_cin", "original_cout", "stride", "kernel_size"]
 
-    @staticmethod
-    def get_samples():
+    def _get_samples_without_filter(self):
+        channel_step = self.settings["channel_step"]
+        channel_range = self.settings["channel_range"]
+
         for profiles in _get_conv_profiles():
             hash_set = set()
             input_imsize, cin, _, cout, stride, names = profiles
             for op_name, model_name in zip(names, map(op_name_to_model_name, names)):
                 if '1st' in op_name:
                     hash_set_key = (model_name, '1st')
-                    cin_cout_range = itertools.product([cin], range(
-                        int(0.2 * cout), int(2 * cout), 4))
+                    cin_cout_range = itertools.product(
+                        [cin], range(int(channel_range[0] * cout),
+                                     int(channel_range[1] * cout), channel_step)
+                    )
                 elif '2nd' in op_name:
                     hash_set_key = (model_name, '2nd')
                     cin_cout_range = itertools.product(
-                        range(int(0.2 * cin), int(2 * cin), 4), [cout])
+                        range(int(channel_range[0] * cin), int(channel_range[1] * cin), channel_step), [cout])
                 else:
                     continue
                 if hash_set_key in hash_set:
@@ -94,4 +106,7 @@ class ConvSampler(Sampler):
                     hash_set.add(hash_set_key)
                 for current_cin, current_cout in cin_cout_range:
                     for ksize in [1, 3, 5, 7]:
-                        yield [model_name, "Conv", input_imsize, current_cin, current_cout, cin, cout, stride, ksize]
+                        sample = [model_name, "Conv", input_imsize,
+                                  current_cin, current_cout, cin, cout, stride, ksize]
+                        if self.settings["filter"](sample):
+                            yield sample

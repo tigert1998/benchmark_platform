@@ -5,7 +5,7 @@ import progressbar
 import json
 
 from .inference_sdks.inference_sdk import InferenceSdk
-from .sampling.samplier import Sampler
+from .sampling.sampler import Sampler
 from .utils import camel_case_to_snake_case, regularize_for_json, adb_shell_su, adb_shell
 
 
@@ -86,11 +86,11 @@ class Tester:
 
     def _dump_snapshot(self):
         dic = {
-            'time': '{0:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()),
             'class_name': type(self).__name__,
-            'inference_sdk': type(self.inference_sdk).__name__,
+            'time': '{0:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()),
+            'inference_sdk': self.inference_sdk.settings,
+            'sampler': self.sampler.settings,
             'adb_device_id': self.adb_device_id,
-            'sampler': type(self.sampler).__name__,
             'settings': self.settings,
             'benchmark_model_flags': self.benchmark_model_flags
         }
@@ -110,10 +110,7 @@ class Tester:
         self._chdir_in()
         self._dump_snapshot()
 
-        samples = self.sampler.get_samples()
-        if self.settings.get('filter') is not None:
-            samples = filter(self.settings['filter'], samples)
-        samples = list(samples)
+        samples = list(self.sampler.get_samples())
 
         bar = progressbar.ProgressBar(
             max_value=len(samples),
