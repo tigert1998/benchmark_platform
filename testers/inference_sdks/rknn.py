@@ -8,8 +8,7 @@ from testers.utils import adb_push, adb_shell
 
 
 class Rknn(InferenceSdk):
-    @staticmethod
-    def generate_model(path, inputs, outputs):
+    def generate_model(self, path, inputs, outputs):
         path = os.path.splitext(path)[0]
 
         outputs_ops_names = [o.op.name for o in outputs]
@@ -38,8 +37,7 @@ class Rknn(InferenceSdk):
             assert(0 == rknn.export_rknn(path + '.rknn'))
             rknn.release()
 
-    @staticmethod
-    def fetch_results(adb_device_id, model_path, flags) -> InferenceResult:
+    def _fetch_results(self, adb_device_id, model_path, flags) -> InferenceResult:
         model_path = os.path.splitext(model_path)[0]
         model_basename = os.path.basename(model_path)
 

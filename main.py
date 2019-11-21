@@ -10,15 +10,12 @@ def main():
             "benchmark_model_path": "/data/local/tmp/master-20191015/log_benchmark_model",
         }),
         sampler=testers.sampling.conv_sampler.ConvSampler({
-            "channel_step": 1,
-            "channel_range": (0.2, 0.5),
-            "filter": lambda sample: sample[-1] == 1 and sample[2] == 7
+            "filter": lambda sample: sample[-1] == 1
         }))
-    tester.run(settings={
-        "push_to_max_freq": True,
-        "mkshrc": "/data/local/tmp/mkshrc"
-    }, benchmark_model_flags={
-        "num_runs": 30
+    tester.run(settings={}, benchmark_model_flags={
+        "num_runs": 30,
+        "use_gpu": True,
+        "gpu_precision_loss_allowed": False
     })
 
 

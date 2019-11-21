@@ -12,8 +12,7 @@ container: docker.models.containers.Container =\
 
 
 class Hiai(InferenceSdk):
-    @staticmethod
-    def generate_model(path, inputs, outputs):
+    def generate_model(self, path, inputs, outputs):
         path = os.path.splitext(path)[0]
         model_basename = os.path.basename(path)
 
@@ -56,8 +55,7 @@ class Hiai(InferenceSdk):
             assert(result.exit_code == 0)
             print(result.output.decode('utf-8'))
 
-    @staticmethod
-    def fetch_results(adb_device_id, model_path, flags) -> InferenceResult:
+    def _fetch_results(self, adb_device_id, model_path, flags) -> InferenceResult:
         model_path = os.path.splitext(model_path)[0]
         model_basename = os.path.basename(model_path)
 

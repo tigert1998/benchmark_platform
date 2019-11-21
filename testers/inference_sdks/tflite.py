@@ -12,6 +12,12 @@ class Tflite(InferenceSdk):
     def default_settings():
         return {"benchmark_model_path": None, "taskset": None}
 
+    @staticmethod
+    def default_flags():
+        return {
+            "use_gpu": None
+        }
+
     def generate_model(self, path, inputs, outputs):
         path = os.path.splitext(path)[0]
 
@@ -22,7 +28,7 @@ class Tflite(InferenceSdk):
             tflite_model = converter.convert()
             open(path + '.tflite', 'wb').write(tflite_model)
 
-    def fetch_results(self, adb_device_id: str, model_path: str, flags) -> InferenceResult:
+    def _fetch_results(self, adb_device_id: str, model_path: str, flags) -> InferenceResult:
         model_path = os.path.splitext(model_path)[0]
         model_basename = os.path.basename(model_path)
 

@@ -26,7 +26,7 @@ class CSVWriter:
         if self.fd is not None:
             self.fd.close()
 
-    def update_data(self, filename, is_resume, titles, data):
+    def update_data(self, filename, titles, data, is_resume):
         if self.previous_filename is None:
             if is_resume:
                 self.fd = open(filename, 'a')
@@ -128,9 +128,10 @@ class Tester:
             self._push_to_max_freq()
 
             results = self._test_sample(sample)
-            csv_writer.update_data(self._get_csv_filename(sample), resumed,
+            csv_writer.update_data(self._get_csv_filename(sample),
                                    self.sampler.get_sample_titles() + self._get_metrics_titles(),
-                                   sample + results)
+                                   sample + results,
+                                   resumed)
 
             bar.update(i + 1)
 
