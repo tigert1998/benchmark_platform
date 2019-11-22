@@ -28,7 +28,7 @@ class Tflite(InferenceSdk):
             tflite_model = converter.convert()
             open(path + '.tflite', 'wb').write(tflite_model)
 
-    def _fetch_results(self, adb_device_id: str, model_path: str, flags) -> InferenceResult:
+    def _launch_benchmark(self, adb_device_id: str, model_path: str, flags):
         model_path = os.path.splitext(model_path)[0]
         model_basename = os.path.basename(model_path)
 
@@ -40,7 +40,7 @@ class Tflite(InferenceSdk):
         else:
             taskset_prefix = "taskset " + self.settings["taskset"].strip()
 
-        result_str = adb_shell(adb_device_id, "{} {} {}".format(
+        return adb_shell(adb_device_id, "{} {} {}".format(
             taskset_prefix,
             self.settings["benchmark_model_path"],
             concatenate_flags(
@@ -49,6 +49,9 @@ class Tflite(InferenceSdk):
                     **flags
                 })
         ))
+
+    def _fetch_results(self, adb_device_id: str, model_path: str, flags) -> InferenceResult:
+        result_str = self._launch_benchmark(adb_device_id, model_path, flags)
 
         if flags.get("num_runs") is None or flags.get("num_runs") >= 2:
             std_ms = rfind_assign_float(result_str, 'std') / 1e3
@@ -62,7 +65,7 @@ class Tflite(InferenceSdk):
         enable_op_profiling = flags.get("enable_op_profiling", False)
 
         if use_delegate or (not enable_op_profiling):
-            return InferenceResult(avg_ms=avg_ms, std_ms=std_ms, op_profiling=None)
+            return InferenceResult(avg_ms=avg_ms, std_ms=std_ms, profiling_details=None)
         else:
             op_profiling = []
             started = False
@@ -79,4 +82,4 @@ class Tflite(InferenceSdk):
                         continue
                     op_profiling.append(cells)
             op_profiling = table_try_float(op_profiling)
-            return InferenceResult(avg_ms=avg_ms, std_ms=std_ms, op_profiling=op_profiling)
+            return InferenceResult(avg_ms=avg_ms, std_ms=std_ms, profiling_details=op_profiling)

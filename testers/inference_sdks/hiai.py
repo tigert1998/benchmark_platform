@@ -82,4 +82,4 @@ class Hiai(InferenceSdk):
         else:
             std_ms = 0
             avg_ms = rfind_assign_float(result_str, 'curr')
-        return InferenceResult(avg_ms=avg_ms, std_ms=std_ms, op_profiling=None)
+        return InferenceResult(avg_ms=avg_ms, std_ms=std_ms, profiling_details=None)

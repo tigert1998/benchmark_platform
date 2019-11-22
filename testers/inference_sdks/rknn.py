@@ -60,4 +60,4 @@ class Rknn(InferenceSdk):
             avg_ms = rfind_assign_float(result_str, 'curr')
 
         # FIXME
-        return InferenceResult(avg_ms=avg_ms, std_ms=std_ms, op_profiling=None)
+        return InferenceResult(avg_ms=avg_ms, std_ms=std_ms, profiling_details=None)

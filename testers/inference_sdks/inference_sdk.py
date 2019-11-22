@@ -4,7 +4,7 @@ from collections import namedtuple
 from ..class_with_settings import ClassWithSettings
 
 InferenceResult = namedtuple(
-    "InferenceResult", ["avg_ms", "std_ms", "op_profiling"])
+    "InferenceResult", ["avg_ms", "std_ms", "profiling_details"])
 
 
 class InferenceSdk(ClassWithSettings):
