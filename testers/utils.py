@@ -8,6 +8,10 @@ def adb_push(adb_device_id, host_path, guest_path):
     os.system("adb -s {} push {} {}".format(adb_device_id, host_path, guest_path))
 
 
+def adb_pull(adb_device_id, guest_path, host_path):
+    os.system("adb -s {} pull {} {}".format(adb_device_id, guest_path, host_path))
+
+
 def adb_shell(adb_device_id, shell):
     p = subprocess.Popen("adb -s {} shell".format(adb_device_id),
                          stdin=subprocess.PIPE, stdout=subprocess.PIPE)

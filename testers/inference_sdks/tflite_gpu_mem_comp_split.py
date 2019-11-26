@@ -17,7 +17,12 @@ class TfliteGpuMemCompSplit(Tflite):
         for stage in ["write", "comp", "read"]:
             avg_ms = rfind_assign_float(result_str,  stage + '_avg_ms')
             std_ms = rfind_assign_float(result_str,  stage + '_std_ms')
-            profiling_details[stage] = {"avg": avg_ms, "std": std_ms}
+            min_ms = rfind_assign_float(result_str,  stage + '_min_ms')
+            max_ms = rfind_assign_float(result_str,  stage + '_max_ms')
+            profiling_details[stage] = {
+                "avg": avg_ms, "std": std_ms,
+                "min": min_ms, "max": max_ms
+            }
 
         if flags.get("num_runs") is None or flags.get("num_runs") >= 2:
             std_ms = rfind_assign_float(result_str, 'std') / 1e3
