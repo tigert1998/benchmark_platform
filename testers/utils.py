@@ -20,6 +20,18 @@ def adb_shell_su(adb_device_id, shell):
     return p.communicate(bytes(shell, 'utf-8'))[0].decode('utf-8')
 
 
+def inquire_adb_device(adb_device_id):
+    getprop_items = [
+        "ro.product.model",
+        "ro.build.version.release",
+        "ro.build.version.sdk",
+    ]
+    res = {"adb_device_id": adb_device_id}
+    for item in getprop_items:
+        res[item] = adb_shell(adb_device_id, "getprop {}".format(item)).strip()
+    return res
+
+
 def camel_case_to_snake_case(s):
     ans = []
     last = -1

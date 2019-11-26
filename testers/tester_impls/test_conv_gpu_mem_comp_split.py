@@ -1,4 +1,4 @@
-from .test_conv import TestConv
+from testers.tester_impls.test_conv import TestConv
 
 import tensorflow as tf
 

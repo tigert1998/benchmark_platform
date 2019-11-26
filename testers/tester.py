@@ -6,7 +6,11 @@ import json
 
 from .inference_sdks.inference_sdk import InferenceSdk
 from .sampling.sampler import Sampler
-from .utils import camel_case_to_snake_case, regularize_for_json, adb_shell_su, adb_shell
+from .utils import\
+    camel_case_to_snake_case,\
+    regularize_for_json,\
+    adb_shell_su, adb_shell,\
+    inquire_adb_device
 
 
 class CSVWriter:
@@ -90,9 +94,10 @@ class Tester:
             'time': '{0:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()),
             'inference_sdk': self.inference_sdk.settings,
             'sampler': self.sampler.settings,
-            'adb_device_id': self.adb_device_id,
+            'adb_device': inquire_adb_device(self.adb_device_id),
             'settings': self.settings,
-            'benchmark_model_flags': self.benchmark_model_flags
+            'benchmark_model_flags': self.benchmark_model_flags,
+            "remark": ""
         }
         with open('snapshot.json', 'w') as f:
             f.write(json.dumps(regularize_for_json(dic), indent=4))
