@@ -1,10 +1,18 @@
-def rfind_assign_float(s, mark):
+def rfind_assign(s, mark):
     mark += "="
     l_idx = s.rfind(mark) + len(mark)
     r_idx = l_idx
     while s[r_idx] not in [' ', '\n']:
         r_idx += 1
-    return float(s[l_idx: r_idx])
+    return s[l_idx: r_idx]
+
+
+def rfind_assign_float(s, mark):
+    return float(rfind_assign(s, mark))
+
+
+def rfind_assign_int(s, mark):
+    return int(rfind_assign(s, mark))
 
 
 def concatenate_flags(flags):

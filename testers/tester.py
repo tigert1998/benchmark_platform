@@ -9,7 +9,7 @@ from .sampling.sampler import Sampler
 from .utils import\
     camel_case_to_snake_case,\
     regularize_for_json,\
-    adb_shell_su, adb_shell,\
+    adb_shell_su, adb_shell, shell_with_script,\
     inquire_adb_device
 
 
@@ -102,12 +102,6 @@ class Tester:
         with open('snapshot.json', 'w') as f:
             f.write(json.dumps(regularize_for_json(dic), indent=4))
 
-    def _push_to_max_freq(self):
-        if not self.settings.get("push_to_max_freq", False):
-            return
-        adb_shell_su(self.adb_device_id, "source {} && push_to_max_freq".format(
-            self.settings.get("mkshrc", "/system/etc/mkshrc")))
-
     def run(self, settings, benchmark_model_flags):
         self.settings = settings
         self.benchmark_model_flags = benchmark_model_flags
@@ -130,14 +124,40 @@ class Tester:
                 resumed = (sample == self.settings['resume_from'])
                 continue
 
-            self._push_to_max_freq()
+            self.preprocess()
 
             results = self._test_sample(sample)
+            titles = self.sampler.get_sample_titles() + self._get_metrics_titles()
+            data = sample + results
+
+            titles, data = self.postprocess(titles, data)
+
             csv_writer.update_data(self._get_csv_filename(sample),
-                                   self.sampler.get_sample_titles() + self._get_metrics_titles(),
-                                   sample + results,
-                                   resumed)
+                                   titles, data, resumed)
 
             bar.update(i + 1)
 
         self._chdir_out()
+
+    # preprocessing/postprocessing
+
+    def _push_to_max_freq(self):
+        adb_shell_su(self.adb_device_id,
+                     shell_with_script("push_to_max_freq", self.settings.get("mkshrc", "/system/etc/mkshrc")))
+
+    def _pull_gpu_cur_freq(self):
+        if not self.settings.get("pull_gpu_cur_freq", False):
+            return
+        return int(adb_shell_su(
+            self.adb_device_id,
+            shell_with_script("cat $GPUDIR/cur_freq", self.settings.get("mkshrc", "/system/etc/mkshrc"))))
+
+    def preprocess(self):
+        if self.settings.get("push_to_max_freq", False):
+            self._push_to_max_freq()
+
+    def postprocess(self, titles, data):
+        if self.settings.get("pull_gpu_cur_freq", False):
+            titles.append("gpu_freq")
+            data.append(self._pull_gpu_cur_freq())
+        return titles, data

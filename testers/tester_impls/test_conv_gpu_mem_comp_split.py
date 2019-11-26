@@ -1,6 +1,7 @@
 from testers.tester_impls.test_conv import TestConv
 
 import tensorflow as tf
+import os
 
 
 class TestConvGpuMemCompSplit(TestConv):
@@ -10,6 +11,7 @@ class TestConvGpuMemCompSplit(TestConv):
         for stage in ["write", "comp", "read"]:
             for metric in ["avg", "std"]:
                 titles.append("{}_{}_ms".format(stage, metric))
+        titles.append("gpu_freq")
         return titles
 
     def _test_sample(self, sample):
@@ -23,5 +25,8 @@ class TestConvGpuMemCompSplit(TestConv):
         for stage in ["write", "comp", "read"]:
             for metric in ["avg", "std"]:
                 data.append(results.profiling_details[stage][metric])
+        data.append(results.profiling_details["gpu_freq"])
+
+        os.replace("kernel.cl", '_'.join(map(str, sample[2: 5])) + ".cl")
 
         return data

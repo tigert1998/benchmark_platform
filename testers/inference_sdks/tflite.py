@@ -10,7 +10,11 @@ from testers.utils import adb_push, adb_shell
 class Tflite(InferenceSdk):
     @staticmethod
     def default_settings():
-        return {"benchmark_model_path": None, "taskset": None}
+        return {
+            "benchmark_model_path": None,
+            "taskset": None,
+            "su": False
+        }
 
     @staticmethod
     def default_flags():
@@ -48,7 +52,7 @@ class Tflite(InferenceSdk):
                     "graph": "{}/{}.tflite".format(model_folder, model_basename),
                     **flags
                 })
-        ))
+        ), self.settings["su"])
 
     def _fetch_results(self, adb_device_id: str, model_path: str, flags) -> InferenceResult:
         result_str = self._launch_benchmark(adb_device_id, model_path, flags)

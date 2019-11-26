@@ -12,16 +12,18 @@ def adb_pull(adb_device_id, guest_path, host_path):
     os.system("adb -s {} pull {} {}".format(adb_device_id, guest_path, host_path))
 
 
-def adb_shell(adb_device_id, shell):
-    p = subprocess.Popen("adb -s {} shell".format(adb_device_id),
+def adb_shell(adb_device_id, shell, su=False):
+    p = subprocess.Popen("adb -s {} shell {}".format(adb_device_id, "su" if su else ""),
                          stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     return p.communicate(bytes(shell, 'utf-8'))[0].decode('utf-8')
 
 
 def adb_shell_su(adb_device_id, shell):
-    p = subprocess.Popen("adb -s {} shell su".format(adb_device_id),
-                         stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-    return p.communicate(bytes(shell, 'utf-8'))[0].decode('utf-8')
+    return adb_shell(adb_device_id, shell, True)
+
+
+def shell_with_script(shell, script):
+    return "source {} && {}".format(script, shell)
 
 
 def inquire_adb_device(adb_device_id):

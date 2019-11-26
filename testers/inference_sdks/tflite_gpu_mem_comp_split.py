@@ -1,6 +1,9 @@
 from .tflite import Tflite
 from .inference_sdk import InferenceResult
-from .utils import rfind_assign_float
+from .utils import rfind_assign_float, rfind_assign_int
+from testers.utils import adb_pull
+
+import os
 
 
 class TfliteGpuMemCompSplit(Tflite):
@@ -13,7 +16,10 @@ class TfliteGpuMemCompSplit(Tflite):
     def _fetch_results(self, adb_device_id: str, model_path: str, flags) -> InferenceResult:
         result_str = self._launch_benchmark(adb_device_id, model_path, flags)
 
-        profiling_details = {}
+        profiling_details = {
+            "gpu_freq":  rfind_assign_int(result_str, "gpu_cur_freq")
+        }
+
         for stage in ["write", "comp", "read"]:
             avg_ms = rfind_assign_float(result_str,  stage + '_avg_ms')
             std_ms = rfind_assign_float(result_str,  stage + '_std_ms')
@@ -30,5 +36,12 @@ class TfliteGpuMemCompSplit(Tflite):
         else:
             std_ms = 0
             avg_ms = rfind_assign_float(result_str, 'curr') / 1e3
+
+        adb_pull(
+            adb_device_id,
+            "{}/kernel.cl".format(os.path.dirname(
+                self.settings["benchmark_model_path"])),
+            '.'
+        )
 
         return InferenceResult(avg_ms=avg_ms, std_ms=std_ms, profiling_details=profiling_details)
