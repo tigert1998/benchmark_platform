@@ -27,6 +27,4 @@ class TestConvGpuMemCompSplit(TestConv):
                 data.append(results.profiling_details[stage][metric])
         data.append(results.profiling_details["gpu_freq"])
 
-        os.replace("kernel.cl", '_'.join(map(str, sample[2: 5])) + ".cl")
-
         return data

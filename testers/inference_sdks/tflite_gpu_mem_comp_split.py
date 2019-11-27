@@ -37,11 +37,4 @@ class TfliteGpuMemCompSplit(Tflite):
             std_ms = 0
             avg_ms = rfind_assign_float(result_str, 'curr') / 1e3
 
-        adb_pull(
-            adb_device_id,
-            "{}/kernel.cl".format(os.path.dirname(
-                self.settings["benchmark_model_path"])),
-            '.'
-        )
-
         return InferenceResult(avg_ms=avg_ms, std_ms=std_ms, profiling_details=profiling_details)

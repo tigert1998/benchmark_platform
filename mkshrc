@@ -13,6 +13,8 @@ elif [ "$PRODUCT_MODEL" == "Pixel 3 XL" ]; then
 elif [ "$PRODUCT_MODEL" == "rk3399pro" ]; then
         GPUDIR=/sys/devices/platform/ff9a0000.gpu/devfreq/ff9a0000.gpu
         HOSTNAME=$PRODUCT_MODEL
+elif [ "$PRODUCT_MODEL" == "MI 9" ]; then
+        GPUDIR=/sys/devices/platform/soc/2c00000.qcom,kgsl-3d0/devfreq/2c00000.qcom,kgsl-3d0
 fi
 CPUDIR=/sys/devices/system/cpu
 
