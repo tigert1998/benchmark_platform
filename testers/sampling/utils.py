@@ -36,6 +36,11 @@ shufflenetv2_stages = [
 ]
 
 
+def align(n, divisor):
+    assert(isinstance(n, int) and isinstance(divisor, int))
+    return ((n + divisor - 1) // divisor) * divisor
+
+
 def merge_profiles(profiles):
     dic = {}
     for i in profiles:

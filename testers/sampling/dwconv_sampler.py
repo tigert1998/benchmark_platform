@@ -1,6 +1,6 @@
 from .sampler import Sampler
 
-from .utils import shufflenetv1_stages, shufflenetv2_stages, merge_profiles, op_name_to_model_name
+from .utils import shufflenetv1_stages, shufflenetv2_stages, merge_profiles, op_name_to_model_name, align
 
 import mobilenet.mobilenet_v2 as mobilenet_v2
 import mobilenet.conv_blocks as ops
@@ -66,6 +66,8 @@ class DwconvSampler(Sampler):
         for profiles in _get_dwconv_profiles():
             input_imsize, cin, _, stride, names = profiles
             for model_name in list(set(map(op_name_to_model_name, names))):
-                for current_cin in range(int(0.2 * cin), int(2 * cin), 4):
+                for current_cin in range(align(int(0.2 * cin), 2),
+                                         align(int(2 * cin), 2),
+                                         4):
                     for ksize in [3, 5, 7]:
                         yield [model_name, "DWConv", input_imsize, current_cin, current_cin, cin, cin, stride, ksize]

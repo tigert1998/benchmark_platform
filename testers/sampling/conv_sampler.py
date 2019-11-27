@@ -2,7 +2,7 @@ import itertools
 
 import tensorflow as tf
 
-from .utils import shufflenetv2_stages, merge_profiles, op_name_to_model_name
+from .utils import shufflenetv2_stages, merge_profiles, op_name_to_model_name, align
 from .sampler import Sampler
 
 import mobilenet.mobilenet_v2 as mobilenet_v2
@@ -91,13 +91,20 @@ class ConvSampler(Sampler):
                 if '1st' in op_name:
                     hash_set_key = (model_name, '1st')
                     cin_cout_range = itertools.product(
-                        [cin], range(int(channel_range[0] * cout),
-                                     int(channel_range[1] * cout), channel_step)
+                        [cin], range(
+                            align(int(channel_range[0] * cout), 2),
+                            align(int(channel_range[1] * cout), 2),
+                            channel_step
+                        )
                     )
                 elif '2nd' in op_name:
                     hash_set_key = (model_name, '2nd')
                     cin_cout_range = itertools.product(
-                        range(int(channel_range[0] * cin), int(channel_range[1] * cin), channel_step), [cout])
+                        range(
+                            align(int(channel_range[0] * cin), 2),
+                            align(int(channel_range[1] * cin), 2),
+                            channel_step
+                        ), [cout])
                 else:
                     continue
                 if hash_set_key in hash_set:
