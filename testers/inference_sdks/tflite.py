@@ -3,7 +3,7 @@ import tensorflow as tf
 import os
 
 from .inference_sdk import InferenceSdk, InferenceResult
-from .utils import concatenate_flags, rfind_assign_float, table_try_float
+from .utils import concatenate_flags, rfind_assign_float, table_try_float, rfind_assign_int
 from testers.utils import adb_push, adb_shell
 
 
@@ -44,7 +44,7 @@ class Tflite(InferenceSdk):
         else:
             taskset_prefix = "taskset " + self.settings["taskset"].strip()
 
-        return adb_shell(adb_device_id, "{} {} {}".format(
+        cmd = "{} {} {}".format(
             taskset_prefix,
             self.settings["benchmark_model_path"],
             concatenate_flags(
@@ -52,12 +52,14 @@ class Tflite(InferenceSdk):
                     "graph": "{}/{}.tflite".format(model_folder, model_basename),
                     **flags
                 })
-        ), self.settings["su"])
+        )
+        print(cmd.strip())
+        return adb_shell(adb_device_id, cmd, self.settings["su"])
 
     def _fetch_results(self, adb_device_id: str, model_path: str, flags) -> InferenceResult:
         result_str = self._launch_benchmark(adb_device_id, model_path, flags)
 
-        if flags.get("num_runs") is None or flags.get("num_runs") >= 2:
+        if rfind_assign_int(result_str, 'count') >= 2:
             std_ms = rfind_assign_float(result_str, 'std') / 1e3
             avg_ms = rfind_assign_float(result_str, 'avg') / 1e3
         else:

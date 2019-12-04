@@ -96,7 +96,7 @@ class Tester:
             'sampler': self.sampler.settings,
             'adb_device': inquire_adb_device(self.adb_device_id),
             'settings': self.settings,
-            'benchmark_model_flags': self.benchmark_model_flags,
+            'benchmark_model_flags': self.inference_sdk.flags(self.benchmark_model_flags),
             "remark": ""
         }
         with open('snapshot.json', 'w') as f:

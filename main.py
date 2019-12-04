@@ -7,7 +7,7 @@ def main():
     tester = testers.tester_impls.test_conv_gpu_mem_comp_split.TestConvGpuMemCompSplit(
         adb_device_id="5e6fecf",
         inference_sdk=testers.inference_sdks.tflite_gpu_mem_comp_split.TfliteGpuMemCompSplit({
-            "benchmark_model_path": "/data/local/tmp/master-20191015/benchmark_model_split_io_comp",
+            "benchmark_model_path": "/data/local/tmp/tf-r2.1-60afa4e/benchmark_model_split_io_comp",
             "su": True
         }),
         sampler=testers.sampling.conv_sampler.ConvSampler({
@@ -17,7 +17,8 @@ def main():
     tester.run(settings={}, benchmark_model_flags={
         "num_runs": 30,
         "use_gpu": True,
-        "gpu_precision_loss_allowed": False
+        "precision": "F32_F16",
+        "work_group_size": "4,4,1"
     })
 
 

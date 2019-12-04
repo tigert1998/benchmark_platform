@@ -10,7 +10,8 @@ class TfliteGpuMemCompSplit(Tflite):
     @staticmethod
     def default_flags():
         return {
-            "use_gpu": True
+            "use_gpu": True,
+            "work_group_size": None
         }
 
     def _fetch_results(self, adb_device_id: str, model_path: str, flags) -> InferenceResult:
@@ -30,7 +31,7 @@ class TfliteGpuMemCompSplit(Tflite):
                 "min": min_ms, "max": max_ms
             }
 
-        if flags.get("num_runs") is None or flags.get("num_runs") >= 2:
+        if rfind_assign_int(result_str, 'count') >= 2:
             std_ms = rfind_assign_float(result_str, 'std') / 1e3
             avg_ms = rfind_assign_float(result_str, 'avg') / 1e3
         else:
