@@ -1,12 +1,12 @@
 from .tflite import Tflite
 from .inference_sdk import InferenceResult
-from .utils import rfind_assign_float, rfind_assign_int
+from .utils import rfind_assign_float, rfind_assign_int, rfind_assign
 from testers.utils import adb_pull
 
 import os
 
 
-class TfliteGpuMemCompSplit(Tflite):
+class TfliteModified(Tflite):
     @staticmethod
     def default_flags():
         return {
@@ -20,6 +20,15 @@ class TfliteGpuMemCompSplit(Tflite):
         profiling_details = {
             "gpu_freq":  rfind_assign_int(result_str, "gpu_cur_freq")
         }
+
+        i = 0
+        while True:
+            try:
+                mark = "best_work_group[{}]".format(i)
+                profiling_details[mark] = rfind_assign(result_str, mark).strip()
+            except:
+                break
+            i += 1
 
         for stage in ["write", "comp", "read"]:
             avg_ms = rfind_assign_float(result_str,  stage + '_avg_ms')

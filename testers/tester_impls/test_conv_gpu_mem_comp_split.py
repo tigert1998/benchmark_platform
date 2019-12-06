@@ -12,6 +12,7 @@ class TestConvGpuMemCompSplit(TestConv):
             for metric in ["avg", "std"]:
                 titles.append("{}_{}_ms".format(stage, metric))
         titles.append("gpu_freq")
+        titles.append("best_work_groups")
         return titles
 
     def _test_sample(self, sample):
@@ -26,5 +27,14 @@ class TestConvGpuMemCompSplit(TestConv):
             for metric in ["avg", "std"]:
                 data.append(results.profiling_details[stage][metric])
         data.append(results.profiling_details["gpu_freq"])
+
+        i = 0
+        while True:
+            mark = "best_work_group[{}]".format(i)
+            if results.profiling_details.get(mark) is not None:
+                data.append(results.profiling_details.get(mark))
+            else:
+                break
+            i += 1
 
         return data
