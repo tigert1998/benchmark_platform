@@ -1,7 +1,7 @@
 import shutil
 from collections import namedtuple
 
-from ..class_with_settings import ClassWithSettings
+from utils.class_with_settings import ClassWithSettings
 
 InferenceResult = namedtuple(
     "InferenceResult", ["avg_ms", "std_ms", "profiling_details"])

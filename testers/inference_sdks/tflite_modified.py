@@ -1,7 +1,7 @@
 from .tflite import Tflite
 from .inference_sdk import InferenceResult
 from .utils import rfind_assign_float, rfind_assign_int, rfind_assign
-from testers.utils import adb_pull
+from utils.utils import adb_pull
 
 import os
 

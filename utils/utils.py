@@ -64,3 +64,15 @@ def regularize_for_json(obj):
         return inspect.getsource(obj).strip()
     else:
         return obj
+
+
+def concatenate_flags(flags):
+    def to_str(x):
+        if isinstance(x, bool):
+            return str(x).lower()
+        else:
+            return str(x)
+    res = ''
+    for key in flags:
+        res += ('--' + key + '=' + to_str(flags[key]) + ' ')
+    return res.strip()

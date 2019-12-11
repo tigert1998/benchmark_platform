@@ -1,4 +1,4 @@
-from ..class_with_settings import ClassWithSettings
+from utils.class_with_settings import ClassWithSettings
 
 
 class Sampler(ClassWithSettings):

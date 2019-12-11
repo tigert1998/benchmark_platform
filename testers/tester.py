@@ -6,7 +6,7 @@ import json
 
 from .inference_sdks.inference_sdk import InferenceSdk
 from .sampling.sampler import Sampler
-from .utils import\
+from utils.utils import\
     camel_case_to_snake_case,\
     regularize_for_json,\
     adb_shell_su, adb_shell, shell_with_script,\
@@ -59,10 +59,13 @@ class Tester:
         self.sampler = sampler
 
     def _get_dir_name(self):
-        return "{}_{}_{}".format(
+        dir_name = "{}_{}_{}".format(
             camel_case_to_snake_case(type(self).__name__),
             camel_case_to_snake_case(type(self.inference_sdk).__name__),
             self.adb_device_id)
+        if self.settings.get("subdir") is not None:
+            dir_name += "/" + self.settings.get("subdir")
+        return dir_name
 
     def _chdir_in(self):
         dir_name = self._get_dir_name()
