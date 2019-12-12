@@ -4,8 +4,8 @@ import docker
 import os
 
 from .inference_sdk import InferenceSdk, InferenceResult
-from .utils import concatenate_flags, rfind_assign_float
-from testers.utils import adb_push, adb_shell
+from utils.utils import concatenate_flags, adb_push, adb_shell
+from .utils import rfind_assign_float
 
 container: docker.models.containers.Container =\
     docker.from_env().containers.list()[0]

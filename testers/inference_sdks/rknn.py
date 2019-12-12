@@ -3,8 +3,8 @@ import os
 import tensorflow as tf
 
 from .inference_sdk import InferenceSdk, InferenceResult
-from .utils import concatenate_flags, rfind_assign_float
-from testers.utils import adb_push, adb_shell
+from .utils import rfind_assign_float
+from utils.utils import adb_push, adb_shell, concatenate_flags
 
 
 class Rknn(InferenceSdk):
@@ -23,7 +23,7 @@ class Rknn(InferenceSdk):
 
             from rknn.api import RKNN
 
-            # take care to modify RKNN.__init__
+            # remember to modify RKNN.__init__
             rknn = RKNN(verbose=True)
             rknn.config(batch_size=1)
             assert(0 == rknn.load_tensorflow(

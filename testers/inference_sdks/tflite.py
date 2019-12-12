@@ -3,8 +3,8 @@ import tensorflow as tf
 import os
 
 from .inference_sdk import InferenceSdk, InferenceResult
-from .utils import concatenate_flags, rfind_assign_float, table_try_float, rfind_assign_int
-from utils.utils import adb_push, adb_shell
+from .utils import rfind_assign_float, table_try_float, rfind_assign_int
+from utils.utils import adb_push, adb_shell, concatenate_flags
 
 
 class Tflite(InferenceSdk):
