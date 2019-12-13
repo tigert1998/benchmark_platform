@@ -8,9 +8,7 @@ from .data_preparers.android_data_preparer import AndroidDataPreparer
 from utils.csv_writer import CSVWriter
 
 import os
-import shutil
 import json
-
 import numpy as np
 
 import progressbar
@@ -64,9 +62,14 @@ class AccuracyTester(ClassWithSettings):
         for start in range(0, dataset_size, zip_size):
             num_images = min(dataset_size, start + zip_size) - start
 
-            data_preparer.prepare_dateset(range(start, start + num_images))
+            image_id_range = range(start, start + num_images)
+            data_preparer.prepare_dateset(image_id_range)
 
-            tmp = accuracy_evaluator.evaluate_models(model_paths)
+            tmp = accuracy_evaluator.evaluate_models(
+                model_paths,
+                data_preparer.image_path_label_gen(image_id_range)
+            )
+
             for model_basename in map(os.path.basename, model_paths):
                 model_accuracies[model_basename] += tmp[model_basename] * num_images
                 print("[{}] accumulated_accuracy = {}".format(

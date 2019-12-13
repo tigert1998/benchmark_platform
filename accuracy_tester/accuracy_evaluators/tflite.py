@@ -4,7 +4,7 @@ import numpy as np
 from .accuracy_evaluator_def import AccuracyEvaluatorDef
 from utils.utils import \
     adb_shell, adb_push, adb_pull, \
-    concatenate_flags
+    concatenate_flags, inquire_adb_device
 
 
 class Tflite(AccuracyEvaluatorDef):
@@ -18,10 +18,16 @@ class Tflite(AccuracyEvaluatorDef):
             "delegate": ""
         }
 
+    def snapshot(self):
+        res = super().snapshot()
+        res["adb_device_id"] = inquire_adb_device(
+            self.settings["adb_device_id"])
+        return res
+
     def brief(self):
         return "{}_{}".format(super().brief(), self.settings["adb_device_id"])
 
-    def evaluate_models(self, model_paths):
+    def evaluate_models(self, model_paths, image_path_label_gen):
         guest_path = self.settings["guest_path"]
         adb_device_id = self.settings["adb_device_id"]
 

@@ -23,12 +23,11 @@ class AndroidDataPreparer(DataPreparerDef):
     def _prepare_dateset(self, image_id_range):
         guest_path = self.settings["guest_path"]
         adb_device_id = self.settings["adb_device_id"]
-        image_id_to_path_func = self.settings["image_id_to_path_func"]
+        validation_set_path = self.settings["validation_set_path"]
 
         with open("ground_truth_labels.txt", "w") as f:
-            for basename in map(os.path.basename, map(image_id_to_path_func, image_id_range)):
-                label = self.image_to_label[basename.lower()]
-                f.write("{}\n".format(label))
+            for i in image_id_range:
+                f.write("{}\n".format(self.image_labels[i]))
 
         with open("model_output_labels.txt", "w") as f:
             for i in range(1001):
@@ -49,7 +48,7 @@ class AndroidDataPreparer(DataPreparerDef):
         for i in image_id_range:
             adb_push(
                 adb_device_id,
-                image_id_to_path_func(i),
+                "{}/{}".format(validation_set_path, self.image_basenames[i]),
                 "{}/{}".format(guest_path, "ground_truth_images")
             )
 

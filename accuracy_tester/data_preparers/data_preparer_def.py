@@ -7,23 +7,34 @@ class DataPreparerDef(ClassWithSettings):
         return {
             **ClassWithSettings.default_settings(),
             "labels_path": None,
-            "image_id_to_path_func": None,
+            "validation_set_path": None,
             "skip_models_preparation": False,
             "skip_dataset_preparation": False,
         }
 
     def __init__(self, settings={}):
         super().__init__(settings)
-        self.image_to_label = self._image_to_label()
+        self._init_label()
 
-    def _image_to_label(self):
-        res = {}
+    def _init_label(self):
+        self.image_basenames = []
+        self.image_labels = []
         with open(self.settings["labels_path"]) as f:
             for line in f:
-                filename, label = map(
-                    lambda x: x.strip().lower(), line.split(' '))
-                res[filename] = label
-        return res
+                image_basename, image_label =\
+                    map(lambda x: x.strip().lower(), line.split(' '))
+                self.image_labels.append(image_label)
+                self.image_basenames.append(image_basename)
+
+    def image_path_label_gen(self, image_id_range):
+        for i in image_id_range:
+            yield (
+                "{}/{}".format(
+                    self.settings["validation_set_path"],
+                    self.image_basenames[i]
+                ),
+                self.image_labels[i]
+            )
 
     def _prepare_models(self, model_paths):
         pass

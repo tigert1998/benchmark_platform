@@ -11,11 +11,14 @@ class AccuracyEvaluatorDef(ClassWithSettings):
             **ClassWithSettings.default_settings(),
         }
 
-    def evaluate_models(self, model_paths):
+    def evaluate_models(self, model_paths, image_path_label_gen):
         """evaluate models' accuracies
+
         Args:
             model_paths: model paths in host machine
+            image_path_label_gen: A generator which generates (image_path, image_label)
+
         Returns:
-            Dict[ModelBaseName, Accuracies]
+            Dict[model_basename, accuracies]
         """
         pass
