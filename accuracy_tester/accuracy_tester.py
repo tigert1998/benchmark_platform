@@ -21,7 +21,7 @@ class AccuracyTester(ClassWithSettings):
             **ClassWithSettings.default_settings(),
             "labels_path": None,
             "validation_images_path": None,
-            "models_paths": [],
+            "model_paths": [],
             "adb_device_id": None,
             "skip_data_preparation": False,
             "zip_size": 5000,
@@ -50,10 +50,11 @@ class AccuracyTester(ClassWithSettings):
                 os.mkdir(dir_name)
         os.chdir(dir_name)
 
-    def _evaluate_model(self, model_path, guest_path):
-        adb_push(self.settings["adb_device_id"], model_path, guest_path)
-
-        model_basename = os.path.basename(model_path)
+    def _evaluate_models(self, model_paths, guest_path):
+        model_accuracies = {}
+        for model_path in model_paths:
+            adb_push(self.settings["adb_device_id"], model_path, guest_path)
+            model_accuracies[os.path.basename(model_path)] = np.zeros((10, ))
 
         image_basenames = list(
             filter(
@@ -77,50 +78,55 @@ class AccuracyTester(ClassWithSettings):
             "guest_path": guest_path
         })
 
-        accuracies = np.zeros((10, ))
         for start in range(0, work_load, self.settings["zip_size"]):
             zip_size = min(work_load, start +
                            self.settings["zip_size"]) - start
 
-            if not getattr(self, "dataset_all_copyed", False):
-                data_preparer.prepare(image_basenames[start: start + zip_size])
-                self.dataset_all_copyed = (
-                    zip_size == self.settings["ILSVRC2012_val_size"])
+            data_preparer.prepare(image_basenames[start: start + zip_size])
 
-            cmd = "{} {}".format(
-                "/data/local/tmp/tf-r2.1-60afa4e/imagenet_accuracy_eval",
-                concatenate_flags({
-                    "model_file": "{}/{}".format(guest_path, model_basename),
-                    "ground_truth_images_path": "{}/{}".format(guest_path, "ground_truth_images"),
-                    "ground_truth_labels": "{}/{}".format(guest_path, "ground_truth_labels.txt"),
-                    "model_output_labels": "{}/{}".format(guest_path, "model_output_labels.txt"),
-                    "output_file_path": "{}/{}".format(guest_path, "output.csv"),
-                    "num_images": 0,
-                    "delegate": ""
-                })
-            )
-            print(cmd)
-            print(adb_shell(self.settings["adb_device_id"], cmd))
-            adb_pull(
-                self.settings["adb_device_id"],
-                "{}/{}".format(guest_path, "output.csv"), "."
-            )
+            # evaluate a single model
+            for model_path in model_paths:
+                model_basename = os.path.basename(model_path)
+                cmd = "{} {}".format(
+                    "/data/local/tmp/tf-r2.1-60afa4e/imagenet_accuracy_eval",
+                    concatenate_flags({
+                        "model_file": "{}/{}".format(guest_path, model_basename),
+                        "ground_truth_images_path": "{}/{}".format(guest_path, "ground_truth_images"),
+                        "ground_truth_labels": "{}/{}".format(guest_path, "ground_truth_labels.txt"),
+                        "model_output_labels": "{}/{}".format(guest_path, "model_output_labels.txt"),
+                        "output_file_path": "{}/{}".format(guest_path, "output.csv"),
+                        "num_images": 0,
+                        "delegate": ""
+                    })
+                )
+                print(cmd)
+                print(adb_shell(self.settings["adb_device_id"], cmd))
+                adb_pull(
+                    self.settings["adb_device_id"],
+                    "{}/{}".format(guest_path, "output.csv"),
+                    "."
+                )
 
-            with open("output.csv", "r") as f:
-                for line in f:
-                    pass
-                tmp = np.array(list(map(float, line.split(','))))
-                accuracies += tmp * zip_size
-                print("current_accuracy = {}".format(tmp))
-                print("accumulated_accuracy = {}".format(
-                    accuracies / (start + zip_size)))
+                with open("output.csv", "r") as f:
+                    for line in f:
+                        pass
+                    tmp = np.array(list(map(float, line.split(','))))
+                    model_accuracies[model_basename] += tmp * zip_size
+                    print("[{}] current_accuracy = {}".format(
+                        model_basename,
+                        tmp)
+                    )
+                    print("[{}] accumulated_accuracy = {}".format(
+                        model_basename,
+                        model_accuracies[model_basename] / (start + zip_size))
+                    )
 
             bar.update(start + zip_size)
             print()
 
-        accuracies /= work_load
-        print("final_accuracy = {}".format(accuracies))
-        return accuracies
+        for model_basename in model_accuracies:
+            model_accuracies[model_basename] /= work_load
+        return model_accuracies
 
     @staticmethod
     def _chdir_out():
@@ -134,15 +140,19 @@ class AccuracyTester(ClassWithSettings):
                 f.write("{}\n".format(i))
 
         csv_writer = CSVWriter()
+        titles = ["model_name"] + ["top {}".format(i + 1) for i in range(10)]
 
         guest_path = "/sdcard/accuracy_test"
-        for model_path in self.settings["models_paths"]:
-            accuracies = self._evaluate_model(model_path, guest_path)
+        model_accuracies = self._evaluate_models(
+            self.settings["model_paths"],
+            guest_path)
+
+        for model_basename, accuracies in model_accuracies:
+            data = [model_basename] + list(map(str, list(accuracies)))
             csv_writer.update_data(
                 "data.csv",
-                titles=["model_name"] +
-                ["top {}".format(i + 1) for i in range(10)],
-                data=[os.path.basename(model_path)] + list(map(str, list(accuracies))),
+                titles=titles,
+                data=data,
                 is_resume=False,
             )
 
