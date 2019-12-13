@@ -1,7 +1,7 @@
 from .data_preparer_def import DataPreparerDef
 from utils.utils import adb_push, adb_shell
 
-import tarfile
+import os
 
 
 class AndroidDataPreparer(DataPreparerDef):
@@ -10,17 +10,29 @@ class AndroidDataPreparer(DataPreparerDef):
         return {
             **DataPreparerDef.default_settings(),
             "adb_device_id": None,
-            "guest_path": None
+            "guest_path": "/sdcard/accuracy_test"
         }
 
-    def _prepare(self, image_basenames):
+    def _prepare_models(self, model_paths):
+        for model_path in model_paths:
+            adb_push(
+                self.settings["adb_device_id"],
+                model_path, self.settings["guest_path"]
+            )
+
+    def _prepare_dateset(self, image_id_range):
         guest_path = self.settings["guest_path"]
         adb_device_id = self.settings["adb_device_id"]
+        image_id_to_path_func = self.settings["image_id_to_path_func"]
 
         with open("ground_truth_labels.txt", "w") as f:
-            for basename in image_basenames:
+            for basename in map(os.path.basename, map(image_id_to_path_func, image_id_range)):
                 label = self.image_to_label[basename.lower()]
                 f.write("{}\n".format(label))
+
+        with open("model_output_labels.txt", "w") as f:
+            for i in range(1001):
+                f.write("{}\n".format(i))
 
         adb_shell(
             adb_device_id,
@@ -34,12 +46,10 @@ class AndroidDataPreparer(DataPreparerDef):
             )
         )
 
-        for basename in sorted(image_basenames):
+        for i in image_id_range:
             adb_push(
                 adb_device_id,
-                "{}/{}".format(
-                    self.settings["validation_images_path"],
-                    basename),
+                image_id_to_path_func(i),
                 "{}/{}".format(guest_path, "ground_truth_images")
             )
 

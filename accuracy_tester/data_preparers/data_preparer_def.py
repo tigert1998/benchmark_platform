@@ -7,8 +7,9 @@ class DataPreparerDef(ClassWithSettings):
         return {
             **ClassWithSettings.default_settings(),
             "labels_path": None,
-            "validation_images_path": None,
-            "skip": False
+            "image_id_to_path_func": None,
+            "skip_models_preparation": False,
+            "skip_dataset_preparation": False,
         }
 
     def __init__(self, settings={}):
@@ -24,10 +25,18 @@ class DataPreparerDef(ClassWithSettings):
                 res[filename] = label
         return res
 
-    def _prepare(self, image_basenames):
+    def _prepare_models(self, model_paths):
         pass
 
-    def prepare(self, image_basenames):
-        if self.settings["skip"]:
+    def prepare_models(self, model_paths):
+        if self.settings["skip_models_preparation"]:
             return
-        self._prepare(image_basenames)
+        self._prepare_models(model_paths)
+
+    def _prepare_dateset(self, image_id_range):
+        pass
+
+    def prepare_dateset(self, image_id_range):
+        if self.settings["skip_dataset_preparation"]:
+            return
+        self._prepare_dateset(image_id_range)
