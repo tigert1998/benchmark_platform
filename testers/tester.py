@@ -85,6 +85,8 @@ class Tester:
 
         resumed = False
         bar.update(0)
+        print()
+
         for i, sample in enumerate(samples):
             if self.settings.get('resume_from') is not None and not resumed:
                 resumed = (sample == self.settings['resume_from'])
@@ -102,6 +104,7 @@ class Tester:
                                    titles, data, resumed)
 
             bar.update(i + 1)
+            print()
 
         self._chdir_out()
 

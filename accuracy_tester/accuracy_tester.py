@@ -97,7 +97,7 @@ class AccuracyTester(ClassWithSettings):
 
         model_accuracies = self._evaluate_models(self.settings["model_paths"])
 
-        for model_basename, accuracies in model_accuracies:
+        for model_basename, accuracies in model_accuracies.items():
             data = [model_basename] + list(map(str, list(accuracies)))
             csv_writer.update_data(
                 "data.csv",

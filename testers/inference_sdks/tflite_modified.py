@@ -10,7 +10,7 @@ class TfliteModified(Tflite):
     @staticmethod
     def default_flags():
         return {
-            "use_gpu": True,
+            "use_gpu": None,
             "work_group_size": None
         }
 
@@ -18,14 +18,15 @@ class TfliteModified(Tflite):
         result_str = self._launch_benchmark(adb_device_id, model_path, flags)
 
         profiling_details = {
-            "gpu_freq":  rfind_assign_int(result_str, "gpu_cur_freq")
+            "gpu_freq":  rfind_assign_int(result_str, "gpu_freq")
         }
 
         i = 0
         while True:
             try:
                 mark = "best_work_group[{}]".format(i)
-                profiling_details[mark] = rfind_assign(result_str, mark).strip()
+                profiling_details[mark] = rfind_assign(
+                    result_str, mark).strip()
             except:
                 break
             i += 1

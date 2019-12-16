@@ -37,7 +37,7 @@ def std_preprocess_single_image(image, imsize: int, output_type):
 
     image = ((image.astype(np.float32) - mean) * scale).astype(output_type)
 
-    return image
+    return np.reshape(image, (1, imsize, imsize, 3))
 
 
 def std_preprocess(images, imsize: int, output_type):
@@ -47,12 +47,12 @@ def std_preprocess(images, imsize: int, output_type):
     tensorflow lite imagenet_accuracy_eval tool.
 
     Args:
-        images: An array of numpy arrays in shape of (H, W, C)
+        images: An array of numpy arrays in shape of (H, W, 3)
         imsize: height/width size of NN input tensor
         output_type: np.uint8/np.int8/np.float32, output type of NN
 
     Returns:
-        An array of numpy arrays after preprocessing
+        An array of numpy arrays (reshaped to (1, imsize, imsize, 3)) after preprocessing
     """
 
     res = []

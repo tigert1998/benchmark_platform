@@ -22,7 +22,7 @@ class DataPreparerDef(ClassWithSettings):
         with open(self.settings["labels_path"]) as f:
             for line in f:
                 image_basename, image_label =\
-                    map(lambda x: x.strip().lower(), line.split(' '))
+                    map(lambda x: x.strip(), line.split(' '))
                 self.image_labels.append(image_label)
                 self.image_basenames.append(image_basename)
 

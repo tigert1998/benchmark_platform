@@ -15,7 +15,8 @@ class Tflite(AccuracyEvaluatorDef):
             "adb_device_id": None,
             "imagenet_accuracy_eval_path": None,
             "guest_path": "/sdcard/accuracy_test",
-            "delegate": ""
+            "delegate": "",
+            "precision": None
         }
 
     def snapshot(self):
@@ -46,7 +47,8 @@ class Tflite(AccuracyEvaluatorDef):
                     "model_output_labels": "{}/{}".format(guest_path, "model_output_labels.txt"),
                     "output_file_path": "{}/{}".format(guest_path, "output.csv"),
                     "num_images": 0,
-                    "delegate": self.settings["delegate"]
+                    "delegate": self.settings["delegate"],
+                    "precision": self.settings["precision"]
                 })
             )
             print(cmd)
