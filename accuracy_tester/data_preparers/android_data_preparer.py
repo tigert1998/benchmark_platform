@@ -3,6 +3,9 @@ from utils.utils import adb_push, adb_shell
 
 import os
 
+import tensorflow as tf
+import numpy as np
+
 
 class AndroidDataPreparer(DataPreparerDef):
     @staticmethod
@@ -13,12 +16,34 @@ class AndroidDataPreparer(DataPreparerDef):
             "guest_path": "/sdcard/accuracy_test"
         }
 
+    @staticmethod
+    def _query_tflite_num_outputs(model_path):
+        interpreter = tf.lite.Interpreter(model_path=model_path)
+        output_details = interpreter.get_output_details()
+        return np.prod(output_details[0]["shape"])
+
     def _prepare_models(self, model_paths):
+        adb_device_id = self.settings["adb_device_id"]
+        guest_path = self.settings["guest_path"]
+
         for model_path in model_paths:
-            adb_push(
-                self.settings["adb_device_id"],
-                model_path, self.settings["guest_path"]
-            )
+            num_outputs = self._query_tflite_num_outputs(model_path)
+            assert num_outputs == 1000 or num_outputs == 1001
+
+            model_basename_noext = ".".join(
+                os.path.basename(model_path).split(".")[:-1])
+            model_output_labels = "{}_output_labels.txt".format(
+                model_basename_noext)
+            with open(model_output_labels, "w") as f:
+                if num_outputs == 1000:
+                    for i in range(1, 1001):
+                        f.write("{}\n".format(i))
+                else:
+                    for i in range(1001):
+                        f.write("{}\n".format(i))
+
+            adb_push(adb_device_id, model_output_labels, guest_path)
+            adb_push(adb_device_id, model_path, guest_path)
 
     def _prepare_dateset(self, image_id_range):
         guest_path = self.settings["guest_path"]
@@ -28,10 +53,6 @@ class AndroidDataPreparer(DataPreparerDef):
         with open("ground_truth_labels.txt", "w") as f:
             for i in image_id_range:
                 f.write("{}\n".format(self.image_labels[i]))
-
-        with open("model_output_labels.txt", "w") as f:
-            for i in range(1001):
-                f.write("{}\n".format(i))
 
         adb_shell(
             adb_device_id,
@@ -53,4 +74,3 @@ class AndroidDataPreparer(DataPreparerDef):
             )
 
         adb_push(adb_device_id, "ground_truth_labels.txt", guest_path)
-        adb_push(adb_device_id, "model_output_labels.txt", guest_path)
