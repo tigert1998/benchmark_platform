@@ -12,20 +12,29 @@ from utils.utils import\
     adb_shell_su, adb_shell, shell_with_script,\
     inquire_adb_device
 from utils.csv_writer import CSVWriter
+from utils.class_with_settings import ClassWithSettings
 
 
-class Tester:
-    def __init__(self, adb_device_id: str,
-                 inference_sdk: InferenceSdk, sampler: Sampler):
-        self.adb_device_id = adb_device_id
-        self.inference_sdk = inference_sdk
-        self.sampler = sampler
+class Tester(ClassWithSettings):
+    @staticmethod
+    def default_settings():
+        return {
+            **ClassWithSettings.default_settings(),
+            "adb_device_id": None,
+            "inference_sdk": None,
+            "sampler": None,
+            "subdir": None,
+            "resume_from": None
+        }
+
+    def __init__(self, settings):
+        super().__init__(settings=settings)
+        self.adb_device_id = self.settings["adb_device_id"]
+        self.inference_sdk = self.settings["inference_sdk"]
+        self.sampler = self.settings["sampler"]
 
     def _get_dir_name(self):
-        dir_name = "{}_{}_{}".format(
-            camel_case_to_snake_case(type(self).__name__),
-            camel_case_to_snake_case(type(self.inference_sdk).__name__),
-            self.adb_device_id)
+        dir_name = "{}_{}".format(self.brief(), self.adb_device_id)
         if self.settings.get("subdir") is not None:
             dir_name += "/" + self.settings.get("subdir")
         return dir_name
@@ -55,21 +64,19 @@ class Tester:
         return []
 
     def _dump_snapshot(self):
-        dic = {
-            'class_name': type(self).__name__,
-            'time': '{0:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()),
-            'inference_sdk': self.inference_sdk.settings,
-            'sampler': self.sampler.settings,
-            'adb_device': inquire_adb_device(self.adb_device_id),
-            'settings': self.settings,
-            'benchmark_model_flags': self.inference_sdk.flags(self.benchmark_model_flags),
-            "remark": ""
-        }
-        with open('snapshot.json', 'w') as f:
-            f.write(json.dumps(regularize_for_json(dic), indent=4))
+        snapshot = self.snapshot()
 
-    def run(self, settings, benchmark_model_flags):
-        self.settings = settings
+        snapshot["adb_device_id"] = inquire_adb_device(self.adb_device_id)
+        snapshot["time"] = '{0:%Y-%m-%d %H:%M:%S}'.format(
+            datetime.datetime.now())
+        snapshot["benchmark_model_flags"] = self.inference_sdk.flags(
+            self.benchmark_model_flags)
+        snapshot["remark"] = ""
+
+        with open('snapshot.json', 'w') as f:
+            f.write(json.dumps(regularize_for_json(snapshot), indent=4))
+
+    def run(self, benchmark_model_flags):
         self.benchmark_model_flags = benchmark_model_flags
 
         self._chdir_in()
@@ -92,13 +99,9 @@ class Tester:
                 resumed = (sample == self.settings['resume_from'])
                 continue
 
-            self.preprocess()
-
             results = self._test_sample(sample)
             titles = self.sampler.get_sample_titles() + self._get_metrics_titles()
             data = sample + results
-
-            titles, data = self.postprocess(titles, data)
 
             csv_writer.update_data(self._get_csv_filename(sample),
                                    titles, data, resumed)
@@ -107,26 +110,3 @@ class Tester:
             print()
 
         self._chdir_out()
-
-    # preprocessing/postprocessing
-
-    def _push_to_max_freq(self):
-        adb_shell_su(self.adb_device_id,
-                     shell_with_script("push_to_max_freq", self.settings.get("mkshrc", "/system/etc/mkshrc")))
-
-    def _pull_gpu_cur_freq(self):
-        if not self.settings.get("pull_gpu_cur_freq", False):
-            return
-        return int(adb_shell_su(
-            self.adb_device_id,
-            shell_with_script("cat $GPUDIR/cur_freq", self.settings.get("mkshrc", "/system/etc/mkshrc"))))
-
-    def preprocess(self):
-        if self.settings.get("push_to_max_freq", False):
-            self._push_to_max_freq()
-
-    def postprocess(self, titles, data):
-        if self.settings.get("pull_gpu_cur_freq", False):
-            titles.append("gpu_freq")
-            data.append(self._pull_gpu_cur_freq())
-        return titles, data

@@ -4,8 +4,23 @@ import types
 import inspect
 
 
+def escape_path(path):
+    if path.startswith('"'):
+        assert path.endswith('"')
+        return path
+    if path.startswith("'"):
+        assert path.endswith("'")
+        return path
+    if ' ' in path:
+        return '"{}"'.format(path)
+
+
 def adb_push(adb_device_id, host_path, guest_path):
-    os.system("adb -s {} push {} {}".format(adb_device_id, host_path, guest_path))
+    os.system("adb -s {} push {} {}".format(
+        adb_device_id,
+        escape_path(host_path),
+        guest_path
+    ))
 
 
 def adb_pull(adb_device_id, guest_path, host_path):
@@ -76,3 +91,7 @@ def concatenate_flags(flags):
     for key in flags:
         res += ('--' + key + '=' + to_str(flags[key]) + ' ')
     return res.strip()
+
+
+def rm_ext(path):
+    return ".".join(path.split(".")[:-1])
