@@ -1,5 +1,5 @@
 from .data_preparer_def import DataPreparerDef
-from utils.utils import adb_push, adb_shell
+from utils.utils import adb_push, adb_shell, rm_ext
 
 import os
 
@@ -30,8 +30,7 @@ class AndroidDataPreparer(DataPreparerDef):
             num_outputs = self._query_tflite_num_outputs(model_path)
             assert num_outputs == 1000 or num_outputs == 1001
 
-            model_basename_noext = ".".join(
-                os.path.basename(model_path).split(".")[:-1])
+            model_basename_noext = rm_ext(os.path.basename(model_path))
             model_output_labels = "{}_output_labels.txt".format(
                 model_basename_noext)
             with open(model_output_labels, "w") as f:

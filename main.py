@@ -28,7 +28,7 @@ def accuracy_test_tflite():
     tester = AccuracyTester({
         "zip_size": 50000,
         "model_paths": [
-            "C:/Users/v-xiat/Downloads/imagenet/models/mnasnet-a1_float16_quant.tflite",
+            "C:/Users/v-xiat/Microsoft/Shihao Han (FA Talent) - ChannelNas/models/tflite/mobilenet_v2_1.0/mobilenet_v2_1.0_224_frozen_float16_quant.tflite",
         ],
         "data_preparer": AndroidDataPreparer({
             "labels_path": "C:/Users/v-xiat/Downloads/imagenet/val_labels.txt",
@@ -40,9 +40,9 @@ def accuracy_test_tflite():
         "accuracy_evaluator": Tflite({
             "adb_device_id": "5e6fecf",
             "imagenet_accuracy_eval_path": "/data/local/tmp/tf-r2.1-60afa4e/imagenet_accuracy_eval",
-            "delegate": "gpu",
-            "skip_normalization": True,
-            "precision": "F16"
+            "delegate": "",
+            "skip_normalization": False,
+            # "precision": "F16"
         })
     })
     tester.run()
@@ -60,15 +60,16 @@ def model_latency_test():
             "su": True
         }),
         "sampler": ModelSampler({
-            "model_paths": glob("C:/Users/v-xiat/Microsoft/Shihao Han (FA Talent) - ChannelNas/models/tflite/mnasnet-a1/*.tflite")
+            "model_paths": glob("C:/Users/v-xiat/Microsoft/Shihao Han (FA Talent) - ChannelNas/models/tflite/mobilenet_v2_1.0/mobilenet_v2_1.0_224_frozen.tflite")
         })
     })
 
     tester.run(benchmark_model_flags={
         "num_runs": 30,
-        "use_gpu": False,
+        "use_gpu": True,
+        "gpu_precision_loss_allowed": False
     })
 
 
 if __name__ == '__main__':
-    model_latency_test()
+    accuracy_test_tflite()

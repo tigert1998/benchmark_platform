@@ -5,18 +5,18 @@ import inspect
 
 
 def escape_path(path):
-    if path.startswith('"'):
-        assert path.endswith('"')
-        return path
-    if path.startswith("'"):
-        assert path.endswith("'")
-        return path
+    for quotation in ["'", '"']:
+        if path.startswith(quotation):
+            assert path.endswith(quotation)
+            return path
     if ' ' in path:
         return '"{}"'.format(path)
+    else:
+        return path
 
 
 def adb_push(adb_device_id, host_path, guest_path):
-    os.system("adb -s {} push {} {}".format(
+    assert 0 == os.system("adb -s {} push {} {}".format(
         adb_device_id,
         escape_path(host_path),
         guest_path
@@ -24,7 +24,8 @@ def adb_push(adb_device_id, host_path, guest_path):
 
 
 def adb_pull(adb_device_id, guest_path, host_path):
-    os.system("adb -s {} pull {} {}".format(adb_device_id, guest_path, host_path))
+    assert 0 == os.system(
+        "adb -s {} pull {} {}".format(adb_device_id, guest_path, host_path))
 
 
 def adb_shell(adb_device_id, shell, su=False):

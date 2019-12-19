@@ -4,7 +4,7 @@ import os
 
 from .inference_sdk import InferenceSdk, InferenceResult
 from .utils import rfind_assign_float, table_try_float, rfind_assign_int
-from utils.utils import adb_push, adb_shell, concatenate_flags
+from utils.utils import adb_push, adb_shell, concatenate_flags, rm_ext
 
 
 class Tflite(InferenceSdk):
@@ -33,7 +33,6 @@ class Tflite(InferenceSdk):
             open(path + '.tflite', 'wb').write(tflite_model)
 
     def _launch_benchmark(self, adb_device_id: str, model_path: str, flags):
-        model_path = os.path.splitext(model_path)[0]
         model_basename = os.path.basename(model_path)
 
         model_folder = "/mnt/sdcard/channel_benchmark"
