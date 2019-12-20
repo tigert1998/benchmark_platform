@@ -5,23 +5,39 @@ CROPPING_FRACTION = 0.875
 IMSIZE = 224
 
 
-def std_preprocess_single_image(image, imsize: int, output_type):
+def crop_and_resize(image: np.ndarray, imsize: int):
     original_height, original_width, channels = image.shape
     assert channels == 3
 
-    ratio = max(
-        imsize / (CROPPING_FRACTION * original_width),
-        imsize / (CROPPING_FRACTION * original_height)
-    )
-    crop_height = round(imsize / ratio)
-    crop_width = round(imsize / ratio)
-    left = round((original_width - crop_width) / 2.0)
-    top = round((original_height - crop_height) / 2.0)
-    image = image[top:top+crop_height, left:left + crop_width, :]
+    crop_size = round(min(original_height, original_width) * CROPPING_FRACTION)
+    top = round((original_height - crop_size) / 2.0)
+    left = round((original_width - crop_size) / 2.0)
+    image = image[top:top+crop_size, left:left + crop_size, :]
 
-    image = cv2.resize(
+    return cv2.resize(
         image, (imsize, imsize),
         interpolation=cv2.INTER_LINEAR)
+
+
+def apply_mean_and_scale(image: np.ndarray, mean, scale):
+    return (image - mean) * scale
+
+
+def std_preprocess(image: np.ndarray, imsize: int, output_type):
+    """Standard Preprocess.
+
+    Preprocess a RGB image (np.array) in the exact same way as 
+    tensorflow lite imagenet_accuracy_eval tool.
+
+    Args:
+        image: A numpy array in shape of (H, W, 3)
+        imsize: height/width size of NN input tensor
+        output_type: np.uint8/np.int8/np.float32, output type of NN
+
+    Returns:
+        A numpy array (reshaped to (1, imsize, imsize, 3)) after preprocessing
+    """
+    image = crop_and_resize(image, imsize)
 
     if output_type == np.uint8:
         mean = 0
@@ -38,24 +54,3 @@ def std_preprocess_single_image(image, imsize: int, output_type):
     image = ((image.astype(np.float32) - mean) * scale).astype(output_type)
 
     return np.reshape(image, (1, imsize, imsize, 3))
-
-
-def std_preprocess(images, imsize: int, output_type):
-    """Standard Preprocess.
-
-    Preprocess an array of RGB images (np.array) according to 
-    tensorflow lite imagenet_accuracy_eval tool.
-
-    Args:
-        images: An array of numpy arrays in shape of (H, W, 3)
-        imsize: height/width size of NN input tensor
-        output_type: np.uint8/np.int8/np.float32, output type of NN
-
-    Returns:
-        An array of numpy arrays (reshaped to (1, imsize, imsize, 3)) after preprocessing
-    """
-
-    res = []
-    for image in images:
-        res.append(std_preprocess_single_image(image, imsize, output_type))
-    return res
