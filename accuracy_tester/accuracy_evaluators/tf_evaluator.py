@@ -12,13 +12,6 @@ import cv2
 
 
 class TfEvaluator(AccuracyEvaluatorDef):
-    @staticmethod
-    def default_settings():
-        return {
-            **AccuracyEvaluatorDef.default_settings(),
-            "index_to_label": lambda index: str(index)
-        }
-
     def evaluate_models(self, model_paths, image_path_label_gen):
         model_accuracies = {}
 
@@ -42,7 +35,7 @@ class TfEvaluator(AccuracyEvaluatorDef):
             with tf.Session(graph=graph) as sess:
                 for i, (image_path, image_label) in enumerate(gen):
                     image = cv2.imread(image_path)[:, :, ::-1]
-                    image = std_preprocess(image, 224, np.uint8)
+                    image = self.settings["preprocess"](image)
                     outputs = sess.run(
                         output_ops[0].outputs[0],
                         feed_dict={

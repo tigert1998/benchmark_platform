@@ -9,6 +9,8 @@ class AccuracyEvaluatorDef(ClassWithSettings):
     def default_settings():
         return {
             **ClassWithSettings.default_settings(),
+            "preprocess": lambda image: image,
+            "index_to_label": lambda index: str(index)
         }
 
     def evaluate_models(self, model_paths, image_path_label_gen):

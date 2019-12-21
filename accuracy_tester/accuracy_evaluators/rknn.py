@@ -18,8 +18,18 @@ class Rknn(AccuracyEvaluatorDef):
     def default_settings():
         return {
             **AccuracyEvaluatorDef.default_settings(),
-            "rknn_target": "rk1808"
+            "rknn_target": "rk1808",
+            "input_imsize": 224
+            # "preprocess" is strictly controlled by "input_imsize"
         }
+
+    def __init__(self, settings={}):
+        super().__init__(settings)
+
+        def preprocess(image):
+            return std_preprocess(image, self.settings["input_imsize"], np.uint8)
+
+        self.settings["preprocess"] = preprocess
 
     def brief(self):
         return "{}_{}".format(super().brief(), self.settings["rknn_target"])
@@ -48,11 +58,12 @@ class Rknn(AccuracyEvaluatorDef):
 
             for i, (image_path, image_label) in enumerate(gen):
                 image = cv2.imread(image_path)[:, :, ::-1]
-                image = std_preprocess(image, 224, np.uint8)
+                image = self.settings["preprocess"](image)
                 outputs = rknn.inference(inputs=[image])
                 # assume that image_label is the index of output activation
                 model_accuracies[model_basename] += \
-                    evaluate_outputs(outputs[0][0], 10, int(image_label))
+                    evaluate_outputs(
+                        outputs[0][0], 10, self.settings["index_to_label"], image_label)
 
                 bar.update(i + 1)
 

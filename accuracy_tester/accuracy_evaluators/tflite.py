@@ -26,8 +26,8 @@ class Tflite(AccuracyEvaluatorDef):
             "imagenet_accuracy_eval_flags": None,
 
             # on host
-            "preprocess": lambda image: image,
-            "index_to_label": lambda index: str(index)
+            # self.settings["preprocess"]
+            # self.settings["index_to_label"]
         }
 
     def snapshot(self):
@@ -117,7 +117,7 @@ class Tflite(AccuracyEvaluatorDef):
                 dataset_size, model_basename)
             bar.update(0)
 
-            for i, (image_path, image_label)in enumerate(gen):
+            for i, (image_path, image_label) in enumerate(gen):
                 image = cv2.imread(image_path)[:, :, ::-1]
                 image = self.settings["preprocess"](image)
                 interpreter.set_tensor(input_details[0]["index"], image)
