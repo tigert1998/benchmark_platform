@@ -1,6 +1,5 @@
 from .accuracy_evaluator_def import AccuracyEvaluatorDef
 
-from utils.std_preprocess import std_preprocess
 from .utils import evaluate_outputs, count_dataset_size, construct_evaluating_progressbar
 
 from rknn.api import RKNN
@@ -19,17 +18,10 @@ class Rknn(AccuracyEvaluatorDef):
         return {
             **AccuracyEvaluatorDef.default_settings(),
             "rknn_target": "rk1808",
-            "input_imsize": 224
-            # "preprocess" is strictly controlled by "input_imsize"
         }
 
     def __init__(self, settings={}):
         super().__init__(settings)
-
-        def preprocess(image):
-            return std_preprocess(image, self.settings["input_imsize"], np.uint8)
-
-        self.settings["preprocess"] = preprocess
 
     def brief(self):
         return "{}_{}".format(super().brief(), self.settings["rknn_target"])

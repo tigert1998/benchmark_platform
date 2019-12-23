@@ -1,7 +1,6 @@
 from .accuracy_evaluator_def import AccuracyEvaluatorDef
 from .utils import count_dataset_size, construct_evaluating_progressbar, evaluate_outputs
 
-from utils.std_preprocess import std_preprocess
 from utils.pb_utils import load_graph, analyze_inputs_outputs
 
 import tensorflow as tf
