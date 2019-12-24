@@ -12,7 +12,7 @@ class Tflite(InferenceSdk):
     def default_settings():
         return {
             "benchmark_model_path": None,
-            "taskset": None,
+            "taskset": "f0",
             "su": False
         }
 

@@ -10,6 +10,7 @@ from utils.csv_writer import CSVWriter
 import os
 import json
 import numpy as np
+from datetime import datetime
 
 import progressbar
 
@@ -23,7 +24,14 @@ class AccuracyTester(ClassWithSettings):
             "zip_size": 5000,
             "dataset_size": 50000,
             "data_preparer": None,
-            "accuracy_evaluator": None
+            "accuracy_evaluator": None,
+            "dirname": None
+        }
+
+    def snapshot(self):
+        return {
+            "time": "{}".format(datetime.now()),
+            **super().snapshot(),
         }
 
     def _dump_snapshot(self):
@@ -31,7 +39,10 @@ class AccuracyTester(ClassWithSettings):
             f.write(json.dumps(regularize_for_json(self.snapshot()), indent=4))
 
     def _chdir_in(self):
-        dir_name = self.brief()
+        if self.settings.get("dirname") is not None:
+            dir_name = self.settings["dirname"]
+        else:
+            dir_name = self.brief()
         if not os.path.isdir(dir_name):
             if os.path.exists(dir_name):
                 print("os.path.exists(\"{}\")".format(dir_name))

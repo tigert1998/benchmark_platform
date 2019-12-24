@@ -28,13 +28,15 @@ def accuracy_test_tflite():
     from accuracy_tester.accuracy_evaluators.tflite import Tflite
 
     tester = AccuracyTester({
-        "zip_size": 50000,
-        "model_paths": glob("C:/Users/v-xiat/Downloads/imagenet/models/*.tflite"),
+        "dirname": "quick_test",
+        "zip_size": 20,
+        "model_paths": glob("C:/Users/v-xiat/Microsoft/Shihao Han (FA Talent) - ChannelNas/models/tflite/resnet_v2_50_224/resnet_v2_50_224_int_quant.tflite"),
         "data_preparer": AndroidDataPreparer({
             "labels_path": "C:/Users/v-xiat/Downloads/imagenet/val_labels.txt",
             "validation_set_path": "C:/Users/v-xiat/Downloads/imagenet/validation",
             "adb_device_id": "5e6fecf",
             "skip_dataset_preparation": True,
+            "skip_models_preparation": False
         }),
         "accuracy_evaluator": Tflite({
             "eval_on_host": False,
@@ -78,18 +80,19 @@ def accuracy_test_pb():
     from accuracy_tester.accuracy_evaluators.tf_evaluator import TfEvaluator
 
     tester = AccuracyTester({
-        "zip_size": 500,
-        "model_paths": ["C:/Users/v-xiat/Downloads/resnet-v2-50.pb"],
+        "zip_size": 100,
+        "model_paths": ["C:/Users/v-xiat/Downloads/imagenet/models/inception_v4.pb"],
         "data_preparer": DataPreparerDef({
             "labels_path": "C:/Users/v-xiat/Downloads/imagenet/val_labels.txt",
             "validation_set_path": "C:/Users/v-xiat/Downloads/imagenet/validation",
         }),
         "accuracy_evaluator": TfEvaluator({
-            "preprocess": lambda image: InceptionPreprocess.preprocess(image, 299)
+            "preprocess": lambda image: InceptionPreprocess.preprocess(image, 299),
+            "index_to_label": lambda index: str(index)
         })
     })
     tester.run()
 
 
 if __name__ == '__main__':
-    accuracy_test_pb()
+    accuracy_test_tflite()

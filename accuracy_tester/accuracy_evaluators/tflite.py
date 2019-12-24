@@ -62,6 +62,8 @@ class Tflite(AccuracyEvaluatorDef):
             model_basename_noext = ".".join(model_basename.split(".")[:-1])
             model_output_labels = "{}_output_labels.txt".format(
                 model_basename_noext)
+            output_file_path = "{}/{}_{}".format(
+                guest_path, model_basename, "output.csv")
 
             cmd = "{} {}".format(
                 self.settings["imagenet_accuracy_eval_path"],
@@ -70,7 +72,7 @@ class Tflite(AccuracyEvaluatorDef):
                     "ground_truth_images_path": ground_truth_images_path,
                     "ground_truth_labels": "{}/{}".format(guest_path, "ground_truth_labels.txt"),
                     "model_output_labels": "{}/{}".format(guest_path, model_output_labels),
-                    "output_file_path": "{}/{}".format(guest_path, "output.csv"),
+                    "output_file_path": output_file_path,
                     "num_images": 0,
                     **self.settings["imagenet_accuracy_eval_flags"]
                 })
@@ -79,11 +81,11 @@ class Tflite(AccuracyEvaluatorDef):
             print(adb_shell(adb_device_id, cmd))
             adb_pull(
                 adb_device_id,
-                "{}/{}".format(guest_path, "output.csv"),
+                output_file_path,
                 "."
             )
 
-            with open("output.csv", "r") as f:
+            with open(os.path.basename(output_file_path), "r") as f:
                 for line in f:
                     pass
                 model_accuracies[model_basename] =\
