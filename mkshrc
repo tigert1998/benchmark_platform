@@ -1,4 +1,5 @@
-# Copyright (c) 2010, 2012, 2013, 2014                                                                                  #       Thorsten Glaser <tg@mirbsd.org>
+# Copyright (c) 2010, 2012, 2013, 2014                                                                                  
+#       Thorsten Glaser <tg@mirbsd.org>
 # This file is provided under the same terms as mksh.
 #-
 # Minimal /system/etc/mkshrc for Android
@@ -32,39 +33,29 @@ if [ -t 1 ]; then
         bind ^L=clear-screen
 fi
 
-function set_bigcore_cpu_freq() {
-        if [ "$#" -eq "0" ]; then
-                echo "available big core cpu freq: `cat $CPUDIR/cpu4/cpufreq/scaling_available_frequencies`"
-                echo "cpu freq remains unchanged"
-                return 0
-        fi
-        echo "setting big core cpu freq to $1..."
-        echo "userspace" > $CPUDIR/cpu4/cpufreq/scaling_governor
-        echo "$1" > $CPUDIR/cpu4/cpufreq/scaling_min_freq
-        echo "$1" > $CPUDIR/cpu4/cpufreq/scaling_max_freq
-        echo "$1" > $CPUDIR/cpu4/cpufreq/scaling_setspeed
-        echo "current big core cpu freq = `cat $CPUDIR/cpu4/cpufreq/cpuinfo_cur_freq`"
+function total_cpus() {
+        echo `ls -l $CPUDIR | grep "cpu[0-9]*$" | wc -l`
         return 0
 }
 
-function set_littlecore_cpu_freq() {
-        if [ "$#" -eq "0" ]; then
-                echo "available little core cpu freq: `cat $CPUDIR/cpu0/cpufreq/scaling_available_frequencies`"
+function set_cpu_freq() {
+        if [ "$#" -ne "2" ]; then
                 echo "cpu freq remains unchanged"
                 return 0
         fi
-        echo "setting little core cpu freq to $1..."
-        echo "userspace" > $CPUDIR/cpu0/cpufreq/scaling_governor
-        echo "$1" > $CPUDIR/cpu0/cpufreq/scaling_min_freq
-        echo "$1" > $CPUDIR/cpu0/cpufreq/scaling_max_freq
-        echo "$1" > $CPUDIR/cpu0/cpufreq/scaling_setspeed
-        echo "current little core cpu freq = `cat $CPUDIR/cpu0/cpufreq/cpuinfo_cur_freq`"
+        cpu_freq_path=$CPUDIR/cpu$1/cpufreq
+
+        echo "setting cpu$1 freq to $2..."
+        echo "userspace" > $cpu_freq_path/scaling_governor
+        echo "$2" > $cpu_freq_path/scaling_min_freq
+        echo "$2" > $cpu_freq_path/scaling_max_freq
+        echo "$2" > $cpu_freq_path/scaling_setspeed
+        echo "current cpu$1 freq = `cat $cpu_freq_path/cpuinfo_cur_freq`"
         return 0
 }
 
 function set_gpu_freq() {
         if [ "$#" -eq "0" ]; then
-                echo "available gpu freq: `cat $GPUDIR/available_frequencies`"
                 echo "gpu freq remains unchanged"
                 return 0
         fi
@@ -78,16 +69,21 @@ function set_gpu_freq() {
 }
 
 function inspect_freq() {
-        echo "big core cpu:"
-        echo "\tfreq = `cat $CPUDIR/cpu4/cpufreq/cpuinfo_cur_freq`"
-        echo "\tgovernor = `cat $CPUDIR/cpu4/cpufreq/scaling_governor`"
-        echo "\tavailable freq = `cat $CPUDIR/cpu4/cpufreq/scaling_available_frequencies`"
-        echo
-        echo "little core cpu:"
-        echo "\tfreq = `cat $CPUDIR/cpu0/cpufreq/cpuinfo_cur_freq`"
-        echo "\tgovernor = `cat $CPUDIR/cpu0/cpufreq/scaling_governor`"
-        echo "\tavailable freq = `cat $CPUDIR/cpu0/cpufreq/scaling_available_frequencies`"
-        echo
+        for i in $(seq 1 `total_cpus`); do
+                let cpu_id=$i-1
+                cpu_freq_path=$CPUDIR/cpu$cpu_id/cpufreq
+                related_cpus=`cat $cpu_freq_path/related_cpus`
+                if [ `echo $related_cpus | grep -o "^ *\w*\b"` -ne $cpu_id ]; then
+                        continue
+                fi
+                echo "cpu$cpu_id:"
+                echo "\tfreq = `cat $cpu_freq_path/cpuinfo_cur_freq`"
+                echo "\tgovernor = `cat $cpu_freq_path/scaling_governor`"
+                echo "\tavailable freq = `cat $cpu_freq_path/scaling_available_frequencies`"
+                echo "\trelated cpus = $related_cpus"
+                echo
+        done
+
         echo "gpu:"
         echo "\tfreq = `cat $GPUDIR/cur_freq`"
         echo "\tgovernor = `cat $GPUDIR/governor`"
@@ -97,28 +93,33 @@ function inspect_freq() {
 }
 
 function push_to_max_freq() {
-        set_bigcore_cpu_freq `grep -oE '[^ ]+ *$' $CPUDIR/cpu4/cpufreq/scaling_available_frequencies`
-        set_littlecore_cpu_freq `grep -oE '[^ ]+ *$' $CPUDIR/cpu0/cpufreq/scaling_available_frequencies`
+        for i in $(seq 1 `total_cpus`); do
+                let cpu_id=$i-1
+                cpu_freq_path=$CPUDIR/cpu$cpu_id/cpufreq
+                largest_freq=`grep -oE '[^ ]+ *$' $cpu_freq_path/scaling_available_frequencies`
+                set_cpu_freq $cpu_id $largest_freq
+        done
+
         set_gpu_freq `grep -oE '[^ ]+ *$' $GPUDIR/available_frequencies`
         return 0
 }
 
-function set_ondemand() {
-        echo "setting governor to ondemand..."
+# function set_ondemand() {
+#         echo "setting governor to ondemand..."
 
-        echo "ondemand" > $CPUDIR/cpu4/cpufreq/scaling_governor
-        echo "ondemand" > $CPUDIR/cpu0/cpufreq/scaling_governor
-        echo "simple_ondemand" > $GPUDIR/governor
+#         echo "ondemand" > $CPUDIR/cpu4/cpufreq/scaling_governor
+#         echo "ondemand" > $CPUDIR/cpu0/cpufreq/scaling_governor
+#         echo "simple_ondemand" > $GPUDIR/governor
 
-        echo `grep -oE '^[^ ]+' $CPUDIR/cpu4/cpufreq/scaling_available_frequencies` > $CPUDIR/cpu4/cpufreq/scaling_min_freq
-        echo `grep -oE '[^ ]+ *$' $CPUDIR/cpu4/cpufreq/scaling_available_frequencies` > $CPUDIR/cpu4/cpufreq/scaling_max_freq
+#         echo `grep -oE '^[^ ]+' $CPUDIR/cpu4/cpufreq/scaling_available_frequencies` > $CPUDIR/cpu4/cpufreq/scaling_min_freq
+#         echo `grep -oE '[^ ]+ *$' $CPUDIR/cpu4/cpufreq/scaling_available_frequencies` > $CPUDIR/cpu4/cpufreq/scaling_max_freq
 
-        echo `grep -oE '^[^ ]+' $CPUDIR/cpu0/cpufreq/scaling_available_frequencies` > $CPUDIR/cpu0/cpufreq/scaling_min_freq
-        echo `grep -oE '[^ ]+ *$' $CPUDIR/cpu0/cpufreq/scaling_available_frequencies` > $CPUDIR/cpu0/cpufreq/scaling_max_freq
+#         echo `grep -oE '^[^ ]+' $CPUDIR/cpu0/cpufreq/scaling_available_frequencies` > $CPUDIR/cpu0/cpufreq/scaling_min_freq
+#         echo `grep -oE '[^ ]+ *$' $CPUDIR/cpu0/cpufreq/scaling_available_frequencies` > $CPUDIR/cpu0/cpufreq/scaling_max_freq
 
-        echo `grep -oE '^[^ ]+' $GPUDIR/available_frequencies` > $GPUDIR/min_freq
-        echo `grep -oE '[^ ]+ *$' $GPUDIR/available_frequencies` > $GPUDIR/max_freq
+#         echo `grep -oE '^[^ ]+' $GPUDIR/available_frequencies` > $GPUDIR/min_freq
+#         echo `grep -oE '[^ ]+ *$' $GPUDIR/available_frequencies` > $GPUDIR/max_freq
 
-        inspect_freq
-        return 0
-}
+#         inspect_freq
+#         return 0
+# }
