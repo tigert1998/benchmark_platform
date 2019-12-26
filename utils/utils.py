@@ -2,6 +2,7 @@ import os
 import subprocess
 import types
 import inspect
+import warnings
 
 
 def escape_path(path):
@@ -31,6 +32,8 @@ def adb_pull(adb_device_id, guest_path, host_path):
 def adb_shell(adb_device_id, shell, su=False):
     p = subprocess.Popen("adb -s {} shell {}".format(adb_device_id, "su" if su else ""),
                          stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+    if 0 != p.returncode:
+        warnings.warn("0 != p.returncode")
     return p.communicate(bytes(shell, 'utf-8'))[0].decode('utf-8')
 
 

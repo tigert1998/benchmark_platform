@@ -5,7 +5,7 @@ class Sampler(ClassWithSettings):
     @staticmethod
     def default_settings():
         return {
-            **super(Sampler, Sampler).default_settings(),
+            **ClassWithSettings.default_settings(),
             "filter": lambda x: True
         }
 

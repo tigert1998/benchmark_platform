@@ -1,8 +1,7 @@
 def rfind_assign(s, mark):
     mark += "="
     p = s.rfind(mark)
-    if p == -1:
-        raise Exception()
+    assert p != -1
     l_idx = p + len(mark)
     r_idx = l_idx
     while s[r_idx] not in [' ', '\n']:

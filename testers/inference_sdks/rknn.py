@@ -1,13 +1,32 @@
 import os
 
 import tensorflow as tf
+import numpy as np
+
+from rknn.api import RKNN
 
 from .inference_sdk import InferenceSdk, InferenceResult
 from .utils import rfind_assign_float
 from utils.utils import adb_push, adb_shell, concatenate_flags
+from utils.stat import Stat
 
 
 class Rknn(InferenceSdk):
+    @staticmethod
+    def default_settings():
+        return {
+            **InferenceSdk.default_settings(),
+            "rknn_target": "rk1808",
+            "input_imsize": 299,
+        }
+
+    @staticmethod
+    def default_flags():
+        return {
+            **InferenceSdk.default_flags(),
+            "num_runs": 50
+        }
+
     def generate_model(self, path, inputs, outputs):
         path = os.path.splitext(path)[0]
 
@@ -21,23 +40,21 @@ class Rknn(InferenceSdk):
             with tf.gfile.FastGFile(path + '.pb', mode='wb') as f:
                 f.write(constant_graph.SerializeToString())
 
-            from rknn.api import RKNN
-
             # remember to modify RKNN.__init__
             rknn = RKNN(verbose=True)
             rknn.config(batch_size=1)
-            assert(0 == rknn.load_tensorflow(
+            assert 0 == rknn.load_tensorflow(
                 path + '.pb',
                 inputs=[i.op.name for i in inputs],
                 input_size_list=[i.get_shape().as_list()[1:] for i in inputs],
                 # remove batch size
-                outputs=outputs_ops_names))
-            assert(0 == rknn.build(do_quantization=False,
-                                   dataset="", pre_compile=False))
-            assert(0 == rknn.export_rknn(path + '.rknn'))
+                outputs=outputs_ops_names)
+            assert 0 == rknn.build(do_quantization=False,
+                                   dataset="", pre_compile=False)
+            assert 0 == rknn.export_rknn(path + '.rknn')
             rknn.release()
 
-    def _fetch_results(self, adb_device_id, model_path, flags) -> InferenceResult:
+    def _fetch_results_on_soc(self, adb_device_id, model_path, flags) -> InferenceResult:
         model_path = os.path.splitext(model_path)[0]
         model_basename = os.path.basename(model_path)
 
@@ -52,7 +69,7 @@ class Rknn(InferenceSdk):
                 **flags
             })))
 
-        if flags.get("num_runs") is None or flags.get("num_runs") >= 2:
+        if flags.get["num_runs"] >= 2:
             std_ms = rfind_assign_float(result_str, 'std')
             avg_ms = rfind_assign_float(result_str, 'avg')
         else:
@@ -61,3 +78,29 @@ class Rknn(InferenceSdk):
 
         # FIXME
         return InferenceResult(avg_ms=avg_ms, std_ms=std_ms, profiling_details=None)
+
+    def _fetch_results_with_py_api(self, adb_device_id, model_path, flags) -> InferenceResult:
+        input_imsize = self.settings["input_imsize"]
+        rknn = RKNN()
+
+        assert 0 == rknn.load_rknn(model_path + ".rknn")
+        assert 0 == rknn.init_runtime(target=self.settings["rknn_target"])
+
+        image = np.random.rand(
+            1, input_imsize, input_imsize, 3).astype(np.float32)
+
+        stat = Stat()
+        for i in range(flags["num_runs"]):
+            stat.update(rknn.eval_perf(
+                inputs=[image], is_print=False)["total_time"] / 1e3)
+
+        rknn.release()
+
+        # FIXME
+        return InferenceResult(avg_ms=stat.avg(), std_ms=stat.std(), profiling_details=None)
+
+    def _fetch_results(self, adb_device_id, model_path, flags) -> InferenceResult:
+        if self.settings["rknn_target"] is None:
+            return self._fetch_results_on_soc(adb_device_id, model_path, flags)
+        else:
+            return self._fetch_results_with_py_api(adb_device_id, model_path, flags)

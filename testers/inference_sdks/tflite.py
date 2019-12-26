@@ -11,6 +11,7 @@ class Tflite(InferenceSdk):
     @staticmethod
     def default_settings():
         return {
+            **InferenceSdk.default_settings(),
             "benchmark_model_path": None,
             "taskset": "f0",
             "su": False

@@ -10,7 +10,7 @@ class TfliteModified(Tflite):
     @staticmethod
     def default_flags():
         return {
-            "use_gpu": None,
+            **Tflite.default_flags(),
             "work_group_size": None
         }
 

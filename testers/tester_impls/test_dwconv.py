@@ -3,21 +3,29 @@ from testers.tester import Tester
 import tensorflow as tf
 
 
-class TestConv(Tester):
+class TestDwconv(Tester):
     @staticmethod
     def _get_metrics_titles():
         return ["latency_ms", "std_ms"]
 
     def _generate_model(self, sample):
         model_path = "model"
-        _, _, input_imsize, cin, cout, _, _, stride, kernel_size = sample
+        _, _, input_imsize, cin, _, _, _, stride, kernel_size = sample
         tf.reset_default_graph()
         input_im = tf.placeholder(
-            name="input_im", dtype=tf.float32, shape=(1, input_imsize, input_imsize, cin))
-        net = tf.keras.layers.Conv2D(filters=cout,
-                                     kernel_size=[kernel_size, kernel_size],
-                                     strides=[stride, stride],
-                                     padding='same', name="the_conv")(input_im)
+            name="input_im", dtype=tf.float32,
+            shape=(1, input_imsize, input_imsize, cin))
+
+        net = tf.nn.depthwise_conv2d(
+            input_im,
+            filter=tf.get_variable(
+                "dwconv_filter", [kernel_size, kernel_size, cin, 1], dtype=tf.float32, trainable=True),
+            strides=[1, stride, stride, 1],
+            padding='SAME',
+            rate=[1, 1],
+            name='the_dwconv'
+        )
+
         self.inference_sdk.generate_model(model_path, [input_im], [net])
         return model_path
 
