@@ -70,8 +70,7 @@ class ConvSampler(Sampler):
     @staticmethod
     def default_settings():
         return {
-            **super(ConvSampler, ConvSampler).default_settings(),
-            "channel_step": 4,
+            **Sampler.default_settings(),
             "channel_range": (0.2, 2)
         }
 

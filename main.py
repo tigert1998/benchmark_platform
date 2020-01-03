@@ -126,13 +126,11 @@ def layer_latency_test_tflite():
 def layer_latency_test_rknn():
     from testers.tester_impls.test_dwconv import TestDwconv
     from testers.inference_sdks.rknn import Rknn
-    from testers.sampling.dwconv_sampler import DwconvSampler
+    from testers.sampling.dwconv_sampler import SimpleDwconvSampler
 
     tester = TestDwconv({
         "inference_sdk": Rknn({}),
-        "sampler": DwconvSampler({
-            "filter": lambda sample: sample[-1] == 3
-        })
+        "sampler": SimpleDwconvSampler({})
     })
     tester.run({})
 

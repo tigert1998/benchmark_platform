@@ -96,18 +96,22 @@ class Rknn(InferenceSdk):
             stat.update(result["total_time"] / 1e3)
             result_layer = result["layers"]
             if layerwise_info is None:
-                layerwise_info = result_layer
-                for value in layerwise_info.values():
-                    t = value["time"]
-                    value["time"] = Stat()
-                    value["time"].update(t / 1e3)
+                layerwise_info = []
+                for value in result_layer.values():
+                    layerwise_info.append({
+                        "name": "{}_{}".format(value["name"], value["uid"]),
+                        "time": Stat()
+                    })
+                    layerwise_info[-1]["time"].update(value["time"] / 1e3)
             else:
-                for key, value in result_layer.items():
-                    layerwise_info[key]["time"].update(value["time"] / 1e3)
+                for i, (key, value) in enumerate(result_layer.items()):
+                    assert layerwise_info[i]["name"] == \
+                        "{}_{}".format(value["name"], value["uid"])
+                    layerwise_info[i]["time"].update(value["time"] / 1e3)
 
-        for value in layerwise_info.values():
-            layer_stat = value.pop("time")
-            value["time"] = {
+        for dic in layerwise_info:
+            layer_stat = dic.pop("time")
+            dic["time"] = {
                 "avg_ms": layer_stat.avg(),
                 "std_ms": layer_stat.std()
             }

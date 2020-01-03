@@ -5,6 +5,8 @@ from .utils import shufflenetv1_stages, shufflenetv2_stages, merge_profiles, op_
 import mobilenet.mobilenet_v2 as mobilenet_v2
 import mobilenet.conv_blocks as ops
 
+import itertools
+
 
 def _get_dwconv_profiles():
     """Get depthwise convolution profiles from ShuffleNetV1, ShuffleNetV2 and MobileNetV2
@@ -63,11 +65,21 @@ class DwconvSampler(Sampler):
                 "original_cin", "original_cout", "stride", "kernel_size"]
 
     def _get_samples_without_filter(self):
+        channel_step = self.settings["channel_step"]
         for profiles in _get_dwconv_profiles():
             input_imsize, cin, _, stride, names = profiles
             for model_name in list(set(map(op_name_to_model_name, names))):
                 for current_cin in range(align(int(0.2 * cin), 2),
                                          align(int(2 * cin), 2),
-                                         4):
+                                         channel_step):
                     for ksize in [3, 5, 7]:
                         yield [model_name, "DWConv", input_imsize, current_cin, current_cin, cin, cin, stride, ksize]
+
+
+class SimpleDwconvSampler(DwconvSampler):
+    def _get_samples_without_filter(self):
+        for input_imsize in [7, 14, 28, 56, 112, 224]:
+            for cin in range(4, 1000, self.settings["channel_step"]):
+                for stride in [1, 2]:
+                    for kernel_size in [3, 5, 7]:
+                        yield ["", "DWConv", input_imsize, cin, cin, "", "", stride, kernel_size]

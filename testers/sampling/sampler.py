@@ -6,7 +6,8 @@ class Sampler(ClassWithSettings):
     def default_settings():
         return {
             **ClassWithSettings.default_settings(),
-            "filter": lambda x: True
+            "filter": lambda x: True,
+            "channel_step": 4,
         }
 
     @staticmethod
