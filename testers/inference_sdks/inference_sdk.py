@@ -4,7 +4,7 @@ from collections import namedtuple
 from utils.class_with_settings import ClassWithSettings
 
 InferenceResult = namedtuple(
-    "InferenceResult", ["avg_ms", "std_ms", "profiling_details"])
+    "InferenceResult", ["avg_ms", "std_ms", "profiling_details", "layerwise_info"])
 
 
 class InferenceSdk(ClassWithSettings):
@@ -28,14 +28,15 @@ class InferenceSdk(ClassWithSettings):
         """
         pass
 
-    def fetch_results(self, adb_device_id: str, model_path: str, benchmark_model_flags) -> InferenceResult:
-        return self._fetch_results(adb_device_id, model_path, self.flags(benchmark_model_flags))
+    def fetch_results(self, adb_device_id: str, model_path: str, input_size_list, benchmark_model_flags) -> InferenceResult:
+        return self._fetch_results(adb_device_id, model_path, input_size_list, self.flags(benchmark_model_flags))
 
-    def _fetch_results(self, adb_device_id: str, model_path: str, benchmark_model_flags) -> InferenceResult:
+    def _fetch_results(self, adb_device_id: str, model_path: str, input_size_list, benchmark_model_flags) -> InferenceResult:
         """push model to an android device and fetch results
         Args:
             adb_device_id: adb device ID
             model_path: model path without extension
+            input_size_list: input_shape of the model
             flags: Flag dict for various kinds of benchmark_model tools
 
         Returns:

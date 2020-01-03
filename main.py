@@ -29,18 +29,19 @@ def accuracy_test_tflite():
     from accuracy_tester.accuracy_evaluators.tflite import Tflite
 
     tester = AccuracyTester({
-        "zip_size": 100,
+        "zip_size": 500,
         "dirname": "test_efficientnet_b0",
-        "model_paths": glob("C:/Users/v-xiat/Downloads/imagenet/models/efficientnet_b0_patched_weight_quant.tflite"),
+        "model_paths": glob("C:/Users/v-xiat/repos/efficientnet_b1_int_quant.tflite"),
         "data_preparer": AndroidDataPreparer({
             "labels_path": "C:/Users/v-xiat/Downloads/imagenet/val_labels.txt",
             "validation_set_path": "C:/Users/v-xiat/Downloads/imagenet/validation",
             "adb_device_id": "5e6fecf",
             "skip_dataset_preparation": True,
-            "skip_models_preparation": True
+            "skip_models_preparation": False
         }),
         "accuracy_evaluator": Tflite({
-            "eval_on_host": True,
+            "eval_on_host": False,
+
             # on guest
             "adb_device_id": "5e6fecf",
             "imagenet_accuracy_eval_path": "/data/local/tmp/tf-r2.1-60afa4e/imagenet_accuracy_eval",
@@ -49,7 +50,7 @@ def accuracy_test_tflite():
             },
 
             # on guest
-            "preprocess": lambda image: InceptionPreprocess.preprocess(image, 224),
+            "preprocess": lambda image: InceptionPreprocess.resize(image, 224),
             "index_to_label": lambda index: str(index + 1)
         })
     })
@@ -86,7 +87,7 @@ def accuracy_test_pb():
     from accuracy_tester.accuracy_evaluators.tf_evaluator import TfEvaluator
 
     tester = AccuracyTester({
-        "zip_size": 100,
+        "zip_size": 50000,
         "model_paths": ["C:/Users/v-xiat/Microsoft/Shihao Han (FA Talent) - ChannelNas/models/pb/efficientnet_b0_patched.pb"],
         "data_preparer": DataPreparerDef({
             "labels_path": "C:/Users/v-xiat/Downloads/imagenet/val_labels.txt",
@@ -100,7 +101,7 @@ def accuracy_test_pb():
     tester.run()
 
 
-def layer_latency_test():
+def layer_latency_test_tflite():
     from testers.tester_impls.test_with_tflite_modified import \
         TestDwconvWithTfliteModified
     from testers.inference_sdks.tflite_modified import TfliteModified
@@ -118,9 +119,23 @@ def layer_latency_test():
     })
     tester.run({
         "use_gpu": True,
-        "work_group_size": ""
+        "work_group_size": "4,4,1"
     })
 
 
+def layer_latency_test_rknn():
+    from testers.tester_impls.test_dwconv import TestDwconv
+    from testers.inference_sdks.rknn import Rknn
+    from testers.sampling.dwconv_sampler import DwconvSampler
+
+    tester = TestDwconv({
+        "inference_sdk": Rknn({}),
+        "sampler": DwconvSampler({
+            "filter": lambda sample: sample[-1] == 3
+        })
+    })
+    tester.run({})
+
+
 if __name__ == '__main__':
-    layer_latency_test()
+    layer_latency_test_rknn()

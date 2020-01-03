@@ -17,14 +17,13 @@ class Rknn(InferenceSdk):
         return {
             **InferenceSdk.default_settings(),
             "rknn_target": "rk1808",
-            "input_imsize": 299,
         }
 
     @staticmethod
     def default_flags():
         return {
             **InferenceSdk.default_flags(),
-            "num_runs": 50
+            "num_runs": 50,
         }
 
     def generate_model(self, path, inputs, outputs):
@@ -54,7 +53,7 @@ class Rknn(InferenceSdk):
             assert 0 == rknn.export_rknn(path + '.rknn')
             rknn.release()
 
-    def _fetch_results_on_soc(self, adb_device_id, model_path, flags) -> InferenceResult:
+    def _fetch_results_on_soc(self, adb_device_id, model_path, input_size_list, flags) -> InferenceResult:
         model_path = os.path.splitext(model_path)[0]
         model_basename = os.path.basename(model_path)
 
@@ -77,30 +76,48 @@ class Rknn(InferenceSdk):
             avg_ms = rfind_assign_float(result_str, 'curr')
 
         # FIXME
-        return InferenceResult(avg_ms=avg_ms, std_ms=std_ms, profiling_details=None)
+        return InferenceResult(avg_ms=avg_ms, std_ms=std_ms, profiling_details=None, layerwise_info=None)
 
-    def _fetch_results_with_py_api(self, adb_device_id, model_path, flags) -> InferenceResult:
-        input_imsize = self.settings["input_imsize"]
+    def _fetch_results_with_py_api(self, adb_device_id, model_path, input_size_list, flags) -> InferenceResult:
         rknn = RKNN()
 
         assert 0 == rknn.load_rknn(model_path + ".rknn")
-        assert 0 == rknn.init_runtime(target=self.settings["rknn_target"])
+        assert 0 == rknn.init_runtime(
+            target=self.settings["rknn_target"], perf_debug=True)
 
-        image = np.random.rand(
-            1, input_imsize, input_imsize, 3).astype(np.float32)
+        if input_size_list is None:
+            input_size_list = [1, 299, 299, 3]
+        image = np.random.rand(*input_size_list).astype(np.float32)
 
         stat = Stat()
+        layerwise_info = None
         for i in range(flags["num_runs"]):
-            stat.update(rknn.eval_perf(
-                inputs=[image], is_print=False)["total_time"] / 1e3)
+            result = rknn.eval_perf(inputs=[image], is_print=False)
+            stat.update(result["total_time"] / 1e3)
+            result_layer = result["layers"]
+            if layerwise_info is None:
+                layerwise_info = result_layer
+                for value in layerwise_info.values():
+                    t = value["time"]
+                    value["time"] = Stat()
+                    value["time"].update(t / 1e3)
+            else:
+                for key, value in result_layer.items():
+                    layerwise_info[key]["time"].update(value["time"] / 1e3)
+
+        for value in layerwise_info.values():
+            layer_stat = value.pop("time")
+            value["time"] = {
+                "avg_ms": layer_stat.avg(),
+                "std_ms": layer_stat.std()
+            }
 
         rknn.release()
 
-        # FIXME
-        return InferenceResult(avg_ms=stat.avg(), std_ms=stat.std(), profiling_details=None)
+        return InferenceResult(avg_ms=stat.avg(), std_ms=stat.std(), profiling_details=None, layerwise_info=layerwise_info)
 
-    def _fetch_results(self, adb_device_id, model_path, flags) -> InferenceResult:
+    def _fetch_results(self, adb_device_id, model_path, input_size_list, flags) -> InferenceResult:
         if self.settings["rknn_target"] is None:
-            return self._fetch_results_on_soc(adb_device_id, model_path, flags)
+            return self._fetch_results_on_soc(adb_device_id, model_path, input_size_list, flags)
         else:
-            return self._fetch_results_with_py_api(adb_device_id, model_path, flags)
+            return self._fetch_results_with_py_api(adb_device_id, model_path, input_size_list, flags)

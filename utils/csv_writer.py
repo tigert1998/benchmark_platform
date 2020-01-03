@@ -15,21 +15,21 @@ class CSVWriter:
         if self.fd is not None:
             self.fd.close()
 
-    def update_data(self, filename, titles, data, is_resume):
+    def update_data(self, filename, data, is_resume):
         if self.previous_filename is None:
             if is_resume:
                 self.fd = open(filename, 'a')
             else:
                 self.fd = open(filename, 'w')
-                self._write_titles(titles)
-            self._write_data(data)
+                self._write_titles(data.keys())
+            self._write_data(data.values())
         elif self.previous_filename != filename:
             self._close()
             self.fd = open(filename, 'w')
-            self._write_titles(titles)
-            self._write_data(data)
+            self._write_titles(data.keys())
+            self._write_data(data.values())
         else:
-            self._write_data(data)
+            self._write_data(data.values())
         self.previous_filename = filename
 
     def __del__(self):

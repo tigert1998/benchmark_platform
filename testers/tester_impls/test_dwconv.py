@@ -1,13 +1,10 @@
 from testers.tester import Tester
 
 import tensorflow as tf
+from .utils import append_layerwise_info
 
 
 class TestDwconv(Tester):
-    @staticmethod
-    def _get_metrics_titles():
-        return ["latency_ms", "std_ms"]
-
     def _generate_model(self, sample):
         model_path = "model"
         _, _, input_imsize, cin, _, _, _, stride, kernel_size = sample
@@ -27,10 +24,13 @@ class TestDwconv(Tester):
         )
 
         self.inference_sdk.generate_model(model_path, [input_im], [net])
-        return model_path
+        return model_path, input_im.get_shape().as_list()
 
     def _test_sample(self, sample):
-        model_path = self._generate_model(sample)
+        model_path, input_size_list = self._generate_model(sample)
         results = self.inference_sdk.fetch_results(
-            self.adb_device_id, model_path, self.benchmark_model_flags)
-        return [results.avg_ms, results.std_ms]
+            self.adb_device_id, model_path, input_size_list, self.benchmark_model_flags)
+        return append_layerwise_info({
+            "latency_ms": results.avg_ms,
+            "std_ms": results.std_ms
+        }, results.layerwise_info)

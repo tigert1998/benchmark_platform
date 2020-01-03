@@ -56,7 +56,7 @@ class Tflite(InferenceSdk):
         print(cmd.strip())
         return adb_shell(adb_device_id, cmd, self.settings["su"])
 
-    def _fetch_results(self, adb_device_id: str, model_path: str, flags) -> InferenceResult:
+    def _fetch_results(self, adb_device_id: str, model_path: str, input_size_list, flags) -> InferenceResult:
         result_str = self._launch_benchmark(adb_device_id, model_path, flags)
 
         if rfind_assign_int(result_str, 'count') >= 2:
@@ -71,7 +71,7 @@ class Tflite(InferenceSdk):
         enable_op_profiling = flags.get("enable_op_profiling", False)
 
         if use_delegate or (not enable_op_profiling):
-            return InferenceResult(avg_ms=avg_ms, std_ms=std_ms, profiling_details=None)
+            return InferenceResult(avg_ms=avg_ms, std_ms=std_ms, profiling_details=None, layerwise_info=None)
         else:
             op_profiling = []
             started = False
@@ -88,4 +88,4 @@ class Tflite(InferenceSdk):
                         continue
                     op_profiling.append(cells)
             op_profiling = table_try_float(op_profiling)
-            return InferenceResult(avg_ms=avg_ms, std_ms=std_ms, profiling_details=op_profiling)
+            return InferenceResult(avg_ms=avg_ms, std_ms=std_ms, profiling_details=op_profiling, layerwise_info=None)

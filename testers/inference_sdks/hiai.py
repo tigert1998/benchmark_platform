@@ -52,10 +52,10 @@ class Hiai(InferenceSdk):
 
             print("convert_cmd = \"{}\"".format(convert_cmd))
             result = container.exec_run(convert_cmd)
-            assert(result.exit_code == 0)
+            assert 0 == result.exit_code
             print(result.output.decode('utf-8'))
 
-    def _fetch_results(self, adb_device_id, model_path, flags) -> InferenceResult:
+    def _fetch_results(self, adb_device_id, model_path, input_size_list, flags) -> InferenceResult:
         model_path = os.path.splitext(model_path)[0]
         model_basename = os.path.basename(model_path)
 
@@ -82,4 +82,4 @@ class Hiai(InferenceSdk):
         else:
             std_ms = 0
             avg_ms = rfind_assign_float(result_str, 'curr')
-        return InferenceResult(avg_ms=avg_ms, std_ms=std_ms, profiling_details=None)
+        return InferenceResult(avg_ms=avg_ms, std_ms=std_ms, profiling_details=None, layerwise_info=None)

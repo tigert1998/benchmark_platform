@@ -67,4 +67,4 @@ def op_name_to_model_name(op_name):
     elif 'shufflenetv2' in op_name:
         return 'ShuffleNetV2'
     else:
-        assert(False)
+        assert False

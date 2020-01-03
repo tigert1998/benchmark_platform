@@ -34,7 +34,10 @@ class Tester(ClassWithSettings):
         self.sampler = self.settings["sampler"]
 
     def _get_dir_name(self):
-        dir_name = "{}_{}".format(self.brief(), self.adb_device_id)
+        if self.adb_device_id is not None:
+            dir_name = "{}_{}".format(self.brief(), self.adb_device_id)
+        else:
+            dir_name = self.brief()
         if self.settings.get("subdir") is not None:
             dir_name += "/" + self.settings.get("subdir")
         return dir_name
@@ -56,17 +59,17 @@ class Tester(ClassWithSettings):
     def _get_csv_filename(self, sample):
         return "data.csv"
 
-    @staticmethod
-    def _get_metrics_titles():
-        return []
-
     def _test_sample(self, sample):
         return []
 
     def _dump_snapshot(self):
         snapshot = self.snapshot()
 
-        snapshot["adb_device_id"] = inquire_adb_device(self.adb_device_id)
+        if snapshot["adb_device_id"] is None:
+            snapshot.pop("adb_device_id")
+        else:
+            snapshot["adb_device_id"] = inquire_adb_device(self.adb_device_id)
+
         snapshot["time"] = '{0:%Y-%m-%d %H:%M:%S}'.format(
             datetime.datetime.now())
         snapshot["benchmark_model_flags"] = self.inference_sdk.flags(
@@ -100,11 +103,16 @@ class Tester(ClassWithSettings):
                 continue
 
             results = self._test_sample(sample)
-            titles = self.sampler.get_sample_titles() + self._get_metrics_titles()
-            data = sample + results
+            sample_dic = {
+                key: value for key, value in zip(self.sampler.get_sample_titles(), sample)
+            }
+            data = {
+                **sample_dic,
+                **results
+            }
 
-            csv_writer.update_data(self._get_csv_filename(sample),
-                                   titles, data, resumed)
+            csv_writer.update_data(
+                self._get_csv_filename(sample), data, resumed)
 
             bar.update(i + 1)
             print()

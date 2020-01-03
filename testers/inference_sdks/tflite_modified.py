@@ -14,7 +14,7 @@ class TfliteModified(Tflite):
             "work_group_size": None
         }
 
-    def _fetch_results(self, adb_device_id: str, model_path: str, flags) -> InferenceResult:
+    def _fetch_results(self, adb_device_id: str, model_path: str, input_size_list, flags) -> InferenceResult:
         result_str = self._launch_benchmark(adb_device_id, model_path, flags)
 
         profiling_details = {
@@ -48,4 +48,4 @@ class TfliteModified(Tflite):
             std_ms = 0
             avg_ms = rfind_assign_float(result_str, 'curr') / 1e3
 
-        return InferenceResult(avg_ms=avg_ms, std_ms=std_ms, profiling_details=profiling_details)
+        return InferenceResult(avg_ms=avg_ms, std_ms=std_ms, profiling_details=profiling_details, layerwise_info=None)
