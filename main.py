@@ -105,7 +105,7 @@ def layer_latency_test_tflite():
     from testers.tester_impls.test_with_tflite_modified import \
         TestDwconvWithTfliteModified
     from testers.inference_sdks.tflite_modified import TfliteModified
-    from testers.sampling.dwconv_sampler import DwconvSampler
+    from testers.sampling.dwconv_sampler import SimpleDwconvSampler
 
     tester = TestDwconvWithTfliteModified({
         "adb_device_id": "5e6fecf",
@@ -113,13 +113,11 @@ def layer_latency_test_tflite():
             "benchmark_model_path": "/data/local/tmp/tf-r2.1-60afa4e/benchmark_model_modified",
             "su": True
         }),
-        "sampler": DwconvSampler({
-            "filter": lambda sample: sample[-1] == 3
-        })
+        "sampler": SimpleDwconvSampler({})
     })
     tester.run({
         "use_gpu": True,
-        "work_group_size": "4,4,1"
+        "work_group_size": ""
     })
 
 
@@ -130,10 +128,11 @@ def layer_latency_test_rknn():
 
     tester = TestDwconv({
         "inference_sdk": Rknn({}),
-        "sampler": SimpleDwconvSampler({})
+        "sampler": SimpleDwconvSampler({}),
+        "resume_from": ["", "DWConv", 56, 476, 476, "", "", 2, 3]
     })
     tester.run({})
 
 
 if __name__ == '__main__':
-    layer_latency_test_rknn()
+    layer_latency_test_tflite()

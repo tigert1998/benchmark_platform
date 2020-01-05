@@ -22,11 +22,12 @@ class TfliteModified(Tflite):
         }
 
         i = 0
+        profiling_details["local_work_size"] = []
         while True:
             try:
-                mark = "best_work_group[{}]".format(i)
-                profiling_details[mark] = rfind_assign(
-                    result_str, mark).strip()
+                mark = "local_work_size[{}]".format(i)
+                ans = '"{}"'.format(rfind_assign(result_str, mark).strip())
+                profiling_details["local_work_size"].append(ans)
             except:
                 break
             i += 1

@@ -17,17 +17,11 @@ class TestWithTfliteModified:
                 metric_title = "{}_{}".format(stage, metric)
                 data[metric_title] = results.profiling_details[stage][metric]
 
-        if results.profiling_details["gpu_freq"] > 0:
-            data["gpu_freq"] = results.profiling_details["gpu_freq"]
+        data["gpu_freq"] = results.profiling_details["gpu_freq"]
 
-        i = 0
-        while True:
-            mark = "work_group_size[{}]".format(i)
-            if results.profiling_details.get(mark) is not None:
-                data[mark] = results.profiling_details.get(mark)
-            else:
-                break
-            i += 1
+        local_work_size = results.profiling_details["local_work_size"]
+        for i in range(len(local_work_size)):
+            data["local_work_size[{}]".format(i)] = local_work_size[i]
 
         return data
 

@@ -40,7 +40,7 @@ class Rknn(InferenceSdk):
                 f.write(constant_graph.SerializeToString())
 
             # remember to modify RKNN.__init__
-            rknn = RKNN(verbose=True)
+            rknn = RKNN()
             rknn.config(batch_size=1)
             assert 0 == rknn.load_tensorflow(
                 path + '.pb',
