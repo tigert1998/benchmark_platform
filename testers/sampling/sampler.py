@@ -7,7 +7,6 @@ class Sampler(ClassWithSettings):
         return {
             **ClassWithSettings.default_settings(),
             "filter": lambda x: True,
-            "channel_step": 4,
         }
 
     @staticmethod

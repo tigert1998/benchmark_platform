@@ -2,6 +2,11 @@ from glob import glob
 from utils.preprocess import InceptionPreprocess, VggPreprocess
 import numpy as np
 
+from testers.tester_impls.test_conv import TestConv
+from testers.tester_impls.test_dwconv import TestDwconv
+from testers.sampling.conv_sampler import SimpleConvSampler
+from testers.sampling.dwconv_sampler import SimpleDwconvSampler
+
 
 def accuracy_test_rknn():
     from accuracy_tester.accuracy_tester import AccuracyTester
@@ -102,37 +107,37 @@ def accuracy_test_pb():
 
 
 def layer_latency_test_tflite():
-    from testers.tester_impls.test_with_tflite_modified import \
-        TestDwconvWithTfliteModified
+    from testers.tester_impls.test_with_tflite_modified import TestConvWithTfliteModified
+    from testers.tester_impls.test_with_tflite_modified import TestDwconvWithTfliteModified
     from testers.inference_sdks.tflite_modified import TfliteModified
-    from testers.sampling.dwconv_sampler import SimpleDwconvSampler
+    from testers.inference_sdks.tflite import Tflite
 
-    tester = TestDwconvWithTfliteModified({
+    tester = TestConv({
         "adb_device_id": "5e6fecf",
-        "inference_sdk": TfliteModified({
-            "benchmark_model_path": "/data/local/tmp/tf-r2.1-60afa4e/benchmark_model_modified",
-            "su": True
+        "inference_sdk": Tflite({
+            "benchmark_model_path": "/data/local/tmp/tf-r2.1-60afa4e/benchmark_model",
+            "su": False
         }),
-        "sampler": SimpleDwconvSampler({})
+        "sampler": SimpleConvSampler({
+            # "filter": lambda sample: sample[2: 5] == [7, 960, 960]
+        })
     })
     tester.run({
-        "use_gpu": True,
+        "use_gpu": False,
         "work_group_size": ""
     })
 
 
 def layer_latency_test_rknn():
-    from testers.tester_impls.test_dwconv import TestDwconv
     from testers.inference_sdks.rknn import Rknn
-    from testers.sampling.dwconv_sampler import SimpleDwconvSampler
 
     tester = TestDwconv({
         "inference_sdk": Rknn({}),
         "sampler": SimpleDwconvSampler({}),
-        "resume_from": ["", "DWConv", 56, 476, 476, "", "", 2, 3]
+        "resume_from": ["", "DWConv", 112, 324, 324, "", "", 1, 5]
     })
     tester.run({})
 
 
 if __name__ == '__main__':
-    layer_latency_test_tflite()
+    layer_latency_test_rknn()

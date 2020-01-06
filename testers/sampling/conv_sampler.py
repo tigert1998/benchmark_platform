@@ -71,7 +71,8 @@ class ConvSampler(Sampler):
     def default_settings():
         return {
             **Sampler.default_settings(),
-            "channel_range": (0.2, 2)
+            "channel_range": (0.2, 2),
+            "channel_step": 4,
         }
 
     @staticmethod
@@ -116,3 +117,84 @@ class ConvSampler(Sampler):
                                   current_cin, current_cout, cin, cout, stride, ksize]
                         if self.settings["filter"](sample):
                             yield sample
+
+
+class SimpleConvSampler(ConvSampler):
+    def _get_channel_step(self, input_imsize):
+        if input_imsize <= 56:
+            return 4
+        elif input_imsize <= 224:
+            return 2
+        else:
+            assert False
+
+    def _get_channel_range(self, input_imsize):
+        channel_step = self._get_channel_step(input_imsize)
+        if input_imsize <= 56:
+            return list(range(16, 1000 + channel_step, channel_step))
+        elif input_imsize <= 112:
+            return list(range(12, 320 + channel_step, channel_step))
+        elif input_imsize <= 224:
+            return [3] + list(range(4, 64 + channel_step, channel_step))
+        else:
+            assert False
+
+    def _get_cin_cout_range_with_fixed_cin(self, input_imsize):
+        cout_range = self._get_channel_range(input_imsize)
+
+        if input_imsize <= 28:
+            cin_range = [64, 160, 320, 640]
+        elif input_imsize <= 56:
+            cin_range = [16, 32, 64, 160]
+        elif input_imsize <= 112:
+            cin_range = [16, 32, 64]
+        elif input_imsize <= 224:
+            cin_range = [3]
+        else:
+            assert False
+
+        return itertools.product(cin_range, cout_range)
+
+    def _get_cin_cout_range_with_fixed_cout(self, input_imsize):
+        channel_step = self._get_channel_step(input_imsize)
+
+        if input_imsize <= 56:
+            cin_range = list(range(160, 640 + channel_step, channel_step))
+        elif input_imsize <= 112:
+            cin_range = list(range(12, 320 + channel_step, channel_step))
+        elif input_imsize <= 224:
+            cin_range = []
+        else:
+            assert False
+
+        if input_imsize <= 56:
+            cout_range = [16, 640]
+        elif input_imsize <= 112:
+            cout_range = [16, 320]
+        elif input_imsize <= 224:
+            cout_range = []
+        else:
+            assert False
+
+        return itertools.product(cin_range, cout_range)
+
+    def _get_cin_cout_range(self, input_imsize):
+        cin_cout_range = set()
+
+        for cin in self._get_channel_range(input_imsize):
+            cin_cout_range.add((cin, cin))
+        for cin, cout in itertools.chain(
+            self._get_cin_cout_range_with_fixed_cin(input_imsize),
+            self._get_cin_cout_range_with_fixed_cout(input_imsize)
+        ):
+            cin_cout_range.add((cin, cout))
+
+        cin_cout_range = sorted(list(cin_cout_range))
+        return cin_cout_range
+
+    def _get_samples_without_filter(self):
+        for input_imsize in [7, 14, 28, 56, 112, 224]:
+            for cin, cout in self._get_cin_cout_range(input_imsize):
+                for stride in [1, 2]:
+                    for kernel_size in [1, 3, 5]:
+                        yield ["", "Conv", input_imsize, cin, cout, "", "", stride, kernel_size]

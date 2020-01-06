@@ -7,7 +7,9 @@ from .utils import append_layerwise_info
 class TestDwconv(Tester):
     def _generate_model(self, sample):
         model_path = "model"
-        _, _, input_imsize, cin, _, _, _, stride, kernel_size = sample
+        _, _, input_imsize, cin, cout, _, _, stride, kernel_size = sample
+        assert cin == cout
+
         tf.reset_default_graph()
         input_im = tf.placeholder(
             name="input_im", dtype=tf.float32,
