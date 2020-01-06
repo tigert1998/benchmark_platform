@@ -2,12 +2,13 @@ import os
 
 import tensorflow as tf
 import numpy as np
+import csv
 
 from rknn.api import RKNN
 
 from .inference_sdk import InferenceSdk, InferenceResult
-from .utils import rfind_assign_float
-from utils.utils import adb_push, adb_shell, concatenate_flags
+from .utils import rfind_assign_float, rfind_assign_int
+from utils.utils import adb_push, adb_pull, adb_shell, concatenate_flags
 from utils.stat import Stat
 
 
@@ -61,24 +62,43 @@ class Rknn(InferenceSdk):
         benchmark_model_folder = "/data/local/tmp/rknn_benchmark_model"
         adb_push(adb_device_id, model_path + ".rknn", model_folder)
 
-        result_str = adb_shell(adb_device_id, "LD_LIBRARY_PATH={}/lib64 {}/rknn_benchmark_model {}".format(
+        cmd = "LD_LIBRARY_PATH={}/lib64 {}/rknn_benchmark_model {}".format(
             benchmark_model_folder,
             benchmark_model_folder, concatenate_flags({
                 "model_path": "{}/{}.rknn".format(model_folder, model_basename),
+                "enable_op_profiling": True,
+                "op_profiling_dump_path": "{}/op_profiling.csv".format(model_folder),
                 **flags
-            })))
+            }))
+        print(cmd)
 
-        if flags.get["num_runs"] >= 2:
+        result_str = adb_shell(adb_device_id, cmd)
+
+        if rfind_assign_int(result_str, "count") >= 2:
             std_ms = rfind_assign_float(result_str, 'std')
             avg_ms = rfind_assign_float(result_str, 'avg')
         else:
             std_ms = 0
             avg_ms = rfind_assign_float(result_str, 'curr')
 
-        # FIXME
-        return InferenceResult(avg_ms=avg_ms, std_ms=std_ms, profiling_details=None, layerwise_info=None)
+        adb_pull(adb_device_id, "{}/op_profiling.csv".format(model_folder), ".")
+        layerwise_info = []
+        with open("op_profiling.csv") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                layerwise_info.append({
+                    "name": "{}_{}".format(row["Name"], row["Uid"]),
+                    "time": {
+                        "avg_ms": float(row["avg(us)"]) / 1e3,
+                        "std_ms": float(row["std"]) / 1e3
+                    }
+                })
+
+        return InferenceResult(avg_ms=avg_ms, std_ms=std_ms, profiling_details=None, layerwise_info=layerwise_info)
 
     def _fetch_results_with_py_api(self, adb_device_id, model_path, input_size_list, flags) -> InferenceResult:
+        assert adb_device_id is None
+
         rknn = RKNN()
 
         assert 0 == rknn.load_rknn(model_path + ".rknn")

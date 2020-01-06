@@ -73,7 +73,7 @@ function inspect_freq() {
                 let cpu_id=$i-1
                 cpu_freq_path=$CPUDIR/cpu$cpu_id/cpufreq
                 related_cpus=`cat $cpu_freq_path/related_cpus`
-                if [ `echo $related_cpus | grep -o "^ *\w*\b"` -ne $cpu_id ]; then
+                if [ `echo $related_cpus | grep -o "^[0-9][0-9]*"` -ne $cpu_id ]; then
                         continue
                 fi
                 echo "cpu$cpu_id:"

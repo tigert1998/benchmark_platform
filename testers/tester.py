@@ -43,13 +43,13 @@ class Tester(ClassWithSettings):
         return dir_name
 
     def _chdir_in(self):
-        dir_name = self._get_dir_name()
+        dir_name = "test_results/{}".format(self._get_dir_name())
         if not os.path.isdir(dir_name):
             if os.path.exists(dir_name):
                 print("os.path.exists(\"{}\")".format(dir_name))
                 exit()
             else:
-                os.mkdir(dir_name)
+                os.makedirs(dir_name)
         os.chdir(dir_name)
 
     @staticmethod

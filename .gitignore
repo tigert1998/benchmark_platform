@@ -1,6 +1,2 @@
 __pycache__
-*.cl
-*.json
-*.csv
-*.txt
-*.tflite
+test_results

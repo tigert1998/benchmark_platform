@@ -120,6 +120,12 @@ class ConvSampler(Sampler):
 
 
 class SimpleConvSampler(ConvSampler):
+    @staticmethod
+    def default_settings():
+        return {
+            **Sampler.default_settings(),
+        }
+
     def _get_channel_step(self, input_imsize):
         if input_imsize <= 56:
             return 4
