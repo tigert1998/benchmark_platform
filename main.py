@@ -131,13 +131,13 @@ def layer_latency_test_tflite():
 def layer_latency_test_rknn():
     from testers.inference_sdks.rknn import Rknn
 
-    tester = TestConv({
-        "adb_device_id": "TD033101190100171",
+    tester = TestDwconv({
+        # "adb_device_id": "TD033101190100171",
         "inference_sdk": Rknn({
-            "rknn_target": None
+            # "rknn_target": None
         }),
-        "sampler": SimpleConvSampler({}),
-        # "resume_from": ["", "DWConv", 112, 324, 324, "", "", 1, 5]
+        "sampler": SimpleDwconvSampler({}),
+        "resume_from": ["", "DWConv", 112, 536, 536, "", "", 1, 5]
     })
     tester.run({})
 
