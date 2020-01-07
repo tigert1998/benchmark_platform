@@ -99,3 +99,12 @@ def concatenate_flags(flags):
 
 def rm_ext(path):
     return ".".join(path.split(".")[:-1])
+
+
+def set_multilevel_dict(dic, keys, value):
+    node = dic
+    for key in keys[:-1]:
+        if node.get(key) is None:
+            node[key] = {}
+        node = node[key]
+    node[keys[-1]] = value
