@@ -4,7 +4,7 @@ import datetime
 import progressbar
 import json
 
-from .inference_sdks.inference_sdk import InferenceSdk
+from .inference_sdks.inference_sdk import InferenceSdk, InferenceResult
 from .sampling.sampler import Sampler
 from utils.utils import\
     camel_case_to_snake_case,\
@@ -59,8 +59,35 @@ class Tester(ClassWithSettings):
     def _get_csv_filename(self, sample):
         return "data.csv"
 
-    def _test_sample(self, sample):
-        return []
+    def _test_sample(self, sample) -> InferenceResult:
+        ...
+
+    def _process_inference_result(self, result: InferenceResult):
+        ret = {
+            "latency_ms": result.avg_ms,
+            "std_ms": result.std_ms
+        }
+
+        # layerwise info
+        if result.layerwise_info is not None:
+            for dic in result.layerwise_info:
+                ret[dic["name"] + "_avg_ms"] = dic["time"]["avg_ms"]
+                ret[dic["name"] + "_std_ms"] = dic["time"]["std_ms"]
+
+        # profiling details
+        if result.profiling_details is not None:
+            for stage in ["write", "comp", "read"]:
+                for metric in ["avg", "std"]:
+                    metric_title = "{}_{}".format(stage, metric)
+                    ret[metric_title] = result.profiling_details[stage][metric]
+
+            ret["gpu_freq"] = result.profiling_details["gpu_freq"]
+
+            local_work_size = result.profiling_details["local_work_size"]
+            for i in range(len(local_work_size)):
+                ret["local_work_size[{}]".format(i)] = local_work_size[i]
+
+        return ret
 
     def _dump_snapshot(self):
         snapshot = self.snapshot()
@@ -102,17 +129,21 @@ class Tester(ClassWithSettings):
                 resumed = (sample == self.settings['resume_from'])
                 continue
 
-            results = self._test_sample(sample)
             sample_dic = {
                 key: value for key, value in zip(self.sampler.get_sample_titles(), sample)
             }
-            data = {
-                **sample_dic,
-                **results
-            }
+            result = self._test_sample(sample)
 
-            csv_writer.update_data(
-                self._get_csv_filename(sample), data, resumed)
+            if result.avg_ms is None:
+                csv_writer.update_data("timeouts.csv", sample_dic, True)
+            else:
+                result = self._process_inference_result(result)
+                data = {
+                    **sample_dic,
+                    **result
+                }
+                csv_writer.update_data(
+                    self._get_csv_filename(sample), data, resumed)
 
             bar.update(i + 1)
             print()

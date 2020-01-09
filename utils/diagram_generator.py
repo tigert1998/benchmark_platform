@@ -14,9 +14,10 @@ class DiagramGenerator:
     METRIC_START = "latency_ms"
     IRRELEVANTS = ["model", "original_cin", "original_cout"]
 
-    def __init__(self, output_folder, filename_filter=lambda filename: True):
+    def __init__(self, output_folder, filename_filter=lambda filename: True, point_threshold=10):
         self.filename_filter = filename_filter
         self.output_folder = output_folder
+        self.point_threshold = point_threshold
         assert os.path.isdir(output_folder)
 
     @staticmethod
@@ -66,7 +67,7 @@ class DiagramGenerator:
                 for fixed_channel in inner_dic:
                     channel_to_metrics = sorted(
                         list(inner_dic[fixed_channel].items()))
-                    if len(channel_to_metrics) <= 1:
+                    if len(channel_to_metrics) <= self.point_threshold:
                         continue
                     xs = list(map(lambda item: item[0], channel_to_metrics))
                     for i in range(len(metric_titles)):
@@ -101,7 +102,7 @@ class DiagramGenerator:
         for sample, channel_to_metrics in new_dic.items():
             channel_to_metrics = sorted(list(channel_to_metrics.items()))
             xs = list(map(lambda item: item[0], channel_to_metrics))
-            if len(xs) <= 1:
+            if len(xs) <= self.point_threshold:
                 continue
 
             for i in range(len(metric_titles)):

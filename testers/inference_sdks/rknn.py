@@ -3,12 +3,14 @@ import os
 import tensorflow as tf
 import numpy as np
 import csv
+import json
+
 
 from rknn.api import RKNN
 
 from .inference_sdk import InferenceSdk, InferenceResult
 from .utils import rfind_assign_float, rfind_assign_int
-from utils.utils import adb_push, adb_pull, adb_shell, concatenate_flags
+from utils.utils import adb_push, adb_pull, adb_shell, concatenate_flags, rm_ext
 from utils.stat import Stat
 
 
@@ -18,6 +20,7 @@ class Rknn(InferenceSdk):
         return {
             **InferenceSdk.default_settings(),
             "rknn_target": "rk1808",
+            "pre_compile": False
         }
 
     @staticmethod
@@ -27,8 +30,15 @@ class Rknn(InferenceSdk):
             "num_runs": 50,
         }
 
+    def __init__(self, settings={}):
+        super().__init__(settings)
+        if self.settings["pre_compile"]:
+            import docker
+            self.container: docker.models.containers.Container =\
+                docker.from_env().containers.list()[0]
+
     def generate_model(self, path, inputs, outputs):
-        path = os.path.splitext(path)[0]
+        path = rm_ext(path)
 
         outputs_ops_names = [o.op.name for o in outputs]
 
@@ -40,19 +50,43 @@ class Rknn(InferenceSdk):
             with tf.gfile.FastGFile(path + '.pb', mode='wb') as f:
                 f.write(constant_graph.SerializeToString())
 
+            docker_path = os.path.abspath(path).split(os.path.sep)
+            docker_path = docker_path[docker_path.index("benchmark_platform"):]
+            docker_path = "/" + "/".join(["playground"] + docker_path)
+            rknn_convert_config = {
+                "path": docker_path,
+                "inputs": [i.op.name for i in inputs],
+                "input_size_list": [i.get_shape().as_list()[1:] for i in inputs],
+                "outputs": outputs_ops_names
+            }
+
+        if not self.settings["pre_compile"]:
             # remember to modify RKNN.__init__
             rknn = RKNN()
             rknn.config(batch_size=1)
             assert 0 == rknn.load_tensorflow(
                 path + '.pb',
-                inputs=[i.op.name for i in inputs],
-                input_size_list=[i.get_shape().as_list()[1:] for i in inputs],
-                # remove batch size
-                outputs=outputs_ops_names)
+                inputs=rknn_convert_config["inputs"],
+                input_size_list=rknn_convert_config["input_size_list"],
+                outputs=rknn_convert_config["outputs"]
+            )
             assert 0 == rknn.build(do_quantization=False,
                                    dataset="", pre_compile=False)
             assert 0 == rknn.export_rknn(path + '.rknn')
             rknn.release()
+        else:
+            host_config_path = os.path.abspath(__file__).split(os.path.sep)
+            host_config_path = os.path.sep.join(host_config_path[:host_config_path.index(
+                "benchmark_platform")])
+            host_config_path = os.path.join(
+                host_config_path, "rknn_convert_tools/config.json")
+            with open(host_config_path, "w") as f:
+                f.write(json.dumps(rknn_convert_config))
+            convert_cmd = "{} run -n rknn python /playground/rknn_convert_tools/main.py".format(
+                "/root/anaconda3/bin/conda")
+            result = self.container.exec_run(convert_cmd)
+            assert 0 == result.exit_code
+            print(result.output.decode('utf-8'))
 
     def _fetch_results_on_soc(self, adb_device_id, model_path, input_size_list, flags) -> InferenceResult:
         model_path = os.path.splitext(model_path)[0]
@@ -73,6 +107,8 @@ class Rknn(InferenceSdk):
         print(cmd)
 
         result_str = adb_shell(adb_device_id, cmd)
+        if result_str.find("TIMEOUT") >= 0:
+            return InferenceResult(avg_ms=None, std_ms=None, profiling_details=None, layerwise_info=None)
 
         if rfind_assign_int(result_str, "count") >= 2:
             std_ms = rfind_assign_float(result_str, 'std')

@@ -1,7 +1,6 @@
 from testers.tester import Tester
 
 import tensorflow as tf
-from .utils import append_layerwise_info
 
 
 class TestConv(Tester):
@@ -20,9 +19,5 @@ class TestConv(Tester):
 
     def _test_sample(self, sample):
         model_path, input_size_list = self._generate_model(sample)
-        results = self.inference_sdk.fetch_results(
+        return self.inference_sdk.fetch_results(
             self.adb_device_id, model_path, input_size_list, self.benchmark_model_flags)
-        return append_layerwise_info({
-            "latency_ms": results.avg_ms,
-            "std_ms": results.std_ms
-        }, results.layerwise_info)

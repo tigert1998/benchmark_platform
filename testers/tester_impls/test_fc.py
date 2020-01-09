@@ -1,7 +1,6 @@
 from testers.tester import Tester
 
 import tensorflow as tf
-from .utils import append_layerwise_info
 
 
 class TestFc(Tester):
@@ -14,9 +13,5 @@ class TestFc(Tester):
         self.inference_sdk.generate_model("model", [input_im], [net])
 
         input_size_list = input_im.get_shape().as_list()
-        results = self.inference_sdk.fetch_results(
+        return self.inference_sdk.fetch_results(
             self.adb_device_id, "model", input_size_list, self.benchmark_model_flags)
-        return append_layerwise_info({
-            "latency_ms": results.avg_ms,
-            "std_ms": results.std_ms
-        }, results.layerwise_info)
