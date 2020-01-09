@@ -14,9 +14,9 @@ class DiagramGenerator:
     METRIC_START = "latency_ms"
     IRRELEVANTS = ["model", "original_cin", "original_cout"]
 
-    def __init__(self, output_folder, filename_filter=lambda filename: True, point_threshold=10):
-        self.filename_filter = filename_filter
+    def __init__(self, output_folder, metric_lists, point_threshold=10):
         self.output_folder = output_folder
+        self.metric_lists = metric_lists
         self.point_threshold = point_threshold
         assert os.path.isdir(output_folder)
 
@@ -35,13 +35,14 @@ class DiagramGenerator:
             ls.append("{}{}{}".format(str(x), eq, str(y)))
         return sep.join(ls)
 
-    def _plot_figure(self, xs, ys, xlabel, ylabel, title, filename):
+    def _plot_figure(self, xs, ys_list, xlabel, ylabel_list, title, filename):
         fig = plt.figure()
         fig.set_size_inches(19, 11)
-        plt.plot(xs, ys)
+        for ys, ylabel in zip(ys_list, ylabel_list):
+            plt.plot(xs, ys, label=ylabel)
         plt.xlabel(xlabel)
-        plt.ylabel(ylabel)
         plt.title(title)
+        plt.legend()
         plt.savefig("{}/{}.png".format(
             self.output_folder,
             filename))
@@ -70,26 +71,25 @@ class DiagramGenerator:
                     if len(channel_to_metrics) <= self.point_threshold:
                         continue
                     xs = list(map(lambda item: item[0], channel_to_metrics))
-                    for i in range(len(metric_titles)):
-                        metric_title = metric_titles[i]
-                        ys = list(map(
-                            lambda item: item[1][i], channel_to_metrics))
-
+                    for metric_list in self.metric_lists:
                         diagram_filename = "{}_{}={}_{}".format(
-                            metric_title, fixed_name, fixed_channel,
+                            "_".join(metric_list), fixed_name, fixed_channel,
                             self._concatenate_diagram_title(sample_titles, sample, False))
                         diagram_title = "{}, {} = {}, {}".format(
-                            metric_title, fixed_name, fixed_channel,
+                            ", ".join(metric_list), fixed_name, fixed_channel,
                             self._concatenate_diagram_title(sample_titles, sample, True))
 
-                        if not self.filename_filter(diagram_filename):
-                            continue
+                        ys_list = []
+                        for metric in metric_list:
+                            i = metric_titles.index(metric)
+                            ys_list.append(list(map(
+                                lambda item: item[1][i], channel_to_metrics)))
 
                         xlabel = "#output_channels" if fixed_name == "cin" else "#input_channels"
 
                         self._plot_figure(
-                            xs, ys,
-                            xlabel, metric_title,
+                            xs, ys_list,
+                            xlabel, metric_list,
                             diagram_title, diagram_filename
                         )
 
@@ -105,23 +105,23 @@ class DiagramGenerator:
             if len(xs) <= self.point_threshold:
                 continue
 
-            for i in range(len(metric_titles)):
-                metric_title = metric_titles[i]
-                ys = list(map(lambda item: item[1][i], channel_to_metrics))
-
+            for metric_list in self.metric_lists:
                 diagram_filename = "{}_cin=cout_{}".format(
-                    metric_title,
+                    "_".join(metric_list),
                     self._concatenate_diagram_title(sample_titles, sample, False))
                 diagram_title = "{}, cin = cout, {}".format(
-                    metric_title,
+                    ", ".join(metric_list),
                     self._concatenate_diagram_title(sample_titles, sample, True))
 
-                if not self.filename_filter(diagram_filename):
-                    continue
+                ys_list = []
+                for metric in metric_list:
+                    i = metric_titles.index(metric)
+                    ys_list.append(
+                        list(map(lambda item: item[1][i], channel_to_metrics)))
 
                 self._plot_figure(
-                    xs, ys,
-                    "#channels", metric_title,
+                    xs, ys_list,
+                    "#channels", metric_list,
                     diagram_title, diagram_filename
                 )
 
