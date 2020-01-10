@@ -7,6 +7,8 @@ from testers.tester_impls.test_dwconv import TestDwconv
 from testers.sampling.conv_sampler import SimpleConvSampler
 from testers.sampling.dwconv_sampler import SimpleDwconvSampler
 
+from utils.connection import Adb, Ssh
+
 
 def accuracy_test_rknn():
     from accuracy_tester.accuracy_tester import AccuracyTester
@@ -40,7 +42,7 @@ def accuracy_test_tflite():
         "data_preparer": AndroidDataPreparer({
             "labels_path": "C:/Users/v-xiat/Downloads/imagenet/val_labels.txt",
             "validation_set_path": "C:/Users/v-xiat/Downloads/imagenet/validation",
-            "adb_device_id": "5e6fecf",
+            "connection": Adb("5e6fecf", False),
             "skip_dataset_preparation": True,
             "skip_models_preparation": False
         }),
@@ -48,7 +50,7 @@ def accuracy_test_tflite():
             "eval_on_host": False,
 
             # on guest
-            "adb_device_id": "5e6fecf",
+            "connection": Adb("5e6fecf", False),
             "imagenet_accuracy_eval_path": "/data/local/tmp/tf-r2.1-60afa4e/imagenet_accuracy_eval",
             "imagenet_accuracy_eval_flags": {
                 "num_images": 500,
@@ -69,7 +71,7 @@ def model_latency_test():
     from testers.sampling.model_sampler import ModelSampler
 
     tester = TestModel(settings={
-        "adb_device_id": "5e6fecf",
+        "connection": Adb("5e6fecf", False),
         "inference_sdk": Rknn({
             "rknn_target": "rk1808",
             "input_imsize": 224
@@ -111,15 +113,14 @@ def layer_latency_test_tflite():
     from testers.inference_sdks.tflite import Tflite
 
     tester = TestConv({
-        "adb_device_id": "5e6fecf",
+        "connection": Adb("5e6fecf", False),
         "inference_sdk": Tflite({
             "benchmark_model_path": "/data/local/tmp/tf-r2.1-60afa4e/benchmark_model",
-            "su": False
         }),
         "sampler": SimpleConvSampler({
             # "filter": lambda sample: sample[2: 5] == [7, 960, 960]
         }),
-        "resume_from": ["", "Conv", 28, 588, 16, "", "", 2, 1]
+        "resume_from": ["", "Conv", 112, 102, 320, "", "", 2, 1]
     })
     tester.run({
         "use_gpu": False,
@@ -127,26 +128,37 @@ def layer_latency_test_tflite():
     })
 
 
-def layer_latency_test_rknn():
-    from testers.inference_sdks.rknn import Rknn
+def layer_latency_test_tpu():
+    from testers.inference_sdks.tpu import Tpu
 
-    tester = TestDwconv({
-        "inference_sdk": Rknn({}),
-        "sampler": SimpleDwconvSampler({}),
-        "resume_from": ["", "DWConv", 224, 200, 200, "", "", 2, 7]
+    tester = TestConv({
+        "connection": Ssh("zhongrg@zhongrg-All-Series"),
+        "inference_sdk": Tpu(),
+        "sampler": SimpleConvSampler({}),
     })
     tester.run({})
 
-    # tester = TestConv({
-    #     "adb_device_id": "TD033101190100171",
-    #     "inference_sdk": Rknn({
-    #         "rknn_target": None,
-    #     }),
-    #     "sampler": SimpleConvSampler({}),
-    #     "resume_from": ["", "Conv", 28, 640, 644, "", "", 2, 1]
+
+def layer_latency_test_rknn():
+    from testers.inference_sdks.rknn import Rknn
+
+    # tester = TestDwconv({
+    #     "inference_sdk": Rknn({}),
+    #     "sampler": SimpleDwconvSampler({}),
+    #     "resume_from": ["", "DWConv", 224, 424, 424, "", "", 1, 3]
     # })
     # tester.run({})
 
+    tester = TestConv({
+        "connection": Adb("TD033101190100171", False),
+        "inference_sdk": Rknn({
+            "rknn_target": None,
+        }),
+        "sampler": SimpleConvSampler({}),
+        "resume_from": ["", "Conv", 56, 268, 16, "", "", 2, 3]
+    })
+    tester.run({})
+
 
 if __name__ == '__main__':
-    layer_latency_test_rknn()
+    layer_latency_test_tpu()

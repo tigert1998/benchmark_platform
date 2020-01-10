@@ -3,9 +3,8 @@ import numpy as np
 import itertools
 
 from .accuracy_evaluator_def import AccuracyEvaluatorDef
-from utils.utils import \
-    adb_shell, adb_push, adb_pull, \
-    concatenate_flags, inquire_adb_device
+from utils.utils import concatenate_flags
+from utils.connection import Connection
 from .utils import evaluate_outputs, count_dataset_size, construct_evaluating_progressbar
 
 import tensorflow as tf
@@ -17,10 +16,9 @@ class Tflite(AccuracyEvaluatorDef):
     def default_settings():
         return {
             **AccuracyEvaluatorDef.default_settings(),
-            "eval_on_host": False,
+            "connection": Connection()
 
             # on guest
-            "adb_device_id": None,
             "imagenet_accuracy_eval_path": None,
             "guest_path": "/sdcard/accuracy_test",
             "imagenet_accuracy_eval_flags": None,
@@ -30,28 +28,25 @@ class Tflite(AccuracyEvaluatorDef):
             # self.settings["index_to_label"]
         }
 
+    def __init__(self, settings):
+        super().__init__(settings)
+        self.connection: Connection = self.settings["connection"]
+
     def snapshot(self):
         res = super().snapshot()
-        if self.settings["eval_on_host"]:
+        if isinstance(self.connection, Connection):
             dummys = [
-                "adb_device_id", "imagenet_accuracy_eval_path",
+                "imagenet_accuracy_eval_path",
                 "guest_path", "imagenet_accuracy_eval_flags"
             ]
         else:
             dummys = ["preprocess", "index_to_label"]
-            res["adb_device_id"] =\
-                inquire_adb_device(self.settings["adb_device_id"])
         for item in dummys:
             res.pop(item)
         return res
 
-    def brief(self):
-        device_info = "host" if self.settings["eval_on_host"] else self.settings["adb_device_id"]
-        return "{}_{}".format(super().brief(), device_info)
-
     def _eval_on_guest(self, model_paths, image_path_label_gen):
         guest_path = self.settings["guest_path"]
-        adb_device_id = self.settings["adb_device_id"]
 
         ground_truth_images_path = \
             "{}/{}".format(guest_path, "ground_truth_images")
@@ -78,9 +73,8 @@ class Tflite(AccuracyEvaluatorDef):
                 })
             )
             print(cmd)
-            print(adb_shell(adb_device_id, cmd))
-            adb_pull(
-                adb_device_id,
+            print(self.connection.shell(cmd))
+            self.connection.pull(
                 output_file_path,
                 "."
             )
@@ -139,7 +133,7 @@ class Tflite(AccuracyEvaluatorDef):
         return model_accuracies
 
     def evaluate_models(self, model_paths, image_path_label_gen):
-        if self.settings["eval_on_host"]:
+        if isinstance(self.connection, Connection):
             return self._eval_on_host(model_paths, image_path_label_gen)
         else:
             return self._eval_on_guest(model_paths, image_path_label_gen)

@@ -10,8 +10,9 @@ from rknn.api import RKNN
 
 from .inference_sdk import InferenceSdk, InferenceResult
 from .utils import rfind_assign_float, rfind_assign_int
-from utils.utils import adb_push, adb_pull, adb_shell, concatenate_flags, rm_ext
+from utils.utils import concatenate_flags, rm_ext
 from utils.stat import Stat
+from utils.connection import Connection
 
 
 class Rknn(InferenceSdk):
@@ -88,13 +89,13 @@ class Rknn(InferenceSdk):
             assert 0 == result.exit_code
             print(result.output.decode('utf-8'))
 
-    def _fetch_results_on_soc(self, adb_device_id, model_path, input_size_list, flags) -> InferenceResult:
+    def _fetch_results_on_soc(self, connection: Connection, model_path, input_size_list, flags) -> InferenceResult:
         model_path = os.path.splitext(model_path)[0]
         model_basename = os.path.basename(model_path)
 
         model_folder = "/mnt/sdcard/channel_benchmark"
         benchmark_model_folder = "/data/local/tmp/rknn_benchmark_model"
-        adb_push(adb_device_id, model_path + ".rknn", model_folder)
+        connection.push(model_path + ".rknn", model_folder)
 
         cmd = "LD_LIBRARY_PATH={}/lib64 {}/rknn_benchmark_model {}".format(
             benchmark_model_folder,
@@ -106,7 +107,7 @@ class Rknn(InferenceSdk):
             }))
         print(cmd)
 
-        result_str = adb_shell(adb_device_id, cmd)
+        result_str = connection.shell(cmd)
         if result_str.find("TIMEOUT") >= 0:
             return InferenceResult(avg_ms=None, std_ms=None, profiling_details=None, layerwise_info=None)
 
@@ -117,7 +118,7 @@ class Rknn(InferenceSdk):
             std_ms = 0
             avg_ms = rfind_assign_float(result_str, 'curr')
 
-        adb_pull(adb_device_id, "{}/op_profiling.csv".format(model_folder), ".")
+        connection.pull("{}/op_profiling.csv".format(model_folder), ".")
         layerwise_info = []
         with open("op_profiling.csv") as f:
             reader = csv.DictReader(f)
@@ -132,9 +133,7 @@ class Rknn(InferenceSdk):
 
         return InferenceResult(avg_ms=avg_ms, std_ms=std_ms, profiling_details=None, layerwise_info=layerwise_info)
 
-    def _fetch_results_with_py_api(self, adb_device_id, model_path, input_size_list, flags) -> InferenceResult:
-        assert adb_device_id is None
-
+    def _fetch_results_with_py_api(self, connection: Connection, model_path, input_size_list, flags) -> InferenceResult:
         rknn = RKNN()
 
         assert 0 == rknn.load_rknn(model_path + ".rknn")
@@ -176,8 +175,8 @@ class Rknn(InferenceSdk):
 
         return InferenceResult(avg_ms=stat.avg(), std_ms=stat.std(), profiling_details=None, layerwise_info=layerwise_info)
 
-    def _fetch_results(self, adb_device_id, model_path, input_size_list, flags) -> InferenceResult:
+    def _fetch_results(self, connection: Connection, model_path, input_size_list, flags) -> InferenceResult:
         if self.settings["rknn_target"] is None:
-            return self._fetch_results_on_soc(adb_device_id, model_path, input_size_list, flags)
+            return self._fetch_results_on_soc(connection, model_path, input_size_list, flags)
         else:
-            return self._fetch_results_with_py_api(adb_device_id, model_path, input_size_list, flags)
+            return self._fetch_results_with_py_api(connection, model_path, input_size_list, flags)

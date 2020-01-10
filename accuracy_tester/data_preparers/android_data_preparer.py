@@ -1,5 +1,6 @@
 from .data_preparer_def import DataPreparerDef
-from utils.utils import adb_push, adb_shell, rm_ext
+from utils.utils import rm_ext
+from utils.connection import Connection
 
 import os
 
@@ -12,9 +13,14 @@ class AndroidDataPreparer(DataPreparerDef):
     def default_settings():
         return {
             **DataPreparerDef.default_settings(),
-            "adb_device_id": None,
+            "connection": None,
             "guest_path": "/sdcard/accuracy_test"
         }
+
+    def __init__(self, settings={}):
+        super().__init__(settings)
+        self.connection: Connection = self.settings["connection"]
+        self.guest_path: str = self.settings["guest_path"]
 
     @staticmethod
     def _query_tflite_num_outputs(model_path):
@@ -23,9 +29,6 @@ class AndroidDataPreparer(DataPreparerDef):
         return np.prod(output_details[0]["shape"])
 
     def _prepare_models(self, model_paths):
-        adb_device_id = self.settings["adb_device_id"]
-        guest_path = self.settings["guest_path"]
-
         for model_path in model_paths:
             num_outputs = self._query_tflite_num_outputs(model_path)
             assert num_outputs == 1000 or num_outputs == 1001
@@ -41,35 +44,31 @@ class AndroidDataPreparer(DataPreparerDef):
                     for i in range(1001):
                         f.write("{}\n".format(i))
 
-            adb_push(adb_device_id, model_output_labels, guest_path)
-            adb_push(adb_device_id, model_path, guest_path)
+            self.connection.push(model_output_labels, self.guest_path)
+            self.connection.push(model_path, self.guest_path)
 
     def _prepare_dateset(self, image_id_range):
-        guest_path = self.settings["guest_path"]
-        adb_device_id = self.settings["adb_device_id"]
         validation_set_path = self.settings["validation_set_path"]
 
         with open("ground_truth_labels.txt", "w") as f:
             for i in image_id_range:
                 f.write("{}\n".format(self.image_labels[i]))
 
-        adb_shell(
-            adb_device_id,
+        self.connection.shell(
             '; '.join([
                 "if [ -e \"{ground_truth_images}\" ]",
                 "then rm -r {ground_truth_images}",
                 "fi",
                 "mkdir {ground_truth_images}"
             ]).format(ground_truth_images="{}/{}".format(
-                guest_path, "ground_truth_images")
+                self.guest_path, "ground_truth_images")
             )
         )
 
         for i in image_id_range:
-            adb_push(
-                adb_device_id,
+            self.connection.push(
                 "{}/{}".format(validation_set_path, self.image_basenames[i]),
-                "{}/{}".format(guest_path, "ground_truth_images")
+                "{}/{}".format(self.guest_path, "ground_truth_images")
             )
 
-        adb_push(adb_device_id, "ground_truth_labels.txt", guest_path)
+        self.connection.push("ground_truth_labels.txt", self.guest_path)

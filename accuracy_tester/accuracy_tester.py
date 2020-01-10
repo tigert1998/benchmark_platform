@@ -1,8 +1,8 @@
 from utils.class_with_settings import ClassWithSettings
 from utils.utils import \
-    adb_shell, adb_push, adb_pull, \
     camel_case_to_snake_case, regularize_for_json,\
     concatenate_flags
+from utils.connection import Connection
 
 from .data_preparers.android_data_preparer import AndroidDataPreparer
 from utils.csv_writer import CSVWriter

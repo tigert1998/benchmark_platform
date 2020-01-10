@@ -14,4 +14,4 @@ class TestFc(Tester):
 
         input_size_list = input_im.get_shape().as_list()
         return self.inference_sdk.fetch_results(
-            self.adb_device_id, "model", input_size_list, self.benchmark_model_flags)
+            self.connection, "model", input_size_list, self.benchmark_model_flags)

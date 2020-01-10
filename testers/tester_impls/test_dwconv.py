@@ -30,4 +30,4 @@ class TestDwconv(Tester):
     def _test_sample(self, sample):
         model_path, input_size_list = self._generate_model(sample)
         return self.inference_sdk.fetch_results(
-            self.adb_device_id, model_path, input_size_list, self.benchmark_model_flags)
+            self.connection, model_path, input_size_list, self.benchmark_model_flags)

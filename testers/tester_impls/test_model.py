@@ -9,4 +9,4 @@ class TestModel(Tester):
     def _test_sample(self, sample):
         model_path = sample[0]
         return self.inference_sdk.fetch_results(
-            self.adb_device_id, rm_ext(model_path), None, self.benchmark_model_flags)
+            self.connection, rm_ext(model_path), None, self.benchmark_model_flags)

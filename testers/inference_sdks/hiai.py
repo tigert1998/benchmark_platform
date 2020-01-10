@@ -4,8 +4,9 @@ import docker
 import os
 
 from .inference_sdk import InferenceSdk, InferenceResult
-from utils.utils import concatenate_flags, adb_push, adb_shell
+from utils.utils import concatenate_flags
 from .utils import rfind_assign_float
+from utils.connection import Connection
 
 container: docker.models.containers.Container =\
     docker.from_env().containers.list()[0]
@@ -55,18 +56,18 @@ class Hiai(InferenceSdk):
             assert 0 == result.exit_code
             print(result.output.decode('utf-8'))
 
-    def _fetch_results(self, adb_device_id, model_path, input_size_list, flags) -> InferenceResult:
+    def _fetch_results(self, connection: Connection, model_path, input_size_list, flags) -> InferenceResult:
         model_path = os.path.splitext(model_path)[0]
         model_basename = os.path.basename(model_path)
 
         model_folder = "/mnt/sdcard/channel_benchmark"
         benchmark_model_folder = "/data/local/tmp/hiai_benchmark_model"
         for ext in ["pb", "txt", "cambricon"]:
-            adb_push(adb_device_id,
-                     "{}.{}".format(model_path, ext),
-                     model_folder)
+            connection.push(
+                "{}.{}".format(model_path, ext),
+                model_folder)
 
-        result_str = adb_shell(adb_device_id, "LD_LIBRARY_PATH={}/lib64 {}/hiai_benchmark_model {}".format(
+        result_str = connection.shell("LD_LIBRARY_PATH={}/lib64 {}/hiai_benchmark_model {}".format(
             benchmark_model_folder,
             benchmark_model_folder,
             concatenate_flags({

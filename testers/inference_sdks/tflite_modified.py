@@ -1,7 +1,7 @@
 from .tflite import Tflite
 from .inference_sdk import InferenceResult
 from .utils import rfind_assign_float, rfind_assign_int, rfind_assign
-from utils.utils import adb_pull
+from utils.connection import Connection
 
 import os
 
@@ -14,8 +14,8 @@ class TfliteModified(Tflite):
             "work_group_size": None
         }
 
-    def _fetch_results(self, adb_device_id: str, model_path: str, input_size_list, flags) -> InferenceResult:
-        result_str = self._launch_benchmark(adb_device_id, model_path, flags)
+    def _fetch_results(self, connection: Connection, model_path: str, input_size_list, flags) -> InferenceResult:
+        result_str = self._launch_benchmark(connection, model_path, flags)
 
         profiling_details = {
             "gpu_freq":  rfind_assign_int(result_str, "gpu_freq")

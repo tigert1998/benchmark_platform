@@ -4,7 +4,8 @@ import os
 
 from .inference_sdk import InferenceSdk, InferenceResult
 from .utils import rfind_assign_float, table_try_float, rfind_assign_int
-from utils.utils import adb_push, adb_shell, concatenate_flags, rm_ext
+from utils.utils import concatenate_flags, rm_ext
+from utils.connection import Connection
 
 
 class Tflite(InferenceSdk):
@@ -14,7 +15,6 @@ class Tflite(InferenceSdk):
             **InferenceSdk.default_settings(),
             "benchmark_model_path": None,
             "taskset": "f0",
-            "su": False
         }
 
     @staticmethod
@@ -24,7 +24,7 @@ class Tflite(InferenceSdk):
         }
 
     def generate_model(self, path, inputs, outputs):
-        path = os.path.splitext(path)[0]
+        path = rm_ext(path)
 
         with tf.Session() as sess:
             sess.run(tf.global_variables_initializer())
@@ -33,11 +33,11 @@ class Tflite(InferenceSdk):
             tflite_model = converter.convert()
             open(path + '.tflite', 'wb').write(tflite_model)
 
-    def _launch_benchmark(self, adb_device_id: str, model_path: str, flags):
+    def _launch_benchmark(self, connection: Connection, model_path: str, flags):
         model_basename = os.path.basename(model_path)
 
         model_folder = "/mnt/sdcard/channel_benchmark"
-        adb_push(adb_device_id, model_path + ".tflite", model_folder)
+        connection.push(model_path + ".tflite", model_folder)
 
         if self.settings["taskset"] is None:
             taskset_prefix = ""
@@ -54,10 +54,10 @@ class Tflite(InferenceSdk):
                 })
         )
         print(cmd.strip())
-        return adb_shell(adb_device_id, cmd, self.settings["su"])
+        return connection.shell(cmd)
 
-    def _fetch_results(self, adb_device_id: str, model_path: str, input_size_list, flags) -> InferenceResult:
-        result_str = self._launch_benchmark(adb_device_id, model_path, flags)
+    def _fetch_results(self, connection: Connection, model_path: str, input_size_list, flags) -> InferenceResult:
+        result_str = self._launch_benchmark(connection, model_path, flags)
 
         if rfind_assign_int(result_str, 'count') >= 2:
             std_ms = rfind_assign_float(result_str, 'std') / 1e3
