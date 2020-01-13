@@ -29,6 +29,7 @@ class Rknn(InferenceSdk):
         return {
             **InferenceSdk.default_flags(),
             "num_runs": 50,
+            "enable_op_profiling": True,
         }
 
     def __init__(self, settings={}):
@@ -101,15 +102,14 @@ class Rknn(InferenceSdk):
             benchmark_model_folder,
             benchmark_model_folder, concatenate_flags({
                 "model_path": "{}/{}.rknn".format(model_folder, model_basename),
-                "enable_op_profiling": True,
                 "op_profiling_dump_path": "{}/op_profiling.csv".format(model_folder),
                 **flags
             }))
         print(cmd)
 
         result_str = connection.shell(cmd)
-        if result_str.find("TIMEOUT") >= 0:
-            return InferenceResult(avg_ms=None, std_ms=None, profiling_details=None, layerwise_info=None)
+        print(result_str)
+        assert result_str.find("TIMEOUT") == -1
 
         if rfind_assign_int(result_str, "count") >= 2:
             std_ms = rfind_assign_float(result_str, 'std')
@@ -136,6 +136,7 @@ class Rknn(InferenceSdk):
     def _fetch_results_with_py_api(self, connection: Connection, model_path, input_size_list, flags) -> InferenceResult:
         rknn = RKNN()
 
+        assert self.settings["enable_op_profiling"]
         assert 0 == rknn.load_rknn(model_path + ".rknn")
         assert 0 == rknn.init_runtime(
             target=self.settings["rknn_target"], perf_debug=True)

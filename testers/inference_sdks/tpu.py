@@ -21,8 +21,7 @@ class Tpu(InferenceSdk):
         converter.optimizations = [tf.lite.Optimize.DEFAULT]
 
         def representative_data_gen():
-            for _ in range(10):
-                yield [np.random.randint(0, 256, inputs[0].get_shape().as_list()).astype(np.float32)]
+            yield [np.random.randint(0, 256, inputs[0].get_shape().as_list()).astype(np.float32)]
 
         converter.representative_dataset = representative_data_gen
         converter.target_spec.supported_ops = [

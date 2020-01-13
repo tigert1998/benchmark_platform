@@ -113,18 +113,20 @@ def layer_latency_test_tflite():
     from testers.inference_sdks.tflite import Tflite
 
     tester = TestConv({
-        "connection": Adb("5e6fecf", False),
-        "inference_sdk": Tflite({
-            "benchmark_model_path": "/data/local/tmp/tf-r2.1-60afa4e/benchmark_model",
+        "connection": Adb("5e6fecf", True),
+        "inference_sdk": TfliteModified({
+            "benchmark_model_path": "/data/local/tmp/tf-r2.1-60afa4e/benchmark_model_modified",
         }),
         "sampler": SimpleConvSampler({
             # "filter": lambda sample: sample[2: 5] == [7, 960, 960]
         }),
-        "resume_from": ["", "Conv", 112, 102, 320, "", "", 2, 1]
+        # "resume_from": ["", "Conv", 112, 102, 320, "", "", 2, 1]
     })
     tester.run({
-        "use_gpu": False,
-        "work_group_size": ""
+        "use_gpu": True,
+        "work_group_size": "",
+        "tuning_type": "EXHAUSTIVE",
+        "kernel_path": "/data/local/tmp/kernel.cl"
     })
 
 
@@ -135,6 +137,7 @@ def layer_latency_test_tpu():
         "connection": Ssh("zhongrg@zhongrg-All-Series"),
         "inference_sdk": Tpu(),
         "sampler": SimpleConvSampler({}),
+        "resume_from": ["", "Conv", 14, 64, 644, "", "", 2, 1]
     })
     tester.run({})
 
@@ -155,7 +158,7 @@ def layer_latency_test_rknn():
             "rknn_target": None,
         }),
         "sampler": SimpleConvSampler({}),
-        "resume_from": ["", "Conv", 56, 268, 16, "", "", 2, 3]
+        "resume_from": ["", "Conv", 224, 64, 64, "", "", 2, 5]
     })
     tester.run({})
 
