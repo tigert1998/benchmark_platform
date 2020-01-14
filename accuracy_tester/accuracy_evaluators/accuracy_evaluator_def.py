@@ -9,7 +9,7 @@ class AccuracyEvaluatorDef(ClassWithSettings):
     def default_settings():
         return {
             **ClassWithSettings.default_settings(),
-            "preprocess": lambda image: image,
+            "preprocess": None,
             "index_to_label": lambda index: str(index)
         }
 

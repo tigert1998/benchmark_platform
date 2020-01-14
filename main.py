@@ -1,5 +1,5 @@
 from glob import glob
-from utils.preprocess import InceptionPreprocess, VggPreprocess
+from utils.preprocess import InceptionPreprocess, InceptionPreprocessTF
 import numpy as np
 
 from testers.tester_impls.test_conv import TestConv
@@ -23,7 +23,7 @@ def accuracy_test_rknn():
             "validation_set_path": "C:/Users/v-xiat/Downloads/imagenet/validation",
         }),
         "accuracy_evaluator": Rknn({
-            "preprocess": lambda image: InceptionPreprocess.resize(image, 224),
+            "preprocess": lambda image_path: InceptionPreprocess.resize(image_path, 224),
             "index_to_label": lambda index: str(index + 1)
         })
     })
@@ -37,14 +37,13 @@ def accuracy_test_tflite():
 
     tester = AccuracyTester({
         "zip_size": 100,
-        "dataset_size": 100,
         "model_paths": glob("C:/Users/v-xiat/Microsoft/Shihao Han (FA Talent) - ChannelNas/models/tflite/efficientnet/efficientnet_b0.tflite"),
         "data_preparer": AndroidDataPreparer({
             "labels_path": "C:/Users/v-xiat/Downloads/imagenet/val_labels.txt",
             "validation_set_path": "C:/Users/v-xiat/Downloads/imagenet/validation",
             "connection": Adb("5e6fecf", False),
             "skip_dataset_preparation": True,
-            "skip_models_preparation": False
+            "skip_models_preparation": True
         }),
         "accuracy_evaluator": Tflite({
             # "connection": Adb("5e6fecf", False),
@@ -56,7 +55,7 @@ def accuracy_test_tflite():
             },
 
             # on host
-            "preprocess": lambda image: InceptionPreprocess.preprocess(image, 224),
+            "preprocess": lambda image_path: InceptionPreprocessTF.preprocess(image_path, 224),
             "index_to_label": lambda index: str(index + 1)
         })
     })
@@ -100,7 +99,7 @@ def accuracy_test_pb():
             "validation_set_path": "C:/Users/v-xiat/Downloads/imagenet/validation",
         }),
         "accuracy_evaluator": TfEvaluator({
-            "preprocess": lambda image: InceptionPreprocess.preprocess(image, 224),
+            "preprocess": lambda image_path: InceptionPreprocess.preprocess(image_path, 224),
             "index_to_label": lambda index: str(index + 1)
         })
     })

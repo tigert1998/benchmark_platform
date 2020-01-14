@@ -5,15 +5,15 @@ import tensorflow as tf
 from .utils import shufflenetv2_stages, merge_profiles, op_name_to_model_name, align
 from .sampler import Sampler
 
-import mobilenet.mobilenet_v2 as mobilenet_v2
-import mobilenet.conv_blocks as ops
-
 
 def _get_conv_profiles():
     """Get convolution profiles from ShuffleNetV1, ShuffleNetV2 and MobileNetV2
     Returns:
         [[input_imsize, cin, ksize, cout, stride, [names]]]
     """
+
+    import mobilenet.mobilenet_v2 as mobilenet_v2
+    import mobilenet.conv_blocks as ops
 
     profiles = [
         [224, 3, 3, 24, 2, ["shufflenetv1_conv_0", "shufflenetv2_conv_0"]],

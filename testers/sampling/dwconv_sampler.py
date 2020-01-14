@@ -2,9 +2,6 @@ from .sampler import Sampler
 
 from .utils import shufflenetv1_stages, shufflenetv2_stages, merge_profiles, op_name_to_model_name, align
 
-import mobilenet.mobilenet_v2 as mobilenet_v2
-import mobilenet.conv_blocks as ops
-
 import itertools
 
 
@@ -13,6 +10,10 @@ def _get_dwconv_profiles():
     Returns:
         [[input_imsize, cin, ksize, stride, [names]]]
     """
+
+    import mobilenet.mobilenet_v2 as mobilenet_v2
+    import mobilenet.conv_blocks as ops
+
     profiles = []
 
     current_shape = [224, 3]

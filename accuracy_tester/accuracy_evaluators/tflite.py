@@ -116,8 +116,7 @@ class Tflite(AccuracyEvaluatorDef):
             bar.update(0)
 
             for i, (image_path, image_label) in enumerate(gen):
-                image = cv2.imread(image_path)[:, :, ::-1]
-                image = self.settings["preprocess"](image)
+                image = self.settings["preprocess"](image_path)
                 interpreter.set_tensor(input_details[0]["index"], image)
                 interpreter.invoke()
                 outputs = interpreter.get_tensor(output_details[0]["index"])
@@ -129,6 +128,8 @@ class Tflite(AccuracyEvaluatorDef):
                 )
 
                 bar.update(i + 1)
+
+            print()
 
         return model_tps
 

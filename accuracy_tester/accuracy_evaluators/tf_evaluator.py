@@ -33,8 +33,7 @@ class TfEvaluator(AccuracyEvaluatorDef):
 
             with tf.Session(graph=graph) as sess:
                 for i, (image_path, image_label) in enumerate(gen):
-                    image = cv2.imread(image_path)[:, :, ::-1]
-                    image = self.settings["preprocess"](image)
+                    image = self.settings["preprocess"](image_path)
                     outputs = sess.run(
                         output_ops[0].outputs[0],
                         feed_dict={
