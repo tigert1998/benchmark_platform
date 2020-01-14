@@ -43,12 +43,13 @@ class AccuracyTester(ClassWithSettings):
             dir_name = self.settings["dirname"]
         else:
             dir_name = self.brief()
+        dir_name = "test_results/{}".format(dir_name)
         if not os.path.isdir(dir_name):
             if os.path.exists(dir_name):
                 print("os.path.exists(\"{}\")".format(dir_name))
                 exit()
             else:
-                os.mkdir(dir_name)
+                os.makedirs(dir_name)
         os.chdir(dir_name)
 
     def _evaluate_models(self, model_paths):
@@ -82,17 +83,17 @@ class AccuracyTester(ClassWithSettings):
             )
 
             for model_basename in map(os.path.basename, model_paths):
-                model_accuracies[model_basename] += tmp[model_basename] * num_images
+                model_accuracies[model_basename] += tmp[model_basename]
                 print("[{}] accumulated_accuracy = {}".format(
                     model_basename,
-                    model_accuracies[model_basename] / (start + num_images))
+                    100.0 * model_accuracies[model_basename] / (start + num_images))
                 )
 
             bar.update(start + num_images)
             print()
 
         for model_basename in model_accuracies:
-            model_accuracies[model_basename] /= dataset_size
+            model_accuracies[model_basename] *= 100 / dataset_size
         return model_accuracies
 
     @staticmethod
@@ -112,8 +113,7 @@ class AccuracyTester(ClassWithSettings):
             data = [model_basename] + list(map(str, list(accuracies)))
             csv_writer.update_data(
                 "data.csv",
-                titles=titles,
-                data=data,
+                data=dict(zip(titles, data)),
                 is_resume=False,
             )
 

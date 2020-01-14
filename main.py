@@ -164,4 +164,4 @@ def layer_latency_test_rknn():
 
 
 if __name__ == '__main__':
-    layer_latency_test_tpu()
+    accuracy_test_pb()

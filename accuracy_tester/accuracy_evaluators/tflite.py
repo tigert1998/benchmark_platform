@@ -3,7 +3,7 @@ import numpy as np
 import itertools
 
 from .accuracy_evaluator_def import AccuracyEvaluatorDef
-from utils.utils import concatenate_flags
+from utils.utils import concatenate_flags, rm_ext
 from utils.connection import Connection
 from .utils import evaluate_outputs, count_dataset_size, construct_evaluating_progressbar
 
@@ -51,14 +51,14 @@ class Tflite(AccuracyEvaluatorDef):
         ground_truth_images_path = \
             "{}/{}".format(guest_path, "ground_truth_images")
 
-        model_accuracies = {}
+        model_tps = {}
+        dataset_size = count_dataset_size(image_path_label_gen)
 
         for model_basename in map(os.path.basename, model_paths):
-            model_basename_noext = ".".join(model_basename.split(".")[:-1])
             model_output_labels = "{}_output_labels.txt".format(
-                model_basename_noext)
+                rm_ext(model_basename))
             output_file_path = "{}/{}_{}".format(
-                guest_path, model_basename, "output.csv")
+                guest_path, rm_ext(model_basename), "output.csv")
 
             cmd = "{} {}".format(
                 self.settings["imagenet_accuracy_eval_path"],
@@ -82,24 +82,25 @@ class Tflite(AccuracyEvaluatorDef):
             with open(os.path.basename(output_file_path), "r") as f:
                 for line in f:
                     pass
-                model_accuracies[model_basename] =\
-                    np.array(list(map(float, line.split(','))))
+                accuracies = np.array(list(map(float, line.split(','))))
                 print("[{}] current_accuracy = {}".format(
                     model_basename,
-                    model_accuracies[model_basename])
-                )
+                    accuracies
+                ))
+                model_tps[model_basename] = np.round(
+                    accuracies * dataset_size).astype(np.int32)
 
-        return model_accuracies
+        return model_tps
 
     def _eval_on_host(self, model_paths, image_path_label_gen):
-        model_accuracies = {}
+        model_tps = {}
 
         image_path_label_gen, dataset_size = \
             count_dataset_size(image_path_label_gen)
 
         for model_path in model_paths:
             model_basename = os.path.basename(model_path)
-            model_accuracies[model_basename] = np.zeros((10,))
+            model_tps[model_basename] = np.zeros((10,), dtype=np.int32)
 
             image_path_label_gen, gen = itertools.tee(image_path_label_gen)
 
@@ -119,7 +120,7 @@ class Tflite(AccuracyEvaluatorDef):
                 interpreter.set_tensor(input_details[0]["index"], image)
                 interpreter.invoke()
                 outputs = interpreter.get_tensor(output_details[0]["index"])
-                model_accuracies[model_basename] += \
+                model_tps[model_basename] += \
                     evaluate_outputs(
                         outputs[0], 10,
                         self.settings["index_to_label"],
@@ -128,9 +129,7 @@ class Tflite(AccuracyEvaluatorDef):
 
                 bar.update(i + 1)
 
-            model_accuracies[model_basename] *= 100 / dataset_size
-
-        return model_accuracies
+        return model_tps
 
     def evaluate_models(self, model_paths, image_path_label_gen):
         if isinstance(self.connection, Connection):

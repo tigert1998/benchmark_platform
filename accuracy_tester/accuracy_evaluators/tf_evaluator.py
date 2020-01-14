@@ -12,7 +12,7 @@ import cv2
 
 class TfEvaluator(AccuracyEvaluatorDef):
     def evaluate_models(self, model_paths, image_path_label_gen):
-        model_accuracies = {}
+        model_tps = {}
 
         image_path_label_gen, dataset_size = \
             count_dataset_size(image_path_label_gen)
@@ -21,7 +21,7 @@ class TfEvaluator(AccuracyEvaluatorDef):
             image_path_label_gen, gen = itertools.tee(image_path_label_gen)
 
             model_basename = os.path.basename(model_path)
-            model_accuracies[model_basename] = np.zeros((10,))
+            model_tps[model_basename] = np.zeros((10,), dtype=np.int32)
 
             bar = construct_evaluating_progressbar(
                 dataset_size, model_basename)
@@ -41,7 +41,7 @@ class TfEvaluator(AccuracyEvaluatorDef):
                             input_ops[0].outputs[0]: image
                         }
                     )
-                    model_accuracies[model_basename] += \
+                    model_tps[model_basename] += \
                         evaluate_outputs(
                             outputs[0], 10, self.settings["index_to_label"], image_label)
                     bar.update(i + 1)
@@ -49,9 +49,9 @@ class TfEvaluator(AccuracyEvaluatorDef):
             # progression bar ends
             print()
 
-            model_accuracies[model_basename] = \
-                model_accuracies[model_basename] * 100 / dataset_size
             print("[{}] current_accuracy = {}".format(
-                model_basename, model_accuracies[model_basename]))
+                model_basename,
+                model_tps[model_basename] * 100.0 / dataset_size
+            ))
 
-        return model_accuracies
+        return model_tps

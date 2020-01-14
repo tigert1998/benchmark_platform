@@ -21,6 +21,6 @@ class AccuracyEvaluatorDef(ClassWithSettings):
             image_path_label_gen: A generator which generates (image_path, image_label)
 
         Returns:
-            Dict[model_basename, accuracies]
+            Dict[model_basename, TPs]
         """
         pass

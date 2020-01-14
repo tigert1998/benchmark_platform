@@ -27,7 +27,7 @@ class Rknn(AccuracyEvaluatorDef):
         return "{}_{}".format(super().brief(), self.settings["rknn_target"])
 
     def evaluate_models(self, model_paths, image_path_label_gen):
-        model_accuracies = {}
+        model_tps = {}
 
         image_path_label_gen, dataset_size = \
             count_dataset_size(image_path_label_gen)
@@ -36,7 +36,7 @@ class Rknn(AccuracyEvaluatorDef):
             image_path_label_gen, gen = itertools.tee(image_path_label_gen)
 
             model_basename = os.path.basename(model_path)
-            model_accuracies[model_basename] = np.zeros((10,))
+            model_tps[model_basename] = np.zeros((10,), dtype=np.int32)
 
             rknn = RKNN()
 
@@ -53,7 +53,7 @@ class Rknn(AccuracyEvaluatorDef):
                 image = self.settings["preprocess"](image)
                 outputs = rknn.inference(inputs=[image])
                 # assume that image_label is the index of output activation
-                model_accuracies[model_basename] += \
+                model_tps[model_basename] += \
                     evaluate_outputs(
                         outputs[0][0], 10, self.settings["index_to_label"], image_label)
 
@@ -62,11 +62,10 @@ class Rknn(AccuracyEvaluatorDef):
             # progression bar ends
             print()
 
-            model_accuracies[model_basename] = \
-                model_accuracies[model_basename] * 100 / dataset_size
             print("[{}] current_accuracy = {}".format(
-                model_basename, model_accuracies[model_basename]))
+                model_basename,
+                model_tps[model_basename] * 100 / dataset_size))
 
             rknn.release()
 
-        return model_accuracies
+        return model_tps
