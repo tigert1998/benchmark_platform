@@ -36,9 +36,9 @@ def accuracy_test_tflite():
     from accuracy_tester.accuracy_evaluators.tflite import Tflite
 
     tester = AccuracyTester({
-        "zip_size": 500,
-        "dirname": "test_efficientnet_b0",
-        "model_paths": glob("C:/Users/v-xiat/repos/efficientnet_b1_int_quant.tflite"),
+        "zip_size": 100,
+        "dataset_size": 100,
+        "model_paths": glob("C:/Users/v-xiat/Microsoft/Shihao Han (FA Talent) - ChannelNas/models/tflite/efficientnet/efficientnet_b0.tflite"),
         "data_preparer": AndroidDataPreparer({
             "labels_path": "C:/Users/v-xiat/Downloads/imagenet/val_labels.txt",
             "validation_set_path": "C:/Users/v-xiat/Downloads/imagenet/validation",
@@ -47,17 +47,16 @@ def accuracy_test_tflite():
             "skip_models_preparation": False
         }),
         "accuracy_evaluator": Tflite({
-            "eval_on_host": False,
+            # "connection": Adb("5e6fecf", False),
 
             # on guest
-            "connection": Adb("5e6fecf", False),
             "imagenet_accuracy_eval_path": "/data/local/tmp/tf-r2.1-60afa4e/imagenet_accuracy_eval",
             "imagenet_accuracy_eval_flags": {
-                "num_images": 500,
+                "num_images": 100,
             },
 
-            # on guest
-            "preprocess": lambda image: InceptionPreprocess.resize(image, 224),
+            # on host
+            "preprocess": lambda image: InceptionPreprocess.preprocess(image, 224),
             "index_to_label": lambda index: str(index + 1)
         })
     })
@@ -164,4 +163,4 @@ def layer_latency_test_rknn():
 
 
 if __name__ == '__main__':
-    accuracy_test_pb()
+    accuracy_test_tflite()

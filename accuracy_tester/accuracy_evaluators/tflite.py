@@ -16,7 +16,7 @@ class Tflite(AccuracyEvaluatorDef):
     def default_settings():
         return {
             **AccuracyEvaluatorDef.default_settings(),
-            "connection": Connection()
+            "connection": Connection(),
 
             # on guest
             "imagenet_accuracy_eval_path": None,
@@ -52,7 +52,8 @@ class Tflite(AccuracyEvaluatorDef):
             "{}/{}".format(guest_path, "ground_truth_images")
 
         model_tps = {}
-        dataset_size = count_dataset_size(image_path_label_gen)
+        image_path_label_gen, dataset_size = count_dataset_size(
+            image_path_label_gen)
 
         for model_basename in map(os.path.basename, model_paths):
             model_output_labels = "{}_output_labels.txt".format(
@@ -88,7 +89,7 @@ class Tflite(AccuracyEvaluatorDef):
                     accuracies
                 ))
                 model_tps[model_basename] = np.round(
-                    accuracies * dataset_size).astype(np.int32)
+                    accuracies / 100. * dataset_size).astype(np.int32)
 
         return model_tps
 
@@ -132,7 +133,7 @@ class Tflite(AccuracyEvaluatorDef):
         return model_tps
 
     def evaluate_models(self, model_paths, image_path_label_gen):
-        if isinstance(self.connection, Connection):
+        if type(self.connection) is Connection:
             return self._eval_on_host(model_paths, image_path_label_gen)
         else:
             return self._eval_on_guest(model_paths, image_path_label_gen)
