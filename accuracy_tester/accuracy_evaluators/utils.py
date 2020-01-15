@@ -4,7 +4,7 @@ import progressbar
 
 def evaluate_outputs(activations, top_n, index_to_label, answer):
     assert activations.shape == (1001,) or activations.shape == (1000,)
-    indices = map(
+    indices = list(map(
         lambda pair: pair[0],
         itertools.islice(
             sorted(
@@ -13,7 +13,7 @@ def evaluate_outputs(activations, top_n, index_to_label, answer):
             ),
             top_n
         )
-    )
+    ))
     ret = []
     current = False
     for index in indices:

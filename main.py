@@ -1,5 +1,5 @@
 from glob import glob
-from utils.preprocess import InceptionPreprocess, InceptionPreprocessTF
+from utils.preprocess import InceptionPreprocess, TPURepoPreprocess
 import numpy as np
 
 from testers.tester_impls.test_conv import TestConv
@@ -35,9 +35,13 @@ def accuracy_test_tflite():
     from accuracy_tester.data_preparers.android_data_preparer import AndroidDataPreparer
     from accuracy_tester.accuracy_evaluators.tflite import Tflite
 
+    preprocessor = TPURepoPreprocess(224, False)
     tester = AccuracyTester({
-        "zip_size": 100,
-        "model_paths": glob("C:/Users/v-xiat/Microsoft/Shihao Han (FA Talent) - ChannelNas/models/tflite/efficientnet/efficientnet_b0.tflite"),
+        "zip_size": 50000,
+        "dirname": "mnasnet_a1",
+        "model_paths": [
+            "C:/Users/v-xiat/repos/exported_models/mnasnet-a1/mnasnet-a1.tflite",
+        ],
         "data_preparer": AndroidDataPreparer({
             "labels_path": "C:/Users/v-xiat/Downloads/imagenet/val_labels.txt",
             "validation_set_path": "C:/Users/v-xiat/Downloads/imagenet/validation",
@@ -55,7 +59,7 @@ def accuracy_test_tflite():
             },
 
             # on host
-            "preprocess": lambda image_path: InceptionPreprocessTF.preprocess(image_path, 224),
+            "preprocess": lambda image_path: preprocessor.preprocess(image_path),
             "index_to_label": lambda index: str(index + 1)
         })
     })
@@ -135,7 +139,7 @@ def layer_latency_test_tpu():
         "connection": Ssh("zhongrg@zhongrg-All-Series"),
         "inference_sdk": Tpu(),
         "sampler": SimpleConvSampler({}),
-        "resume_from": ["", "Conv", 14, 64, 644, "", "", 2, 1]
+        "resume_from": ["", "Conv", 14, 320, 692, "", "", 1, 1]
     })
     tester.run({})
 

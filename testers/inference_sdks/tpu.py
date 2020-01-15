@@ -18,12 +18,11 @@ class Tpu(InferenceSdk):
             converter = tf.lite.TFLiteConverter.from_session(
                 sess, inputs, outputs)
 
-        converter.optimizations = [tf.lite.Optimize.DEFAULT]
-
         def representative_data_gen():
             yield [np.random.randint(0, 256, inputs[0].get_shape().as_list()).astype(np.float32)]
 
         converter.representative_dataset = representative_data_gen
+        converter.optimizations = [tf.lite.Optimize.DEFAULT]
         converter.target_spec.supported_ops = [
             tf.lite.OpsSet.TFLITE_BUILTINS_INT8]
         converter.inference_input_type = tf.uint8
