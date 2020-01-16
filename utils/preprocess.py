@@ -61,9 +61,10 @@ class TPURepoPreprocess(Preprocess):
     MEAN_RGB = [0.485 * 255, 0.456 * 255, 0.406 * 255]
     STDDEV_RGB = [0.229 * 255, 0.224 * 255, 0.225 * 255]
 
-    def __init__(self, imsize: int, is_inception: bool):
+    def __init__(self, imsize: int, is_inception: bool, is_resize_bicubic: bool):
         super().__init__(imsize)
         self.is_inception = is_inception
+        self.is_resize_bicubic = is_resize_bicubic
         self._construct_tf_graph()
 
     def _construct_tf_graph(self):
@@ -91,7 +92,11 @@ class TPURepoPreprocess(Preprocess):
             ])
             image = tf.image.decode_and_crop_jpeg(
                 self.image_bytes, crop_window, channels=3)
-            self.ret_resize = tf.image.resize_bicubic(
+            if self.is_resize_bicubic:
+                resize_func = tf.image.resize_bicubic
+            else:
+                resize_func = tf.image.resize
+            self.ret_resize = resize_func(
                 [image], [self.imsize, self.imsize])[0]
 
             if self.is_inception:

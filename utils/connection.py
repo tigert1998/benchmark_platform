@@ -18,6 +18,11 @@ class Connection(ClassWithSettings):
     def brief(self):
         return "local"
 
+    def snapshot(self):
+        return {
+            "remark": "local"
+        }
+
 
 class Ssh(Connection):
     def __init__(self, address):

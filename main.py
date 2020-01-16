@@ -35,9 +35,10 @@ def accuracy_test_tflite():
     from accuracy_tester.data_preparers.android_data_preparer import AndroidDataPreparer
     from accuracy_tester.accuracy_evaluators.tflite import Tflite
 
-    preprocessor = TPURepoPreprocess(224, False)
+    preprocessor = TPURepoPreprocess(224, False, False)
     tester = AccuracyTester({
         "zip_size": 50000,
+        # "dataset_size": 1000,
         "dirname": "mnasnet_a1",
         "model_paths": [
             "C:/Users/v-xiat/repos/exported_models/mnasnet-a1/mnasnet-a1.tflite",
@@ -122,7 +123,7 @@ def layer_latency_test_tflite():
         "sampler": SimpleConvSampler({
             # "filter": lambda sample: sample[2: 5] == [7, 960, 960]
         }),
-        # "resume_from": ["", "Conv", 112, 102, 320, "", "", 2, 1]
+        "resume_from": ["", "Conv", 56, 516, 516, "", "", 1, 3]
     })
     tester.run({
         "use_gpu": True,
@@ -139,7 +140,7 @@ def layer_latency_test_tpu():
         "connection": Ssh("zhongrg@zhongrg-All-Series"),
         "inference_sdk": Tpu(),
         "sampler": SimpleConvSampler({}),
-        "resume_from": ["", "Conv", 14, 320, 692, "", "", 1, 1]
+        # "resume_from": ["", "Conv", 14, 320, 692, "", "", 1, 1]
     })
     tester.run({})
 
