@@ -116,7 +116,7 @@ class Tflite(AccuracyEvaluatorDef):
             bar.update(0)
 
             for i, (image_path, image_label) in enumerate(gen):
-                image = self.settings["preprocess"](image_path)
+                image = self.settings["preprocess"].execute(image_path)
                 interpreter.set_tensor(input_details[0]["index"], image)
                 interpreter.invoke()
                 outputs = interpreter.get_tensor(output_details[0]["index"])

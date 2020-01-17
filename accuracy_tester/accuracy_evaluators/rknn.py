@@ -49,7 +49,7 @@ class Rknn(AccuracyEvaluatorDef):
             bar.update(0)
 
             for i, (image_path, image_label) in enumerate(gen):
-                image = self.settings["preprocess"](image_path)
+                image = self.settings["preprocess"].execute(image_path)
                 outputs = rknn.inference(inputs=[image])
                 # assume that image_label is the index of output activation
                 model_tps[model_basename] += \

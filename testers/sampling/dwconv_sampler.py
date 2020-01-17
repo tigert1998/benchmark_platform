@@ -85,10 +85,21 @@ class DwconvSampler(Sampler):
 
 
 class SimpleDwconvSampler(DwconvSampler):
+    @staticmethod
+    def default_settings():
+        return Sampler.default_settings()
+
     def _get_samples_without_filter(self):
-        channel_step = self.settings["channel_step"]
-        for input_imsize in [7, 14, 28, 56, 112, 224]:
-            for cin in range(4, 1000 + channel_step, channel_step):
+        configs = {}
+        channel_step = 4
+        for imsize in [7, 14, 28, 56]:
+            configs[imsize] = list(
+                range(16, 1000 + channel_step, channel_step))
+        channel_step = 2
+        configs[112] = list(range(12, 320 + channel_step, channel_step))
+        configs[224] = [3] + list(range(4, 64 + channel_step, channel_step))
+        for imsize in sorted(configs.keys()):
+            for cin in configs[imsize]:
                 for stride in [1, 2]:
-                    for kernel_size in [3, 5, 7]:
-                        yield ["", "DWConv", input_imsize, cin, cin, "", "", stride, kernel_size]
+                    for ksize in [3, 5, 7]:
+                        yield ["", "DWConv", imsize, cin, cin, "", "", stride, ksize]

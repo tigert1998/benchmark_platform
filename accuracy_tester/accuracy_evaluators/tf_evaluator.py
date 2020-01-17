@@ -33,7 +33,7 @@ class TfEvaluator(AccuracyEvaluatorDef):
 
             with tf.Session(graph=graph) as sess:
                 for i, (image_path, image_label) in enumerate(gen):
-                    image = self.settings["preprocess"](image_path)
+                    image = self.settings["preprocess"].execute(image_path)
                     outputs = sess.run(
                         output_ops[0].outputs[0],
                         feed_dict={
@@ -42,7 +42,7 @@ class TfEvaluator(AccuracyEvaluatorDef):
                     )
                     model_tps[model_basename] += \
                         evaluate_outputs(
-                            outputs[0], 10, self.settings["index_to_label"], image_label)
+                            outputs.flatten(), 10, self.settings["index_to_label"], image_label)
                     bar.update(i + 1)
 
             # progression bar ends

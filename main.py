@@ -1,5 +1,5 @@
 from glob import glob
-from utils.preprocess import InceptionPreprocess, TPURepoPreprocess
+from utils.preprocess import InceptionPreprocessor, TFRepoPreprocessor, Preprocess
 import numpy as np
 
 from testers.tester_impls.test_conv import TestConv
@@ -35,7 +35,6 @@ def accuracy_test_tflite():
     from accuracy_tester.data_preparers.android_data_preparer import AndroidDataPreparer
     from accuracy_tester.accuracy_evaluators.tflite import Tflite
 
-    preprocessor = TPURepoPreprocess(224, False, False)
     tester = AccuracyTester({
         "zip_size": 50000,
         # "dataset_size": 1000,
@@ -60,7 +59,15 @@ def accuracy_test_tflite():
             },
 
             # on host
-            "preprocess": lambda image_path: preprocessor.preprocess(image_path),
+            "preprocess": Preprocess({
+                "preprocessor": TFRepoPreprocessor({
+                    "use_crop_padding": True,
+                    "imsize": 224,
+                    "resize_func": "resize",
+                    "is_inception": False
+                }),
+                "func": "preprocess"
+            }),
             "index_to_label": lambda index: str(index + 1)
         })
     })
@@ -97,15 +104,24 @@ def accuracy_test_pb():
     from accuracy_tester.accuracy_evaluators.tf_evaluator import TfEvaluator
 
     tester = AccuracyTester({
-        "zip_size": 50000,
-        "model_paths": ["C:/Users/v-xiat/Microsoft/Shihao Han (FA Talent) - ChannelNas/models/pb/efficientnet_b0_patched.pb"],
+        "zip_size": 20,
+        "dirname": "test",
+        "model_paths": ["C:/Users/v-xiat/repos/exported_models/resnet_v2_50.pb"],
         "data_preparer": DataPreparerDef({
             "labels_path": "C:/Users/v-xiat/Downloads/imagenet/val_labels.txt",
             "validation_set_path": "C:/Users/v-xiat/Downloads/imagenet/validation",
         }),
         "accuracy_evaluator": TfEvaluator({
-            "preprocess": lambda image_path: InceptionPreprocess.preprocess(image_path, 224),
-            "index_to_label": lambda index: str(index + 1)
+            "preprocess": Preprocess({
+                "preprocessor": TFRepoPreprocessor({
+                    "use_crop_padding": False,
+                    "imsize": 299,
+                    "resize_func": "resize_bilinear",
+                    "is_inception": True
+                }),
+                "func": "preprocess"
+            }),
+            "index_to_label": lambda index: str(index)
         })
     })
     tester.run()
@@ -115,15 +131,15 @@ def layer_latency_test_tflite():
     from testers.inference_sdks.tflite_modified import TfliteModified
     from testers.inference_sdks.tflite import Tflite
 
-    tester = TestConv({
+    tester = TestDwconv({
         "connection": Adb("5e6fecf", True),
         "inference_sdk": TfliteModified({
             "benchmark_model_path": "/data/local/tmp/tf-r2.1-60afa4e/benchmark_model_modified",
         }),
-        "sampler": SimpleConvSampler({
+        "sampler": SimpleDwconvSampler({
             # "filter": lambda sample: sample[2: 5] == [7, 960, 960]
         }),
-        "resume_from": ["", "Conv", 56, 516, 516, "", "", 1, 3]
+        # "resume_from": ["", "DWConv", 56, 516, 516, "", "", 1, 3]
     })
     tester.run({
         "use_gpu": True,
@@ -140,7 +156,7 @@ def layer_latency_test_tpu():
         "connection": Ssh("zhongrg@zhongrg-All-Series"),
         "inference_sdk": Tpu(),
         "sampler": SimpleConvSampler({}),
-        # "resume_from": ["", "Conv", 14, 320, 692, "", "", 1, 1]
+        "resume_from": ["", "Conv", 7, 320, 960, "", "", 2, 3]
     })
     tester.run({})
 
@@ -167,4 +183,4 @@ def layer_latency_test_rknn():
 
 
 if __name__ == '__main__':
-    accuracy_test_tflite()
+    accuracy_test_pb()

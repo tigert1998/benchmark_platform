@@ -1,10 +1,20 @@
 import numpy as np
 import cv2
 
+from .class_with_settings import ClassWithSettings
 
-class Preprocess:
-    def __init__(self, imsize: int):
-        self.imsize = imsize
+
+class Preprocessor(ClassWithSettings):
+    @staticmethod
+    def default_settings():
+        return {
+            **ClassWithSettings.default_settings(),
+            "imsize": 224
+        }
+
+    def __init__(self, settings={}):
+        super().__init__(settings)
+        self.imsize = self.settings["imsize"]
 
     @staticmethod
     def imread(image_path: str) -> np.ndarray:
@@ -39,13 +49,13 @@ class Preprocess:
         ]
 
 
-class InceptionPreprocess(Preprocess):
+class InceptionPreprocessor(Preprocessor):
     CROPPING_FRACTION = 0.875
 
     def _resize(self, image: np.ndarray, dtype) -> np.ndarray:
         height, width, _ = image.shape
         crop_size = int(min(height, width) * self.CROPPING_FRACTION)
-        image = Preprocess.central_crop(image, crop_size)
+        image = Preprocessor.central_crop(image, crop_size)
         image = cv2.resize(
             image.astype(np.float32), (self.imsize, self.imsize),
             interpolation=cv2.INTER_CUBIC
@@ -56,15 +66,36 @@ class InceptionPreprocess(Preprocess):
         return (image * 2.0 / 255 - 1.0).astype(np.float32)
 
 
-class TPURepoPreprocess(Preprocess):
+class TFRepoPreprocessor(Preprocessor):
     CROP_PADDING = 32
+    CENTRAL_FRACTION = 0.875
     MEAN_RGB = [0.485 * 255, 0.456 * 255, 0.406 * 255]
     STDDEV_RGB = [0.229 * 255, 0.224 * 255, 0.225 * 255]
 
-    def __init__(self, imsize: int, is_inception: bool, is_resize_bicubic: bool):
-        super().__init__(imsize)
-        self.is_inception = is_inception
-        self.is_resize_bicubic = is_resize_bicubic
+    @staticmethod
+    def default_settings():
+        return {
+            **Preprocessor.default_settings(),
+            "use_crop_padding": True,
+            "resize_func": "resize_bicubic",
+            "use_inception": True,
+        }
+
+    def __init__(self, settings={}):
+        super().__init__(settings)
+        import tensorflow as tf
+
+        self.use_crop_padding = self.settings["use_crop_padding"]
+        if self.settings["resize_func"] == "resize_bicubic":
+            self.resize_func = tf.image.resize_bicubic
+        elif self.settings["resize_func"] == "resize":
+            self.resize_func = tf.image.resize
+        elif self.settings["resize_func"] == "resize_bilinear":
+            self.resize_func = tf.image.resize_bilinear
+        else:
+            assert False
+        self.use_inception = self.settings["use_inception"]
+
         self._construct_tf_graph()
 
     def _construct_tf_graph(self):
@@ -75,31 +106,34 @@ class TPURepoPreprocess(Preprocess):
             self.ret_imread = tf.image.decode_jpeg(
                 self.image_bytes, channels=3)
 
-            shape = tf.image.extract_jpeg_shape(self.image_bytes)
-            image_height = shape[0]
-            image_width = shape[1]
-
-            padded_center_crop_size = tf.cast(
-                ((self.imsize / (self.imsize + self.CROP_PADDING)) *
-                 tf.cast(tf.minimum(image_height, image_width), tf.float32)),
-                tf.int32)
-
-            offset_height = ((image_height - padded_center_crop_size) + 1) // 2
-            offset_width = ((image_width - padded_center_crop_size) + 1) // 2
-            crop_window = tf.stack([
-                offset_height, offset_width,
-                padded_center_crop_size, padded_center_crop_size
-            ])
-            image = tf.image.decode_and_crop_jpeg(
-                self.image_bytes, crop_window, channels=3)
-            if self.is_resize_bicubic:
-                resize_func = tf.image.resize_bicubic
+            if self.use_crop_padding:
+                shape = tf.image.extract_jpeg_shape(self.image_bytes)
+                image_height = shape[0]
+                image_width = shape[1]
+                padded_center_crop_size = tf.cast(
+                    ((self.imsize / (self.imsize + self.CROP_PADDING)) *
+                     tf.cast(tf.minimum(image_height, image_width), tf.float32)),
+                    tf.int32)
+                offset_height = (
+                    (image_height - padded_center_crop_size) + 1) // 2
+                offset_width = (
+                    (image_width - padded_center_crop_size) + 1) // 2
+                crop_window = tf.stack([
+                    offset_height, offset_width,
+                    padded_center_crop_size, padded_center_crop_size
+                ])
+                image = tf.image.decode_and_crop_jpeg(
+                    self.image_bytes, crop_window, channels=3)
             else:
-                resize_func = tf.image.resize
-            self.ret_resize = resize_func(
+                image = tf.image.central_crop(
+                    self.ret_imread,
+                    central_fraction=self.CENTRAL_FRACTION
+                )
+
+            self.ret_resize = self.resize_func(
                 [image], [self.imsize, self.imsize])[0]
 
-            if self.is_inception:
+            if self.use_inception:
                 self.ret_preprocess = self.ret_resize * 2.0 / 255 - 1.0
             else:
                 self.ret_preprocess = (
@@ -131,3 +165,22 @@ class TPURepoPreprocess(Preprocess):
 
     def preprocess(self, image_path: str, dtype=np.float32) -> np.ndarray:
         return np.expand_dims(self._run_op(self.ret_preprocess, image_path, dtype), 0)
+
+
+class Preprocess(ClassWithSettings):
+    @staticmethod
+    def default_settings():
+        return {
+            **ClassWithSettings.default_settings(),
+            "preprocessor": Preprocessor(),
+            "func": "preprocess",
+            "args": []
+        }
+
+    def execute(self, image_path: str):
+        return getattr(
+            self.settings["preprocessor"],
+            self.settings["func"])(
+            image_path,
+            *self.settings["args"]
+        )
