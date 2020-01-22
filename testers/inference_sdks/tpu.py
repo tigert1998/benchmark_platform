@@ -19,10 +19,11 @@ class Tpu(InferenceSdk):
                 sess, inputs, outputs)
 
         def representative_data_gen():
-            yield [np.random.randint(0, 256, inputs[0].get_shape().as_list()).astype(np.float32)]
+            for _ in range(10):
+                yield [np.random.randint(0, 256, inputs[0].get_shape().as_list()).astype(np.float32)]
 
-        converter.representative_dataset = representative_data_gen
         converter.optimizations = [tf.lite.Optimize.DEFAULT]
+        converter.representative_dataset = representative_data_gen
         converter.target_spec.supported_ops = [
             tf.lite.OpsSet.TFLITE_BUILTINS_INT8]
         converter.inference_input_type = tf.uint8
@@ -44,6 +45,7 @@ class Tpu(InferenceSdk):
         )
         print(cmd)
         result_str = connection.shell(cmd)
+        print(result_str)
         avg_ms = rfind_assign_float(result_str, "avg")
         std_ms = rfind_assign_float(result_str, "std")
         return InferenceResult(avg_ms=avg_ms, std_ms=std_ms, profiling_details=None, layerwise_info=None)

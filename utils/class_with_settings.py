@@ -21,8 +21,7 @@ class ClassWithSettings:
     def _check_settings_legality(self, settings):
         default_settings = self.default_settings()
         for key in settings:
-            if key not in default_settings:
-                warnings.warn("invalid key in settings: {}".format(key))
+            assert key in default_settings
 
     def snapshot(self):
         res = {}

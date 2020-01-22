@@ -87,11 +87,11 @@ class TFRepoPreprocessor(Preprocessor):
 
         self.use_crop_padding = self.settings["use_crop_padding"]
         if self.settings["resize_func"] == "resize_bicubic":
-            self.resize_func = tf.image.resize_bicubic
+            self.resize_func = tf.compat.v1.image.resize_bicubic
         elif self.settings["resize_func"] == "resize":
-            self.resize_func = tf.image.resize
+            self.resize_func = tf.compat.v1.image.resize
         elif self.settings["resize_func"] == "resize_bilinear":
-            self.resize_func = tf.image.resize_bilinear
+            self.resize_func = tf.compat.v1.image.resize_bilinear
         else:
             assert False
         self.use_inception = self.settings["use_inception"]

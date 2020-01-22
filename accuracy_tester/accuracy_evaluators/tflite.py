@@ -122,7 +122,7 @@ class Tflite(AccuracyEvaluatorDef):
                 outputs = interpreter.get_tensor(output_details[0]["index"])
                 model_tps[model_basename] += \
                     evaluate_outputs(
-                        outputs[0], 10,
+                        outputs.flatten(), 10,
                         self.settings["index_to_label"],
                     image_label
                 )
