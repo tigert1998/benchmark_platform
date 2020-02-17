@@ -44,6 +44,8 @@ def regularize_for_json(obj):
         return new_obj
     elif isinstance(obj, types.FunctionType):
         return inspect.getsource(obj).strip()
+    elif isinstance(obj, type):
+        return str(obj)
     else:
         return obj
 

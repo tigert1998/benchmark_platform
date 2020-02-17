@@ -36,38 +36,10 @@ def model_latency_test():
     })
 
 
-def accuracy_test_rknn():
-    from accuracy_tester.accuracy_tester import AccuracyTester
-    from accuracy_tester.accuracy_evaluators.rknn import Rknn
-
-    tester = AccuracyTester({
-        "zip_size": 50000,
-        "dataset_size": 100,
-        "model_paths": glob("C:/Users/v-xiat/Microsoft/Shihao Han (FA Talent) - ChannelNas/models/rknn/resnet_v2_50_299/resnet_v2_50_299.rknn"),
-        "data_preparer": DataPreparerDef({
-            "labels_path": "C:/Users/v-xiat/Downloads/playground/imagenet/val_labels.txt",
-            "validation_set_path": "C:/Users/v-xiat/Downloads/playground/imagenet/validation",
-        }),
-        "accuracy_evaluator": Rknn({
-            "preprocess": Preprocess({
-                "preprocessor": TFRepoPreprocessor({
-                    "use_crop_padding": False,
-                    "imsize": 299,
-                    "resize_func": "resize_bilinear",
-                    "use_inception": True
-                }),
-                "func": "preprocess"
-            }),
-            "index_to_label": lambda index: str(index)
-        })
-    })
-    tester.run()
-
-
 def accuracy_test_tflite():
     from accuracy_tester.accuracy_tester import AccuracyTester
     from accuracy_tester.accuracy_evaluators.tflite import Tflite
-    from preprocess.factory import tflite_model_details
+    from preprocess.model_archive import tflite_model_details
 
     tester = AccuracyTester({
         "zip_size": 50000,
@@ -87,35 +59,6 @@ def accuracy_test_tflite():
             "imagenet_accuracy_eval_flags": {
                 "use_crop_padding": True,
             },
-        })
-    })
-    tester.run()
-
-
-def accuracy_test_pb():
-    from accuracy_tester.accuracy_tester import AccuracyTester
-    from accuracy_tester.data_preparers.data_preparer_def import DataPreparerDef
-    from accuracy_tester.accuracy_evaluators.tf_evaluator import TfEvaluator
-
-    tester = AccuracyTester({
-        "zip_size": 20,
-        "dirname": "test",
-        "model_paths": ["C:/Users/v-xiat/repos/exported_models/resnet_v2_50.pb"],
-        "data_preparer": DataPreparerDef({
-            "labels_path": "C:/Users/v-xiat/Downloads/playground/imagenet/val_labels.txt",
-            "validation_set_path": "C:/Users/v-xiat/Downloads/playground/imagenet/validation",
-        }),
-        "accuracy_evaluator": TfEvaluator({
-            "preprocess": Preprocess({
-                "preprocessor": TFRepoPreprocessor({
-                    "use_crop_padding": False,
-                    "imsize": 299,
-                    "resize_func": "resize_bilinear",
-                    "use_inception": True
-                }),
-                "func": "preprocess"
-            }),
-            "index_to_label": lambda index: str(index)
         })
     })
     tester.run()
