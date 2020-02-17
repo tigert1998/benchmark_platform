@@ -20,7 +20,7 @@ class AccuracyTester(ClassWithSettings):
     def default_settings():
         return {
             **ClassWithSettings.default_settings(),
-            "model_paths": [],
+            "model_details": [],
             "zip_size": 5000,
             "dataset_size": 50000,
             "data_preparer": None,
@@ -29,10 +29,15 @@ class AccuracyTester(ClassWithSettings):
         }
 
     def snapshot(self):
-        return {
-            "time": "{}".format(datetime.now()),
-            **super().snapshot(),
-        }
+        snapshot = super().snapshot()
+        snapshot["time"] = "{}".format(datetime.now())
+        snapshot["model_details"] = []
+        for model_detail in self.settings["model_details"]:
+            snapshot["model_details"].append([
+                model_detail.model_path,
+                model_detail.preprocess.snapshot()
+            ])
+        return snapshot
 
     def _dump_snapshot(self):
         with open('snapshot.json', 'w') as f:
@@ -52,13 +57,18 @@ class AccuracyTester(ClassWithSettings):
                 os.makedirs(dir_name)
         os.chdir(dir_name)
 
-    def _evaluate_models(self, model_paths):
+    def _evaluate_models(self, model_details):
         data_preparer = self.settings["data_preparer"]
         accuracy_evaluator = self.settings["accuracy_evaluator"]
         zip_size = self.settings["zip_size"]
 
+        model_paths = list(map(
+            lambda model_detail: model_detail.model_path,
+            model_details))
+        model_basenames = list(map(os.path.basename, model_paths))
+
         model_accuracies = {}
-        for model_basename in map(os.path.basename, model_paths):
+        for model_basename in model_basenames:
             model_accuracies[model_basename] = np.zeros((10, ))
 
         dataset_size = self.settings["dataset_size"]
@@ -78,11 +88,11 @@ class AccuracyTester(ClassWithSettings):
             data_preparer.prepare_dateset(image_id_range)
 
             tmp = accuracy_evaluator.evaluate_models(
-                model_paths,
+                model_details,
                 data_preparer.image_path_label_gen(image_id_range)
             )
 
-            for model_basename in map(os.path.basename, model_paths):
+            for model_basename in model_basenames:
                 model_accuracies[model_basename] += tmp[model_basename]
                 print("[{}] accumulated_accuracy = {}".format(
                     model_basename,
@@ -107,7 +117,8 @@ class AccuracyTester(ClassWithSettings):
         csv_writer = CSVWriter()
         titles = ["model_name"] + ["top {}".format(i + 1) for i in range(10)]
 
-        model_accuracies = self._evaluate_models(self.settings["model_paths"])
+        model_accuracies = self._evaluate_models(
+            self.settings["model_details"])
 
         for model_basename, accuracies in model_accuracies.items():
             data = [model_basename] + list(map(str, list(accuracies)))

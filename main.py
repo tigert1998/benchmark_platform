@@ -1,5 +1,4 @@
 from glob import glob
-from utils.preprocess import InceptionPreprocessor, TFRepoPreprocessor, Preprocess
 import numpy as np
 
 from testers.tester_impls.test_conv import TestConv
@@ -7,7 +6,10 @@ from testers.tester_impls.test_dwconv import TestDwconv
 from testers.sampling.conv_sampler import SimpleConvSampler
 from testers.sampling.dwconv_sampler import SimpleDwconvSampler
 
-from utils.connection import Adb, Ssh
+from accuracy_tester.data_preparers.android_data_preparer import AndroidDataPreparer
+from accuracy_tester.data_preparers.data_preparer_def import DataPreparerDef
+
+from utils.connection import Adb, Ssh, Connection
 
 
 def model_latency_test():
@@ -36,7 +38,6 @@ def model_latency_test():
 
 def accuracy_test_rknn():
     from accuracy_tester.accuracy_tester import AccuracyTester
-    from accuracy_tester.data_preparers.data_preparer_def import DataPreparerDef
     from accuracy_tester.accuracy_evaluators.rknn import Rknn
 
     tester = AccuracyTester({
@@ -65,42 +66,27 @@ def accuracy_test_rknn():
 
 def accuracy_test_tflite():
     from accuracy_tester.accuracy_tester import AccuracyTester
-    from accuracy_tester.data_preparers.android_data_preparer import AndroidDataPreparer
     from accuracy_tester.accuracy_evaluators.tflite import Tflite
+    from preprocess.factory import tflite_model_details
 
     tester = AccuracyTester({
         "zip_size": 50000,
-        "dataset_size": 50000,
-        "model_paths": glob(
-            "C:/Users/v-xiat/Microsoft/Shihao Han (FA Talent) - ChannelNas/models/tflite/efficientnet/*.tflite",
-        ),
-        "data_preparer": AndroidDataPreparer({
-            "labels_path": "C:/Users/v-xiat/Downloads/playground/imagenet/val_labels.txt",
-            "validation_set_path": "C:/Users/v-xiat/Downloads/playground/imagenet/validation",
-            "connection": Adb("5e6fecf", False),
+        "dataset_size": 100,
+        "model_details": tflite_model_details,
+        "data_preparer": DataPreparerDef({
+            "labels_path": "C:/Users/tigertang/Projects/dataset/val_labels.txt",
+            "validation_set_path": "C:/Users/tigertang/Projects/dataset/validation",
             "skip_dataset_preparation": True,
-            "skip_models_preparation": False
+            "skip_models_preparation": True
         }),
         "accuracy_evaluator": Tflite({
-            "connection": Adb("5e6fecf", False),
+            "connection": Connection(),
 
             # on guest
             "imagenet_accuracy_eval_path": "/data/local/tmp/tf-r2.1-60afa4e/imagenet_accuracy_eval",
             "imagenet_accuracy_eval_flags": {
                 "use_crop_padding": True,
             },
-
-            # on host
-            "preprocess": Preprocess({
-                "preprocessor": TFRepoPreprocessor({
-                    "use_crop_padding": False,
-                    "imsize": 299,
-                    "resize_func": "resize_bilinear",
-                    "use_inception": True
-                }),
-                "func": "preprocess"
-            }),
-            "index_to_label": lambda index: str(index)
         })
     })
     tester.run()
@@ -191,4 +177,4 @@ def layer_latency_test_rknn():
 
 
 if __name__ == '__main__':
-    layer_latency_test_tpu()
+    accuracy_test_tflite()

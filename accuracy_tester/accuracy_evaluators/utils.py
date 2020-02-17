@@ -2,8 +2,14 @@ import itertools
 import progressbar
 
 
-def evaluate_outputs(activations, top_n, index_to_label, answer):
+def evaluate_outputs(activations, top_n, answer):
     assert activations.shape == (1001,) or activations.shape == (1000,)
+
+    if activations.shape[0] == 1001:
+        def index_to_label(index: int): return str(index)
+    else:
+        def index_to_label(index: int): return str(index + 1)
+
     indices = list(map(
         lambda pair: pair[0],
         itertools.islice(

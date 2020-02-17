@@ -3,6 +3,10 @@ from .preprocess import Preprocess
 from .torch_preprocessor import TorchPreprocessor
 from .tf_preprocessor import TfPreprocessor
 
+import numpy as np
+import os
+from collections import namedtuple
+
 # shufflenet:
 # https://github.com/megvii-model/ShuffleNet-Series
 shufflenet_preprocess = Preprocess({
@@ -80,3 +84,36 @@ efficientnet_b1_preprocess = Preprocess({
         "use_inception": True,
     })
 })
+
+
+ModelDetail = namedtuple("ModelDetail", ["model_path", "preprocess"])
+
+_onedrive_path = os.path.expanduser(
+    "~/Microsoft/Shihao Han (FA Talent) - ChannelNas/models")
+
+tflite_model_details = [
+    ModelDetail(
+        _onedrive_path + "/tflite/shufflenet_v1/shufflenet_v1_g3_1.5.tflite",
+        shufflenet_preprocess
+    ),
+    ModelDetail(
+        _onedrive_path + "/tflite/shufflenet_v1/shufflenet_v1_g8_1.0.tflite",
+        shufflenet_preprocess
+    ),
+    ModelDetail(
+        _onedrive_path + "/tflite/shufflenet_v2/shufflenet_v2_1.0.tflite",
+        shufflenet_preprocess
+    ),
+    ModelDetail(
+        _onedrive_path + "/tflite/shufflenet_v2/shufflenet_v2_1.5.tflite",
+        shufflenet_preprocess
+    ),
+    ModelDetail(
+        _onedrive_path + "/tflite/efficientnet/efficientnet_b0.tflite",
+        efficientnet_b0_preprocess
+    ),
+    ModelDetail(
+        _onedrive_path + "/tflite/efficientnet/efficientnet_b1.tflite",
+        efficientnet_b1_preprocess
+    )
+]

@@ -22,10 +22,6 @@ class Tflite(AccuracyEvaluatorDef):
             "imagenet_accuracy_eval_path": None,
             "guest_path": "/sdcard/accuracy_test",
             "imagenet_accuracy_eval_flags": None,
-
-            # on host
-            # self.settings["preprocess"]
-            # self.settings["index_to_label"]
         }
 
     def __init__(self, settings):
@@ -40,12 +36,12 @@ class Tflite(AccuracyEvaluatorDef):
                 "guest_path", "imagenet_accuracy_eval_flags"
             ]
         else:
-            dummys = ["preprocess", "index_to_label"]
+            dummys = []
         for item in dummys:
             res.pop(item)
         return res
 
-    def _eval_on_guest(self, model_paths, image_path_label_gen):
+    def _eval_on_guest(self, model_details, image_path_label_gen):
         guest_path = self.settings["guest_path"]
 
         ground_truth_images_path = \
@@ -55,7 +51,10 @@ class Tflite(AccuracyEvaluatorDef):
         image_path_label_gen, dataset_size = count_dataset_size(
             image_path_label_gen)
 
-        for model_basename in map(os.path.basename, model_paths):
+        for model_basename in map(
+                lambda model_detail: os.path.basename(model_detail.model_path),
+                model_details):
+
             model_output_labels = "{}_output_labels.txt".format(
                 rm_ext(model_basename))
             output_file_path = "{}/{}_{}".format(
@@ -93,13 +92,16 @@ class Tflite(AccuracyEvaluatorDef):
 
         return model_tps
 
-    def _eval_on_host(self, model_paths, image_path_label_gen):
+    def _eval_on_host(self, model_details, image_path_label_gen):
         model_tps = {}
 
         image_path_label_gen, dataset_size = \
             count_dataset_size(image_path_label_gen)
 
-        for model_path in model_paths:
+        for model_detail in model_details:
+            model_path = model_detail.model_path
+            preprocess = model_detail.preprocess
+
             model_basename = os.path.basename(model_path)
             model_tps[model_basename] = np.zeros((10,), dtype=np.int32)
 
@@ -116,16 +118,12 @@ class Tflite(AccuracyEvaluatorDef):
             bar.update(0)
 
             for i, (image_path, image_label) in enumerate(gen):
-                image = self.settings["preprocess"].execute(image_path)
+                image = preprocess.execute(image_path)
                 interpreter.set_tensor(input_details[0]["index"], image)
                 interpreter.invoke()
                 outputs = interpreter.get_tensor(output_details[0]["index"])
                 model_tps[model_basename] += \
-                    evaluate_outputs(
-                        outputs.flatten(), 10,
-                        self.settings["index_to_label"],
-                    image_label
-                )
+                    evaluate_outputs(outputs.flatten(), 10, image_label)
 
                 bar.update(i + 1)
 
@@ -133,8 +131,8 @@ class Tflite(AccuracyEvaluatorDef):
 
         return model_tps
 
-    def evaluate_models(self, model_paths, image_path_label_gen):
+    def evaluate_models(self, model_details, image_path_label_gen):
         if type(self.connection) is Connection:
-            return self._eval_on_host(model_paths, image_path_label_gen)
+            return self._eval_on_host(model_details, image_path_label_gen)
         else:
-            return self._eval_on_guest(model_paths, image_path_label_gen)
+            return self._eval_on_guest(model_details, image_path_label_gen)
