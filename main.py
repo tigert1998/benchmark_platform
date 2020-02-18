@@ -42,8 +42,8 @@ def accuracy_test_tflite():
     from preprocess.model_archive import tflite_model_details
 
     tester = AccuracyTester({
-        "zip_size": 50000,
-        "dataset_size": 100,
+        "zip_size": 5,
+        "dataset_size": 10,
         "model_details": tflite_model_details,
         "data_preparer": DataPreparerDef({
             "labels_path": "C:/Users/tigertang/Projects/dataset/val_labels.txt",

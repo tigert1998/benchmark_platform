@@ -1,6 +1,8 @@
 import os
-import numpy as np
+import datetime
 import itertools
+
+import numpy as np
 
 from .accuracy_evaluator_def import AccuracyEvaluatorDef
 from utils.utils import concatenate_flags, rm_ext
@@ -27,6 +29,7 @@ class Tflite(AccuracyEvaluatorDef):
     def __init__(self, settings):
         super().__init__(settings)
         self.connection: Connection = self.settings["connection"]
+        self.log_f = None
 
     def snapshot(self):
         res = super().snapshot()
@@ -98,6 +101,11 @@ class Tflite(AccuracyEvaluatorDef):
         image_path_label_gen, dataset_size = \
             count_dataset_size(image_path_label_gen)
 
+        if self.log_f is None:
+            self.log_f = open("log", "w")
+        self.log_f.write(
+            "len(image_path_label_gen) = {}\n".format(dataset_size))
+
         for model_detail in model_details:
             model_path = model_detail.model_path
             preprocess = model_detail.preprocess
@@ -128,6 +136,11 @@ class Tflite(AccuracyEvaluatorDef):
                 bar.update(i + 1)
 
             print()
+            self.log_f.write("time = {}\n".format(datetime.datetime.now()))
+            self.log_f.write("model_tps[{}] = {}\n".format(
+                model_basename,
+                model_tps[model_basename]))
+            self.log_f.flush()
 
         return model_tps
 
