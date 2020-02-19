@@ -17,6 +17,18 @@ class TfPreprocessor(Preprocessor):
             "use_inception": True,
         }
 
+    def imagenet_accuracy_eval_flags(self):
+        ret = {
+            "use_crop_padding": self.settings["use_crop_padding"],
+        }
+        if not self.settings["use_inception"]:
+            ret = {
+                **ret,
+                "mean": ','.join(map(str, self.MEAN_RGB)),
+                "scale": ','.join(map(lambda v: str(1 / v), self.STDDEV_RGB))
+            }
+        return ret
+
     def __init__(self, settings={}):
         super().__init__(settings)
         import tensorflow as tf

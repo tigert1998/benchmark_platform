@@ -25,18 +25,6 @@ class OpencvResize:
         return img
 
 
-class ToBGRTensor:
-    def __call__(self, img):
-        assert isinstance(img, (np.ndarray, PIL.Image.Image))
-        if isinstance(img, PIL.Image.Image):
-            img = np.asarray(img)
-        img = img[:, :, ::-1]  # 2 BGR
-        img = np.transpose(img, [2, 0, 1])  # 2 (3, H, W)
-        img = np.ascontiguousarray(img)
-        img = torch.from_numpy(img).float()
-        return img
-
-
 class TorchPreprocessor(Preprocessor):
     MEAN = [0.485, 0.456, 0.406]
     STD = [0.229, 0.224, 0.225]
@@ -46,10 +34,26 @@ class TorchPreprocessor(Preprocessor):
         return {
             **Preprocessor.default_settings(),
             "use_opencv_resize": False,
-            "use_bgr": False,
             "use_normalization": True,
-            "use_nhwc": True
         }
+
+    def imagenet_accuracy_eval_flags(self):
+        ret = {
+            "use_crop_padding": True,
+        }
+        if self.settings["use_normalization"]:
+            ret = {
+                **ret,
+                "mean": ','.join(map(lambda v: str(255 * v), self.MEAN)),
+                "scale": ','.join(map(lambda v: str(1 / (255 * v)), self.STD))
+            }
+        else:
+            ret = {
+                **ret,
+                "mean": "0,0,0",
+                "scale": "1,1,1"
+            }
+        return ret
 
     def _run_until(self, idx: int, image_path: str, dtype) -> np.ndarray:
         last = image_path
@@ -84,20 +88,13 @@ class TorchPreprocessor(Preprocessor):
             self.transform.append(transforms.Resize(256))
 
         self.transform.append(transforms.CenterCrop(self.settings["imsize"]))
-
-        if self.settings["use_bgr"]:
-            self.transform.append(ToBGRTensor())
-            self.resize_idx = 3
-        else:
-            self.resize_idx = 2
-            self.transform.append(transforms.ToTensor())
+        self.resize_idx = 2
 
         if self.settings["use_normalization"]:
+            self.transform.append(transforms.ToTensor())
             self.transform.append(transforms.Normalize(
                 mean=self.MEAN,
                 std=self.STD
             ))
-        if self.settings["use_nhwc"]:
-            self.transform.append(lambda tensor: tensor.permute(1, 2, 0))
 
         self.preprocess_idx = len(self.transform) - 1

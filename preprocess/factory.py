@@ -11,9 +11,7 @@ shufflenet_preprocess = Preprocess({
     "preprocessor": TorchPreprocessor({
         "imsize": 224,
         "use_opencv_resize": True,
-        "use_bgr": True,
         "use_normalization": False,
-        "use_nhwc": False
     })
 })
 
@@ -57,9 +55,7 @@ proxyless_preprocess = Preprocess({
     "preprocessor": TorchPreprocessor({
         "imsize": 224,
         "use_opencv_resize": False,
-        "use_bgr": False,
         "use_normalization": True,
-        "use_nhwc": True
     })
 })
 
@@ -82,4 +78,3 @@ efficientnet_b1_preprocess = Preprocess({
         "use_inception": True,
     })
 })
-

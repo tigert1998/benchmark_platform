@@ -22,6 +22,9 @@ class Preprocessor(ClassWithSettings):
             "imsize": 224
         }
 
+    def imagenet_accuracy_eval_flags(self):
+        return {}
+
     def __init__(self, settings={}):
         super().__init__(settings)
         self.imsize = self.settings["imsize"]
