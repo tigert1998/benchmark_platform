@@ -12,7 +12,7 @@ ModelDetail = namedtuple("ModelDetail", [
 
 class MetaModelDetail:
     AVAILABLE_QUANTIZATIONS = {
-        "pb": [""],
+        "pb": ["", "patched"],
         "tflite": ["", "float16", "weight", "int"],
         "saved_model": [""],
     }
@@ -33,7 +33,9 @@ class MetaModelDetail:
 
     def _get_model_path(self, model_format, quantization):
         if model_format == "pb":
-            return "{}/pb/{}.pb".format(self._onedrive_path, self.model_path)
+            if quantization != "":
+                quantization = "_{}".format(quantization)
+            return "{}/pb/{}{}.pb".format(self._onedrive_path, self.model_path, quantization)
 
         elif model_format == "tflite":
             if quantization != "":

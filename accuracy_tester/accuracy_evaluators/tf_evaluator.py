@@ -11,13 +11,16 @@ import cv2
 
 
 class TfEvaluator(AccuracyEvaluatorDef):
-    def evaluate_models(self, model_paths, image_path_label_gen):
+    def evaluate_models(self, model_details, image_path_label_gen):
         model_tps = {}
 
         image_path_label_gen, dataset_size = \
             count_dataset_size(image_path_label_gen)
 
-        for model_path in model_paths:
+        for model_detail in model_details:
+            model_path = model_detail.model_path
+            preprocess = model_detail.preprocess
+
             image_path_label_gen, gen = itertools.tee(image_path_label_gen)
 
             model_basename = os.path.basename(model_path)
@@ -28,21 +31,20 @@ class TfEvaluator(AccuracyEvaluatorDef):
             bar.update(0)
 
             graph = load_graph(model_path)
-            input_ops, output_ops = analyze_inputs_outputs(graph)
-            assert len(input_ops) == 1 and len(output_ops) == 1
 
             with tf.Session(graph=graph) as sess:
                 for i, (image_path, image_label) in enumerate(gen):
-                    image = self.settings["preprocess"].execute(image_path)
+                    image = preprocess.execute(image_path)
                     outputs = sess.run(
-                        output_ops[0].outputs[0],
+                        model_detail.output_node + ":0",
                         feed_dict={
-                            input_ops[0].outputs[0]: image
+                            model_detail.input_node + ":0":
+                            image
                         }
                     )
                     model_tps[model_basename] += \
                         evaluate_outputs(
-                            outputs.flatten(), 10, self.settings["index_to_label"], image_label)
+                            outputs.flatten(), 10, image_label)
                     bar.update(i + 1)
 
             # progression bar ends
