@@ -15,6 +15,7 @@ class MetaModelDetail:
         "pb": ["", "patched"],
         "tflite": ["", "float16", "weight", "int"],
         "saved_model": [""],
+        "rknn": ["", "asymmetric_quantized_u8", "dynamic_fixed_point_8", "dynamic_fixed_point_16"]
     }
 
     def __init__(
@@ -44,6 +45,11 @@ class MetaModelDetail:
 
         elif model_format == "saved_model":
             return "{}/saved_model/{}".format(self._onedrive_path, self.model_path)
+
+        elif model_format == "rknn":
+            if quantization != "":
+                quantization = "_{}".format(quantization)
+            return "{}/rknn/{}{}.rknn".format(self._onedrive_path, self.model_path, quantization)
 
     def _get_preprocess(self, model_format, quantization):
         return self.preprocess
@@ -89,31 +95,31 @@ meta_model_details = [
         "mobilenet_v1/mobilenet_v1_1.0_224",
         inception_224_preprocess,
         "input", "MobilenetV1/Predictions/Reshape_1",
-        ["pb", "tflite", "saved_model"]
+        ["pb", "tflite", "saved_model", "rknn"]
     ),
     MetaModelDetail(
         "mobilenet_v2/mobilenet_v2_1.0_224",
         inception_224_preprocess,
         "input", "MobilenetV2/Predictions/Reshape_1",
-        ["pb", "tflite", "saved_model"]
+        ["pb", "tflite", "saved_model", "rknn"]
     ),
     MetaModelDetail(
         "mobilenet_v3/mobilenet_v3_large_224_1.0",
         inception_224_preprocess,
         "input", "MobilenetV3/Predictions/Softmax",
-        ["pb", "tflite", "saved_model"]
+        ["pb", "tflite", "saved_model", "rknn"]
     ),
     MetaModelDetail(
         "inception_v1/inception_v1",
         inception_224_preprocess,
         "input", "InceptionV1/Logits/Predictions/Reshape_1",
-        ["pb", "tflite", "saved_model"]
+        ["pb", "tflite", "saved_model", "rknn"]
     ),
     MetaModelDetail(
         "inception_v4/inception_v4",
         inception_299_preprocess,
         "input", "InceptionV4/Logits/Predictions",
-        ["pb", "tflite", "saved_model"]
+        ["pb", "tflite", "saved_model", "rknn"]
     ),
     MetaModelDetail(
         "mnasnet/mnasnet_a1",

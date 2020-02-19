@@ -39,6 +39,25 @@ def model_latency_test():
     })
 
 
+def accuracy_test_rknn():
+    from accuracy_tester.accuracy_tester import AccuracyTester
+    from accuracy_tester.accuracy_evaluators.rknn import Rknn
+
+    tester = AccuracyTester({
+        "zip_size": 50000,
+        "dataset_size": 100,
+        "model_details": get_model_details(None, "rknn", [""]),
+        "data_preparer": DataPreparerDef({
+            "labels_path": "C:/Users/v-xiat/Downloads/playground/imagenet/val_labels.txt",
+            "validation_set_path": "C:/Users/v-xiat/Downloads/playground/imagenet/validation",
+            "skip_dataset_preparation": True,
+            "skip_models_preparation": True,
+        }),
+        "accuracy_evaluator": Rknn({})
+    })
+    tester.run()
+
+
 def accuracy_test_pb():
     from accuracy_tester.accuracy_tester import AccuracyTester
     from accuracy_tester.accuracy_evaluators.tf_evaluator import TfEvaluator
@@ -142,4 +161,4 @@ def layer_latency_test_rknn():
 
 
 if __name__ == '__main__':
-    accuracy_test_pb()
+    accuracy_test_rknn()

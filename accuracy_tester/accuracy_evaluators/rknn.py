@@ -26,13 +26,14 @@ class Rknn(AccuracyEvaluatorDef):
     def brief(self):
         return "{}_{}".format(super().brief(), self.settings["rknn_target"])
 
-    def evaluate_models(self, model_paths, image_path_label_gen):
+    def evaluate_models(self, model_details, image_path_label_gen):
         model_tps = {}
 
         image_path_label_gen, dataset_size = \
             count_dataset_size(image_path_label_gen)
 
-        for model_path in model_paths:
+        for model_detail in model_details:
+            model_path = model_detail.model_path
             image_path_label_gen, gen = itertools.tee(image_path_label_gen)
 
             model_basename = os.path.basename(model_path)
@@ -49,12 +50,12 @@ class Rknn(AccuracyEvaluatorDef):
             bar.update(0)
 
             for i, (image_path, image_label) in enumerate(gen):
-                image = self.settings["preprocess"].execute(image_path)
+                image = model_detail.preprocess.execute(image_path)
                 outputs = rknn.inference(inputs=[image])
                 # assume that image_label is the index of output activation
                 model_tps[model_basename] += \
                     evaluate_outputs(
-                        outputs[0][0], 10, self.settings["index_to_label"], image_label)
+                        outputs[0][0], 10, image_label)
 
                 bar.update(i + 1)
 
