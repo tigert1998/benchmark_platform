@@ -96,5 +96,6 @@ class TorchPreprocessor(Preprocessor):
                 mean=self.MEAN,
                 std=self.STD
             ))
+            self.transform.append(lambda tensor: tensor.permute(1, 2, 0))
 
         self.preprocess_idx = len(self.transform) - 1

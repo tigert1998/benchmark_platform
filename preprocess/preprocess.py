@@ -62,6 +62,12 @@ class Preprocess(ClassWithSettings):
             "args": []
         }
 
+    def imagenet_accuracy_eval_flags(self):
+        ret = self.settings["preprocessor"].imagenet_accuracy_eval_flags()
+        if self.settings["func"] == "resize":
+            ret = {**ret, "mean": "0,0,0", "scale": "1,1,1"}
+        return ret
+
     def execute(self, image_path: str):
         return getattr(
             self.settings["preprocessor"],

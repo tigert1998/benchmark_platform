@@ -72,7 +72,7 @@ class Tflite(AccuracyEvaluatorDef):
                     "output_file_path": output_file_path,
                     "num_images": 0,
                     **self.settings["imagenet_accuracy_eval_flags"],
-                    **model_detail.preprocess.settings["preprocessor"].imagenet_accuracy_eval_flags()
+                    **model_detail.preprocess.imagenet_accuracy_eval_flags()
                 })
             )
             print(cmd)

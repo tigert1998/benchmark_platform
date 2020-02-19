@@ -45,18 +45,18 @@ def accuracy_test_tflite():
 
     tester = AccuracyTester({
         "zip_size": 50000,
-        "dataset_size": 5,
-        "model_details": get_model_details(None, "tflite", ["int"]),
+        "dataset_size": 100,
+        "model_details": get_model_details(None, "tflite", [""]),
         "data_preparer": AndroidDataPreparer({
             "labels_path": "C:/Users/tigertang/Projects/dataset/val_labels.txt",
             "validation_set_path": "C:/Users/tigertang/Projects/dataset/validation",
-            "skip_dataset_preparation": False,
-            "skip_models_preparation": False,
+            "skip_dataset_preparation": True,
+            "skip_models_preparation": True,
 
             "connection": Adb("2e98c8a5", False),
         }),
         "accuracy_evaluator": Tflite({
-            "connection": Adb("2e98c8a5", False),
+            "connection": Connection(),
 
             # on guest
             "imagenet_accuracy_eval_path": "/data/local/tmp/tf-r2.1-60afa4e/imagenet_accuracy_eval",
