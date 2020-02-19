@@ -11,7 +11,7 @@ from accuracy_tester.data_preparers.data_preparer_def import DataPreparerDef
 
 from utils.connection import Adb, Ssh, Connection
 
-from preprocess.model_archive import get_tflite_model_details
+from preprocess.model_archive import get_model_details
 
 
 def model_latency_test():
@@ -28,7 +28,7 @@ def model_latency_test():
         "sampler": ModelSampler({
             "model_paths":
             list(map(lambda x: x.model_path,
-                     get_tflite_model_details("float16_quant")))
+                     get_model_details(None, "tflite", ["float16"])))
         })
     })
 
@@ -46,7 +46,7 @@ def accuracy_test_tflite():
     tester = AccuracyTester({
         "zip_size": 50000,
         "dataset_size": 10,
-        "model_details": get_tflite_model_details(),
+        "model_details": get_model_details(None, "tflite", [""]),
         "data_preparer": DataPreparerDef({
             "labels_path": "C:/Users/tigertang/Projects/dataset/val_labels.txt",
             "validation_set_path": "C:/Users/tigertang/Projects/dataset/validation",
