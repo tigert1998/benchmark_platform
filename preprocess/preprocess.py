@@ -22,8 +22,15 @@ class Preprocessor(ClassWithSettings):
             "imsize": 224
         }
 
-    def imagenet_accuracy_eval_flags(self):
-        return {}
+    def get_normalization_parameter(self):
+        """Get normalization parameter
+        Returns:
+            [MEAN_RGB, STD_RGB]
+        """
+        ...
+
+    def _imagenet_accuracy_eval_flags(self):
+        ...
 
     def __init__(self, settings={}):
         super().__init__(settings)
@@ -62,11 +69,28 @@ class Preprocess(ClassWithSettings):
             "args": []
         }
 
-    def imagenet_accuracy_eval_flags(self):
-        ret = self.settings["preprocessor"].imagenet_accuracy_eval_flags()
+    def __init__(self, settings={}):
+        super().__init__(settings)
+        self.preprocessor: Preprocess = self.settings["preprocessor"]
+
+    def get_imsize(self):
+        return self.preprocessor.settings["imsize"]
+
+    def get_normalization_parameter(self):
+        normalization_parameter = self.preprocessor.get_normalization_parameter()
         if self.settings["func"] == "resize":
-            ret = {**ret, "mean": "0,0,0", "scale": "1,1,1"}
-        return ret
+            normalization_parameter = [[0] * 3, [1] * 3]
+        return normalization_parameter
+
+    def imagenet_accuracy_eval_flags(self):
+        ret = self.preprocessor._imagenet_accuracy_eval_flags()
+        normalization_parameter = self.get_normalization_parameter()
+
+        return {
+            **ret,
+            "mean": ','.join(map(str, normalization_parameter[0])),
+            "scale": ','.join(map(lambda v: str(1 / v), normalization_parameter[1]))
+        }
 
     def execute(self, image_path: str):
         return getattr(

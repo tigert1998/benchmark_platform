@@ -56,7 +56,7 @@ def accuracy_test_tflite():
             "connection": Adb("2e98c8a5", False),
         }),
         "accuracy_evaluator": Tflite({
-            "connection": Connection(),
+            "connection": Adb("2e98c8a5", False),
 
             # on guest
             "imagenet_accuracy_eval_path": "/data/local/tmp/tf-r2.1-60afa4e/imagenet_accuracy_eval",

@@ -37,23 +37,16 @@ class TorchPreprocessor(Preprocessor):
             "use_normalization": True,
         }
 
-    def imagenet_accuracy_eval_flags(self):
-        ret = {
+    def get_normalization_parameter(self):
+        if self.settings["use_normalization"]:
+            return [np.asarray(self.MEAN) * 255, np.asarray(self.STD) * 255]
+        else:
+            return [[0, 0, 0], [1, 1, 1]]
+
+    def _imagenet_accuracy_eval_flags(self):
+        return {
             "use_crop_padding": True,
         }
-        if self.settings["use_normalization"]:
-            ret = {
-                **ret,
-                "mean": ','.join(map(lambda v: str(255 * v), self.MEAN)),
-                "scale": ','.join(map(lambda v: str(1 / (255 * v)), self.STD))
-            }
-        else:
-            ret = {
-                **ret,
-                "mean": "0,0,0",
-                "scale": "1,1,1"
-            }
-        return ret
 
     def _run_until(self, idx: int, image_path: str, dtype) -> np.ndarray:
         last = image_path

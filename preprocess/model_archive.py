@@ -12,8 +12,9 @@ ModelDetail = namedtuple("ModelDetail", [
 
 class MetaModelDetail:
     AVAILABLE_QUANTIZATIONS = {
+        "pb": [""],
         "tflite": ["", "float16", "weight", "int"],
-        "saved_model": [""]
+        "saved_model": [""],
     }
 
     def __init__(
@@ -31,7 +32,10 @@ class MetaModelDetail:
             "~/Microsoft/Shihao Han (FA Talent) - ChannelNas/models")
 
     def _get_model_path(self, model_format, quantization):
-        if model_format == "tflite":
+        if model_format == "pb":
+            return "{}/pb/{}.pb".format(self._onedrive_path, self.model_path)
+
+        elif model_format == "tflite":
             if quantization != "":
                 quantization = "_{}_quant".format(quantization)
             return "{}/tflite/{}{}.tflite".format(self._onedrive_path, self.model_path, quantization)
@@ -59,97 +63,97 @@ meta_model_details = [
     #     "shufflenet_v1/shufflenet_v1_g3_1.5",
     #     shufflenet_preprocess,
     #     "input.1", "535",
-    #     ["tflite", "saved_model"]
+    #     ["pb","tflite", "saved_model"]
     # ),
     # MetaModelDetail(
     #     "shufflenet_v1/shufflenet_v1_g8_1.0",
     #     shufflenet_preprocess,
     #     "input.1", "535",
-    #     ["tflite", "saved_model"]
+    #     ["pb","tflite", "saved_model"]
     # ),
     # MetaModelDetail(
     #     "shufflenet_v2/shufflenet_v2_1.0",
     #     shufflenet_preprocess,
     #     "input.1", "626",
-    #     ["tflite", "saved_model"]
+    #     ["pb","tflite", "saved_model"]
     # ),
     # MetaModelDetail(
     #     "shufflenet_v2/shufflenet_v2_1.5",
     #     shufflenet_preprocess,
     #     "input.1", "626",
-    #     ["tflite", "saved_model"]
+    #     ["pb","tflite", "saved_model"]
     # ),
     MetaModelDetail(
         "mobilenet_v1/mobilenet_v1_1.0_224",
         inception_224_preprocess,
         "input", "MobilenetV1/Predictions/Reshape_1",
-        ["tflite", "saved_model"]
+        ["pb", "tflite", "saved_model"]
     ),
     MetaModelDetail(
         "mobilenet_v2/mobilenet_v2_1.0_224",
         inception_224_preprocess,
         "input", "MobilenetV2/Predictions/Reshape_1",
-        ["tflite", "saved_model"]
+        ["pb", "tflite", "saved_model"]
     ),
     MetaModelDetail(
         "mobilenet_v3/mobilenet_v3_large_224_1.0",
         inception_224_preprocess,
         "input", "MobilenetV3/Predictions/Softmax",
-        ["tflite", "saved_model"]
+        ["pb", "tflite", "saved_model"]
     ),
     MetaModelDetail(
         "inception_v1/inception_v1",
         inception_224_preprocess,
         "input", "InceptionV1/Logits/Predictions/Reshape_1",
-        ["tflite", "saved_model"]
+        ["pb", "tflite", "saved_model"]
     ),
     MetaModelDetail(
         "inception_v4/inception_v4",
         inception_299_preprocess,
         "input", "InceptionV4/Logits/Predictions",
-        ["tflite", "saved_model"]
+        ["pb", "tflite", "saved_model"]
     ),
     MetaModelDetail(
         "mnasnet/mnasnet_a1",
         mnasnet_preprocess,
         "Placeholder", "logits",
-        ["tflite", "saved_model"]
+        ["pb", "tflite", "saved_model"]
     ),
     MetaModelDetail(
         "nasnet/nasnet_a_mobile",
         inception_224_preprocess,
         "input", "final_layer/predictions",
-        ["tflite", "saved_model"]
+        ["pb", "tflite", "saved_model"]
     ),
     MetaModelDetail(
         "proxyless/proxyless_mobile",
         proxyless_preprocess,
         "input_images", "classifier/linear/add",
-        ["tflite", "saved_model"]
+        ["pb", "tflite", "saved_model"]
     ),
     MetaModelDetail(
         "proxyless/proxyless_mobile_14",
         proxyless_preprocess,
         "input_images", "classifier/linear/add",
-        ["tflite", "saved_model"]
+        ["pb", "tflite", "saved_model"]
     ),
     MetaModelDetail(
         "resnet_v2/resnet_v2_50_299",
         inception_299_preprocess,
         "input", "resnet_v2_50/predictions/Reshape_1",
-        ["tflite", "saved_model"]
+        ["pb", "tflite", "saved_model"]
     ),
     MetaModelDetail(
         "efficientnet/efficientnet_b0",
         efficientnet_b0_preprocess,
         "images", "Softmax",
-        ["tflite", "saved_model"]
+        ["pb", "tflite", "saved_model"]
     ),
     MetaModelDetail(
         "efficientnet/efficientnet_b1",
         efficientnet_b1_preprocess,
         "images", "Softmax",
-        ["tflite", "saved_model"]
+        ["pb", "tflite", "saved_model"]
     )
 ]
 
