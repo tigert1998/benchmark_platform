@@ -36,13 +36,13 @@ class AndroidDataPreparer(DataPreparerDef):
             model_basename_noext = rm_ext(os.path.basename(model_path))
             model_output_labels = "{}_output_labels.txt".format(
                 model_basename_noext)
-            with open(model_output_labels, "w") as f:
+            with open(model_output_labels, "wb") as f:
                 if num_outputs == 1000:
                     for i in range(1, 1001):
-                        f.write("{}\n".format(i))
+                        f.write(bytes("{}\n".format(i), "ascii"))
                 else:
                     for i in range(1001):
-                        f.write("{}\n".format(i))
+                        f.write(bytes("{}\n".format(i), "ascii"))
 
             self.connection.push(model_output_labels, self.guest_path)
             self.connection.push(model_path, self.guest_path)
@@ -50,9 +50,9 @@ class AndroidDataPreparer(DataPreparerDef):
     def _prepare_dateset(self, image_id_range):
         validation_set_path = self.settings["validation_set_path"]
 
-        with open("ground_truth_labels.txt", "w") as f:
+        with open("ground_truth_labels.txt", "wb") as f:
             for i in image_id_range:
-                f.write("{}\n".format(self.image_labels[i]))
+                f.write(bytes("{}\n".format(self.image_labels[i]), "ascii"))
 
         self.connection.shell(
             '; '.join([

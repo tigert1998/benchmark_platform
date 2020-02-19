@@ -55,30 +55,30 @@ class MetaModelDetail:
 
 
 meta_model_details = [
-    MetaModelDetail(
-        "shufflenet_v1/shufflenet_v1_g3_1.5",
-        shufflenet_preprocess,
-        "input.1", "535",
-        ["tflite", "saved_model"]
-    ),
-    MetaModelDetail(
-        "shufflenet_v1/shufflenet_v1_g8_1.0",
-        shufflenet_preprocess,
-        "input.1", "535",
-        ["tflite", "saved_model"]
-    ),
-    MetaModelDetail(
-        "shufflenet_v2/shufflenet_v2_1.0",
-        shufflenet_preprocess,
-        "input.1", "626",
-        ["tflite", "saved_model"]
-    ),
-    MetaModelDetail(
-        "shufflenet_v2/shufflenet_v2_1.5",
-        shufflenet_preprocess,
-        "input.1", "626",
-        ["tflite", "saved_model"]
-    ),
+    # MetaModelDetail(
+    #     "shufflenet_v1/shufflenet_v1_g3_1.5",
+    #     shufflenet_preprocess,
+    #     "input.1", "535",
+    #     ["tflite", "saved_model"]
+    # ),
+    # MetaModelDetail(
+    #     "shufflenet_v1/shufflenet_v1_g8_1.0",
+    #     shufflenet_preprocess,
+    #     "input.1", "535",
+    #     ["tflite", "saved_model"]
+    # ),
+    # MetaModelDetail(
+    #     "shufflenet_v2/shufflenet_v2_1.0",
+    #     shufflenet_preprocess,
+    #     "input.1", "626",
+    #     ["tflite", "saved_model"]
+    # ),
+    # MetaModelDetail(
+    #     "shufflenet_v2/shufflenet_v2_1.5",
+    #     shufflenet_preprocess,
+    #     "input.1", "626",
+    #     ["tflite", "saved_model"]
+    # ),
     MetaModelDetail(
         "mobilenet_v1/mobilenet_v1_1.0_224",
         inception_224_preprocess,

@@ -54,9 +54,8 @@ class Tflite(AccuracyEvaluatorDef):
         image_path_label_gen, dataset_size = count_dataset_size(
             image_path_label_gen)
 
-        for model_basename in map(
-                lambda model_detail: os.path.basename(model_detail.model_path),
-                model_details):
+        for model_detail in model_details:
+            model_basename = os.path.basename(model_detail.model_path)
 
             model_output_labels = "{}_output_labels.txt".format(
                 rm_ext(model_basename))
@@ -72,7 +71,8 @@ class Tflite(AccuracyEvaluatorDef):
                     "model_output_labels": "{}/{}".format(guest_path, model_output_labels),
                     "output_file_path": output_file_path,
                     "num_images": 0,
-                    **self.settings["imagenet_accuracy_eval_flags"]
+                    **self.settings["imagenet_accuracy_eval_flags"],
+                    **model_detail.preprocess.settings["preprocessor"].imagenet_accuracy_eval_flags()
                 })
             )
             print(cmd)
