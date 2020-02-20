@@ -138,7 +138,7 @@ meta_model_details = [
         "nasnet/nasnet_a_mobile",
         inception_224_preprocess,
         "input", "final_layer/predictions",
-        ["pb", "tflite", "saved_model", "rknn"]
+        ["pb", "tflite", "saved_model"]
     ),
     MetaModelDetail(
         "proxyless/proxyless_mobile",

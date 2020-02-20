@@ -36,8 +36,8 @@ shufflenetv2_stages = [
 ]
 
 
-def align(n, divisor):
-    assert(isinstance(n, int) and isinstance(divisor, int))
+def align(n: int, divisor: int):
+    assert isinstance(n, int) and isinstance(divisor, int)
     return ((n + divisor - 1) // divisor) * divisor
 
 
@@ -59,7 +59,7 @@ def merge_profiles(profiles):
     return res
 
 
-def op_name_to_model_name(op_name):
+def op_name_to_model_name(op_name: str):
     if 'mobilenetv2' in op_name:
         return 'MobileNetV2'
     elif 'shufflenetv1' in op_name:
@@ -68,3 +68,18 @@ def op_name_to_model_name(op_name):
         return 'ShuffleNetV2'
     else:
         assert False
+
+
+# the followings helpers are for the new tests
+
+def sparse_channels_from_imsize(imsize: int):
+    if imsize in [224, 112, 56, 28]:
+        return [32, 64, 96]
+    elif imsize in [14, 7, 3, 1]:
+        return [160, 240, 320]
+    else:
+        assert False
+
+
+def available_imsizes():
+    return [1, 3, 7, 14, 28, 56, 112, 224]
