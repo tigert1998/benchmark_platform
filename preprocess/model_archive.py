@@ -187,7 +187,7 @@ def get_model_details(
                     skip = False
             if skip:
                 continue
-        if not (model_format in meta_model_details.available_model_formats):
+        if not (model_format in i.available_model_formats):
             continue
         for quantization in quantizations:
             ans.append(i.get_model_detail(model_format, quantization))

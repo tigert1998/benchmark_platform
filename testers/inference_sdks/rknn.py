@@ -40,8 +40,6 @@ class Rknn(InferenceSdk):
                 docker.from_env().containers.list()[0]
 
     def generate_model(self, path, inputs, outputs):
-        path = rm_ext(path)
-
         outputs_ops_names = [o.op.name for o in outputs]
 
         with tf.Session() as sess:
@@ -91,7 +89,6 @@ class Rknn(InferenceSdk):
             print(result.output.decode('utf-8'))
 
     def _fetch_results_on_soc(self, connection: Connection, model_path, input_size_list, flags) -> InferenceResult:
-        model_path = os.path.splitext(model_path)[0]
         model_basename = os.path.basename(model_path)
 
         model_folder = "/mnt/sdcard/channel_benchmark"
@@ -101,6 +98,7 @@ class Rknn(InferenceSdk):
         cmd = "LD_LIBRARY_PATH={}/lib64 {}/rknn_benchmark_model {}".format(
             benchmark_model_folder,
             benchmark_model_folder, concatenate_flags({
+                "benchmark_type": "latency",
                 "model_path": "{}/{}.rknn".format(model_folder, model_basename),
                 "op_profiling_dump_path": "{}/op_profiling.csv".format(model_folder),
                 **flags
