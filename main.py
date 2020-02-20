@@ -46,7 +46,7 @@ def accuracy_test_rknn():
     tester = AccuracyTester({
         "zip_size": 50000,
         "dataset_size": 100,
-        "model_details": get_model_details(["shufflenet"], "rknn", [""]),
+        "model_details": get_model_details(None, "rknn", [""]),
         "data_preparer": DataPreparerDef({
             "labels_path": "C:/Users/v-xiat/Downloads/playground/imagenet/val_labels.txt",
             "validation_set_path": "C:/Users/v-xiat/Downloads/playground/imagenet/validation",

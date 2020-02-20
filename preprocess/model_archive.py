@@ -52,7 +52,14 @@ class MetaModelDetail:
             return "{}/rknn/{}{}.rknn".format(self._onedrive_path, self.model_path, quantization)
 
     def _get_preprocess(self, model_format, quantization):
-        return self.preprocess
+        if model_format == "rknn":
+            return Preprocess({
+                "preprocessor": self.preprocess.preprocessor,
+                "func": "resize",
+                "args": [np.float32 if quantization == "" else np.uint8]
+            })
+        else:
+            return self.preprocess
 
     def get_model_detail(self, model_format, quantization) -> ModelDetail:
         assert model_format in self.AVAILABLE_QUANTIZATIONS
@@ -131,7 +138,7 @@ meta_model_details = [
         "nasnet/nasnet_a_mobile",
         inception_224_preprocess,
         "input", "final_layer/predictions",
-        ["pb", "tflite", "saved_model"]
+        ["pb", "tflite", "saved_model", "rknn"]
     ),
     MetaModelDetail(
         "proxyless/proxyless_mobile",
@@ -149,7 +156,7 @@ meta_model_details = [
         "resnet_v2/resnet_v2_50_299",
         inception_299_preprocess,
         "input", "resnet_v2_50/predictions/Reshape_1",
-        ["pb", "tflite", "saved_model"]
+        ["pb", "tflite", "saved_model", "rknn"]
     ),
     MetaModelDetail(
         "efficientnet/efficientnet_b0",
@@ -180,6 +187,8 @@ def get_model_details(
                     skip = False
             if skip:
                 continue
+        if not (model_format in meta_model_details.available_model_formats):
+            continue
         for quantization in quantizations:
             ans.append(i.get_model_detail(model_format, quantization))
     return ans
