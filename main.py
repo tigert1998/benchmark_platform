@@ -46,7 +46,7 @@ def accuracy_test_rknn():
     tester = AccuracyTester({
         "zip_size": 50000,
         "dataset_size": 100,
-        "model_details": get_model_details(None, "rknn", [""]),
+        "model_details": get_model_details(["shufflenet"], "rknn", [""]),
         "data_preparer": DataPreparerDef({
             "labels_path": "C:/Users/v-xiat/Downloads/playground/imagenet/val_labels.txt",
             "validation_set_path": "C:/Users/v-xiat/Downloads/playground/imagenet/validation",
@@ -65,7 +65,7 @@ def accuracy_test_pb():
     tester = AccuracyTester({
         "zip_size": 50000,
         "dataset_size": 100,
-        "model_details": get_model_details(None, "pb", ["patched"]),
+        "model_details": get_model_details(["shufflenet"], "pb", [""]),
         "data_preparer": DataPreparerDef({
             "labels_path": "C:/Users/tigertang/Projects/dataset/val_labels.txt",
             "validation_set_path": "C:/Users/tigertang/Projects/dataset/validation",
@@ -84,7 +84,7 @@ def accuracy_test_tflite():
     tester = AccuracyTester({
         "zip_size": 50000,
         "dataset_size": 100,
-        "model_details": get_model_details(None, "tflite", [""]),
+        "model_details": get_model_details(["shufflenet"], "pb", [""]),
         "data_preparer": AndroidDataPreparer({
             "labels_path": "C:/Users/tigertang/Projects/dataset/val_labels.txt",
             "validation_set_path": "C:/Users/tigertang/Projects/dataset/validation",
@@ -161,4 +161,4 @@ def layer_latency_test_rknn():
 
 
 if __name__ == '__main__':
-    accuracy_test_rknn()
+    accuracy_test_pb()
