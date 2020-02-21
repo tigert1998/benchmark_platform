@@ -4,7 +4,7 @@ from .utils import sparse_channels_from_imsize, available_imsizes
 import itertools
 
 
-class Mobilenetv1BlockSampler(Sampler):
+class MbnetV2BlockSampler(Sampler):
     @staticmethod
     def get_sample_titles():
         return [
@@ -18,4 +18,5 @@ class Mobilenetv1BlockSampler(Sampler):
                         [1, 2], [3, 5, 7]):
                     if ksize > imsize:
                         continue
-                    yield ["MobileNetV1Block", imsize, cin, cin, stride, ksize]
+                    cout = stride * cin
+                    yield ["MobileNetV2Block", imsize, cin, cout, stride, ksize]
