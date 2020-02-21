@@ -2,7 +2,7 @@ from testers.tester import Tester
 
 import tensorflow as tf
 
-from network.building_blocks import grouped_conv
+from network.building_ops import grouped_conv
 
 
 class TestGconv(Tester):

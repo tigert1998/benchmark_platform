@@ -2,7 +2,7 @@ from testers.tester import Tester
 
 import tensorflow as tf
 
-from network.building_blocks import shufflenet_v1_unit
+from network.shufflenet_units import shufflenet_v1_unit
 
 
 class TestShufflenetV1Unit(Tester):

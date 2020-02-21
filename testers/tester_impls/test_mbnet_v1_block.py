@@ -2,7 +2,7 @@ from testers.tester import Tester
 
 import tensorflow as tf
 
-from network.building_blocks import mbnet_v1_block
+from network.mbnet_blocks import mbnet_v1_block
 
 
 class TestMbnetV1Block(Tester):
