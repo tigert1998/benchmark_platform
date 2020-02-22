@@ -26,17 +26,12 @@ def _conv_block(features, use_bottleneck: bool, kernel_size: int, num_outputs: i
 
 def dense_block(features, num_layers: int, use_bottleneck: bool, kernel_size: int, growth_rate: int):
     with tf.variable_scope("dense_block"):
-        previous_layers = [features]
+        concatenated = features
 
         for i in range(num_layers):
             with tf.variable_scope("{}".format(i)):
-                if len(previous_layers) == 1:
-                    concatenated = previous_layers[0]
-                else:
-                    concatenated = tf.concat(
-                        [concatenated, previous_layers[-1]], axis=-1)
                 net = _conv_block(concatenated, use_bottleneck,
                                   kernel_size, growth_rate)
-                previous_layers.append(net)
+                concatenated = tf.concat([concatenated, net], axis=-1)
 
-    return net
+    return concatenated
