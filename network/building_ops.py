@@ -81,3 +81,17 @@ def squeeze_and_excitation(features, mid_channels: int):
         )(net)
 
     return tf.sigmoid(net) * features
+
+
+def mix_conv(features, num_groups: int, stride: int):
+    cin = features.get_shape().as_list()[-1]
+    assert cin % num_groups == 0
+
+    with tf.variable_scope("mix_conv"):
+        groups = []
+        for x, i in zip(tf.split(features, num_groups, axis=-1), range(num_groups)):
+            with tf.variable_scope("{}".format(i)):
+                kernel_size = i * 2 + 3
+                groups.append(depthwise_conv(x, stride, kernel_size))
+
+        return tf.concat(groups, axis=-1)
