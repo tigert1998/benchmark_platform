@@ -2,7 +2,7 @@ import tensorflow as tf
 
 import warnings
 import os
-from .utils import rm_ext
+import shutil
 
 
 def load_graph(frozen_graph_filepath):
@@ -14,11 +14,36 @@ def load_graph(frozen_graph_filepath):
     return graph
 
 
-def load_meta_as_graph(meta_filepath):
-    saver = tf.train.import_meta_graph(meta_filepath)
-    with tf.Session() as sess:
-        saver.restore(sess, rm_ext(meta_filepath))
-        return sess.graph
+def to_saved_model(sess, inputs, outputs, path: str, replace_original_dir: bool):
+    from tensorflow.python.saved_model import signature_constants
+    from tensorflow.python.saved_model import tag_constants
+
+    if replace_original_dir:
+        if os.path.isdir(path):
+            shutil.rmtree(path)
+
+    inputs_dic = {
+        "input_{}".format(idx): i
+        for idx, i in zip(range(len(inputs)), inputs)
+    }
+    outputs_dic = {
+        "output_{}".format(idx): o
+        for idx, o in zip(range(len(outputs)), outputs)
+    }
+
+    builder = tf.saved_model.builder.SavedModelBuilder(path)
+    sigs = {}
+    sigs[signature_constants.DEFAULT_SERVING_SIGNATURE_DEF_KEY] = \
+        tf.saved_model.signature_def_utils.predict_signature_def(
+        inputs_dic, outputs_dic
+    )
+    builder.add_meta_graph_and_variables(
+        sess,
+        [tag_constants.SERVING],
+        signature_def_map=sigs
+    )
+
+    builder.save()
 
 
 def check_frozen(graph):

@@ -75,3 +75,16 @@ def set_multilevel_dict(dic, keys, value):
             node[key] = {}
         node = node[key]
     node[keys[-1]] = value
+
+
+def search_python_script(relative_path: str, caller_script_path: str):
+    caller_script_path = os.path.abspath(caller_script_path)
+    while True:
+        base_path, _ = os.path.split(caller_script_path)
+        path = os.path.join(base_path, relative_path + ".py")
+        if os.path.isfile(path):
+            return path
+        if _ == "":
+            break
+        caller_script_path = base_path
+    assert False
