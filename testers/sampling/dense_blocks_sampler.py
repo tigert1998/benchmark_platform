@@ -4,19 +4,17 @@ from .utils import sparse_channels_from_imsize, available_imsizes
 import itertools
 
 
-class MbnetV2BlockSampler(Sampler):
+class DenseBlockSampler(Sampler):
     @staticmethod
     def get_sample_titles():
         return [
-            "block", "input_imsize", "current_cin", "current_cout", "stride", "kernel_size"
+            "block", "input_imsize", "current_cin", "growth_rate", "num_layers", "kernel_size"
         ]
 
     def _get_samples_without_filter(self):
         for imsize in available_imsizes():
             for cin in sparse_channels_from_imsize(imsize):
-                for stride, ksize in itertools.product(
-                        [1, 2], [3, 5, 7]):
+                for ksize in itertools.product([3, 5, 7]):
                     if ksize > imsize:
                         continue
-                    cout = stride * cin
-                    yield ["MobileNetV2Block", imsize, cin, cout, stride, ksize]
+                    yield ["DenseBlock", imsize, cin, 32, 1, ksize]

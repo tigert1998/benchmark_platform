@@ -5,6 +5,7 @@ from typing import List
 from .building_ops import batch_normalization
 
 
+# https://github.com/keras-team/keras-applications/blob/master/keras_applications/resnet50.py
 def resnet_v1_block(features, num_filters_list: List[int], stride: int, kernel_size: int):
     num_filters_1, num_filters_2, num_filters_3 = num_filters_list
 

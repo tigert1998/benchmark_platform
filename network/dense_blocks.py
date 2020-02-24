@@ -24,6 +24,7 @@ def _conv_block(features, use_bottleneck: bool, kernel_size: int, num_outputs: i
     return net
 
 
+# https://github.com/keras-team/keras-applications/blob/master/keras_applications/densenet.py
 def dense_block(features, num_layers: int, use_bottleneck: bool, kernel_size: int, growth_rate: int):
     with tf.variable_scope("dense_block"):
         concatenated = features

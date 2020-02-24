@@ -3,6 +3,7 @@ import tensorflow as tf
 from .building_ops import depthwise_conv, channel_shuffle, grouped_conv, batch_normalization
 
 
+# https://github.com/megvii-model/ShuffleNet-Series/tree/master/ShuffleNetV1
 def shufflenet_v1_unit(features, num_groups: int, mid_channels: int,
                        stride: int, kernel_size: int, num_outputs: int):
     assert stride in [1, 2]

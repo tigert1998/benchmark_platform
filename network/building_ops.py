@@ -59,7 +59,10 @@ def batch_normalization(features):
     )
 
 
+# https://github.com/tensorflow/models/blob/89dd9a4e2548e8a5214bd4e564428d01c206a7db/research/slim/nets/mobilenet/conv_blocks.py#L408
 def squeeze_and_excitation(features, mid_channels: int):
+    def gating_fn(features): return tf.nn.relu6(features + 3) * 0.16667
+
     with tf.variable_scope("squeeze_and_excitation"):
         net = tf.nn.avg_pool(
             features, ksize=features.get_shape()[1: 3], strides=[1, 1], padding='VALID')
@@ -80,7 +83,7 @@ def squeeze_and_excitation(features, mid_channels: int):
             padding="same",
         )(net)
 
-    return tf.sigmoid(net) * features
+    return gating_fn(net) * features
 
 
 def mix_conv(features, num_groups: int, stride: int):
