@@ -1,11 +1,14 @@
 import tensorflow as tf
 
 import os
+import subprocess
+import shutil
 
 from .inference_sdk import InferenceSdk, InferenceResult
 from .utils import rfind_assign_float, table_try_float, rfind_assign_int
-from utils.utils import concatenate_flags, rm_ext
+from utils.utils import concatenate_flags, search_python_script
 from utils.connection import Connection
+from utils.tf_model_utils import to_saved_model
 
 
 class Tflite(InferenceSdk):
@@ -15,7 +18,12 @@ class Tflite(InferenceSdk):
             **InferenceSdk.default_settings(),
             "benchmark_model_path": None,
             "taskset": "f0",
+            "quantization": ""
         }
+
+    def __init__(self, settings={}):
+        super().__init__(settings)
+        self.local_connection = Connection()
 
     @staticmethod
     def default_flags():
@@ -24,14 +32,26 @@ class Tflite(InferenceSdk):
         }
 
     def generate_model(self, path, inputs, outputs):
-        path = rm_ext(path)
-
         with tf.Session() as sess:
             sess.run(tf.global_variables_initializer())
-            converter = tf.lite.TFLiteConverter.from_session(
-                sess, inputs, outputs)
-            tflite_model = converter.convert()
-            open(path + '.tflite', 'wb').write(tflite_model)
+            to_saved_model(
+                sess, inputs, outputs, path,
+                replace_original_dir=True
+            )
+
+        output_path = path + ".tflite"
+        if os.path.isfile(output_path):
+            os.remove(output_path)
+        cmd = "conda activate tf2; python {} {}".format(
+            search_python_script("conversion/to_tflite", __file__),
+            concatenate_flags({
+                "saved_model_path": path,
+                "quantization": self.settings["quantization"],
+                "output_path": output_path
+            })
+        )
+        print(cmd)
+        self.local_connection.shell(cmd)
 
     def _launch_benchmark(self, connection: Connection, model_path: str, flags):
         model_basename = os.path.basename(model_path)

@@ -1,5 +1,6 @@
 import subprocess
 import os
+import platform
 
 from .utils import escape_path
 from .class_with_settings import ClassWithSettings
@@ -13,7 +14,15 @@ class Connection(ClassWithSettings):
         pass
 
     def shell(self, shell: str):
-        pass
+        if "Win" in platform.platform():
+            shell_exe = "powershell"
+        else:
+            shell_exe = "bash"
+        p = subprocess.Popen(
+            shell_exe,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE)
+        return p.communicate(bytes(shell, 'utf-8'))[0].decode('utf-8')
 
     def brief(self):
         return "local"
