@@ -10,4 +10,4 @@ class FcSampler(Sampler):
     def _get_samples_without_filter(self):
         original_cin = 1000
         for cin in range(int(0.2 * original_cin), 2 * original_cin):
-            yield ["MobileNetV2", "FC", cin, original_cin, original_cin, original_cin]
+            yield ["", "FC", cin, original_cin, original_cin, original_cin]

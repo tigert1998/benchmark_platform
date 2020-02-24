@@ -3,8 +3,8 @@ import numpy as np
 
 from testers.tester_impls.test_conv import TestConv
 from testers.tester_impls.test_dwconv import TestDwconv
-from testers.sampling.conv_sampler import SimpleConvSampler
-from testers.sampling.dwconv_sampler import SimpleDwconvSampler
+from testers.sampling.conv_sampler import ChannelExperimentConvSampler
+from testers.sampling.dwconv_sampler import ChannelExperimentDwconvSampler
 
 from accuracy_tester.data_preparers.android_data_preparer import AndroidDataPreparer
 from accuracy_tester.data_preparers.data_preparer_def import DataPreparerDef
@@ -118,7 +118,7 @@ def layer_latency_test_tflite():
         "inference_sdk": TfliteModified({
             "benchmark_model_path": "/data/local/tmp/tf-r2.1-60afa4e/benchmark_model_modified",
         }),
-        "sampler": SimpleDwconvSampler({
+        "sampler": ChannelExperimentDwconvSampler({
             # "filter": lambda sample: sample[2: 5] == [7, 960, 960]
         }),
         "resume_from": ["", "DWConv", 224, 64, 64, "", "", 2, 7]
@@ -137,7 +137,7 @@ def layer_latency_test_tpu():
     tester = TestConv({
         "connection": Ssh("zhongrg@zhongrg-All-Series"),
         "inference_sdk": Tpu(),
-        "sampler": SimpleConvSampler({}),
+        "sampler": ChannelExperimentConvSampler({}),
         "resume_from": ["", "Conv", 7, 640, 816, "", "", 1, 3]
     })
     tester.run({})
@@ -148,7 +148,7 @@ def layer_latency_test_rknn():
 
     # tester = TestDwconv({
     #     "inference_sdk": Rknn({}),
-    #     "sampler": SimpleDwconvSampler({}),
+    #     "sampler": ChannelExperimentDwconvSampler({}),
     #     "resume_from": ["", "DWConv", 224, 424, 424, "", "", 1, 3]
     # })
     # tester.run({})
@@ -158,7 +158,7 @@ def layer_latency_test_rknn():
         "inference_sdk": Rknn({
             "rknn_target": None,
         }),
-        "sampler": SimpleConvSampler({}),
+        "sampler": ChannelExperimentConvSampler({}),
         "resume_from": ["", "Conv", 7, 640, 344, "", "", 2, 3]
     })
     tester.run({})

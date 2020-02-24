@@ -2,7 +2,9 @@ import itertools
 
 import tensorflow as tf
 
-from .utils import shufflenetv2_stages, merge_profiles, op_name_to_model_name, align
+from .utils import \
+    shufflenetv2_stages, merge_profiles, op_name_to_model_name, align, \
+    sparse_channels_from_imsize, available_imsizes  # for op experiments
 from .sampler import Sampler
 
 
@@ -119,7 +121,7 @@ class ConvSampler(Sampler):
                             yield sample
 
 
-class SimpleConvSampler(ConvSampler):
+class ChannelExperimentConvSampler(ConvSampler):
     @staticmethod
     def default_settings():
         return {
@@ -204,3 +206,19 @@ class SimpleConvSampler(ConvSampler):
                 for stride in [1, 2]:
                     for kernel_size in [1, 3, 5]:
                         yield ["", "Conv", input_imsize, cin, cout, "", "", stride, kernel_size]
+
+
+class OpExperimentConvSampler(Sampler):
+    @staticmethod
+    def get_sample_titles():
+        return ConvSampler.get_sample_titles()
+
+    def _get_samples_without_filter(self):
+        for imsize in available_imsizes():
+            for cin in sparse_channels_from_imsize(imsize):
+                for stride, ksize in itertools.product(
+                    [1, 2], [1, 3, 5, 7]
+                ):
+                    if ksize > imsize:
+                        continue
+                    return ["", "Conv", imsize, cin, cin, "", "", stride, ksize]

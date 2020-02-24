@@ -1,6 +1,8 @@
 from .sampler import Sampler
 
-from .utils import shufflenetv1_stages, shufflenetv2_stages, merge_profiles, op_name_to_model_name, align
+from .utils import \
+    shufflenetv1_stages, shufflenetv2_stages, merge_profiles, op_name_to_model_name, align, \
+    sparse_channels_from_imsize, available_imsizes  # for op experiments
 
 import itertools
 
@@ -84,7 +86,7 @@ class DwconvSampler(Sampler):
                         yield [model_name, "DWConv", input_imsize, current_cin, current_cin, cin, cin, stride, ksize]
 
 
-class SimpleDwconvSampler(DwconvSampler):
+class ChannelExperimentDwconvSampler(DwconvSampler):
     @staticmethod
     def default_settings():
         return Sampler.default_settings()
@@ -103,3 +105,19 @@ class SimpleDwconvSampler(DwconvSampler):
                 for stride in [1, 2]:
                     for ksize in [3, 5, 7]:
                         yield ["", "DWConv", imsize, cin, cin, "", "", stride, ksize]
+
+
+class OpExperimentDwconvSampler(Sampler):
+    @staticmethod
+    def get_sample_titles():
+        return DwconvSampler.get_sample_titles()
+
+    def _get_samples_without_filter(self):
+        for imsize in available_imsizes():
+            for cin in sparse_channels_from_imsize(imsize):
+                for stride, ksize in itertools.product(
+                    [1, 2], [3, 5, 7]
+                ):
+                    if ksize > imsize:
+                        continue
+                    return ["", "Dwconv", imsize, cin, cin, "", "", stride, ksize]
