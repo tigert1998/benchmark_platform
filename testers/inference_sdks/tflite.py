@@ -33,8 +33,9 @@ class Tflite(InferenceSdk):
         }
 
     def generate_model(self, path, inputs, outputs):
-        with tf.Session() as sess:
-            sess.run(tf.global_variables_initializer())
+        path = os.path.abspath(path)
+        with tf.compat.v1.Session() as sess:
+            sess.run(tf.compat.v1.global_variables_initializer())
             to_saved_model(
                 sess, inputs, outputs, path,
                 replace_original_dir=True

@@ -56,7 +56,7 @@ def tflite_cpu_main():
             "quantization": quantization,
         }))
 
-    connection = Adb("2e98c8a5", False)
+    connection = Adb("5e6fecf", False)
 
     for tester_class, sampler_class, name in [
         (TestConv, OpExperimentConvSampler, "conv"),

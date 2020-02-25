@@ -10,7 +10,6 @@ from utils.connection import Connection
 from .utils import evaluate_outputs, count_dataset_size, construct_evaluating_progressbar
 
 import tensorflow as tf
-import cv2
 
 
 class Tflite(AccuracyEvaluatorDef):

@@ -7,7 +7,6 @@ import tensorflow as tf
 import itertools
 import os
 import numpy as np
-import cv2
 
 
 class TfEvaluator(AccuracyEvaluatorDef):

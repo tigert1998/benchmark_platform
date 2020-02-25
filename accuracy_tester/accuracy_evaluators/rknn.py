@@ -4,7 +4,6 @@ from .utils import evaluate_outputs, count_dataset_size, construct_evaluating_pr
 
 from rknn.api import RKNN
 
-import cv2
 import numpy as np
 import itertools
 import os
