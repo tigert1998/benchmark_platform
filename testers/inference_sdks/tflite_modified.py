@@ -4,6 +4,7 @@ from .utils import rfind_assign_float, rfind_assign_int, rfind_assign
 from utils.connection import Connection
 
 import os
+from typing import List
 
 
 class TfliteModified(Tflite):
@@ -14,7 +15,9 @@ class TfliteModified(Tflite):
             "work_group_size": None
         }
 
-    def _fetch_results(self, connection: Connection, model_path: str, input_size_list, flags) -> InferenceResult:
+    def _fetch_results(self,
+                       connection: Connection, model_path: str,
+                       input_size_list: List[List[int]], flags) -> InferenceResult:
         result_str = self._launch_benchmark(connection, model_path, flags)
 
         profiling_details = {

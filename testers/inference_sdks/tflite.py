@@ -3,6 +3,7 @@ import tensorflow as tf
 import os
 import subprocess
 import shutil
+from typing import List
 
 from .inference_sdk import InferenceSdk, InferenceResult
 from .utils import rfind_assign_float, table_try_float, rfind_assign_int
@@ -76,7 +77,9 @@ class Tflite(InferenceSdk):
         print(cmd.strip())
         return connection.shell(cmd)
 
-    def _fetch_results(self, connection: Connection, model_path: str, input_size_list, flags) -> InferenceResult:
+    def _fetch_results(self,
+                       connection: Connection, model_path: str,
+                       input_size_list: List[List[int]], flags) -> InferenceResult:
         result_str = self._launch_benchmark(connection, model_path, flags)
 
         if rfind_assign_int(result_str, 'count') >= 2:

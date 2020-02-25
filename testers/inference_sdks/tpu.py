@@ -5,6 +5,7 @@ from .utils import rfind_assign_float
 
 import numpy as np
 import os
+from typing import List
 import tensorflow as tf
 
 
@@ -31,7 +32,9 @@ class Tpu(InferenceSdk):
         tflite_model = converter.convert()
         open(path + '.tflite', 'wb').write(tflite_model)
 
-    def _fetch_results(self, connection: Connection, model_path: str, input_size_list, benchmark_model_flags) -> InferenceResult:
+    def _fetch_results(self,
+                       connection: Connection, model_path: str,
+                       input_size_list: List[List[int]], benchmark_model_flags) -> InferenceResult:
         model_basename = os.path.basename(model_path)
         model_folder = "/data"
         connection.push(model_path + ".tflite", model_folder)

@@ -1,4 +1,6 @@
 import shutil
+from typing import List
+
 from collections import namedtuple
 
 from utils.class_with_settings import ClassWithSettings
@@ -29,15 +31,19 @@ class InferenceSdk(ClassWithSettings):
         """
         pass
 
-    def fetch_results(self, connection: Connection, model_path: str, input_size_list, benchmark_model_flags) -> InferenceResult:
+    def fetch_results(self,
+                      connection: Connection, model_path: str,
+                      input_size_list: List[List[int]], benchmark_model_flags) -> InferenceResult:
         return self._fetch_results(connection, model_path, input_size_list, self.flags(benchmark_model_flags))
 
-    def _fetch_results(self, connection: Connection, model_path: str, input_size_list, benchmark_model_flags) -> InferenceResult:
+    def _fetch_results(self,
+                       connection: Connection, model_path: str,
+                       input_size_list: List[List[int]], benchmark_model_flags) -> InferenceResult:
         """push model to an android device and fetch results
         Args:
             connection: Connection
             model_path: model path without extension
-            input_size_list: input_shape of the model
+            input_size_list: inputs shapes of the model
             flags: Flag dict for various kinds of benchmark_model tools
 
         Returns:

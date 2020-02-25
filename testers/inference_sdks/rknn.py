@@ -4,6 +4,7 @@ import tensorflow as tf
 import numpy as np
 import csv
 import json
+from typing import List
 
 
 from rknn.api import RKNN
@@ -88,7 +89,9 @@ class Rknn(InferenceSdk):
             assert 0 == result.exit_code
             print(result.output.decode('utf-8'))
 
-    def _fetch_results_on_soc(self, connection: Connection, model_path, input_size_list, flags) -> InferenceResult:
+    def _fetch_results_on_soc(self,
+                              connection: Connection, model_path,
+                              input_size_list: List[List[int]], flags) -> InferenceResult:
         model_basename = os.path.basename(model_path)
 
         model_folder = "/mnt/sdcard/channel_benchmark"
@@ -131,7 +134,9 @@ class Rknn(InferenceSdk):
 
         return InferenceResult(avg_ms=avg_ms, std_ms=std_ms, profiling_details=None, layerwise_info=layerwise_info)
 
-    def _fetch_results_with_py_api(self, connection: Connection, model_path, input_size_list, flags) -> InferenceResult:
+    def _fetch_results_with_py_api(self,
+                                   connection: Connection, model_path,
+                                   input_size_list: List[List[int]], flags) -> InferenceResult:
         rknn = RKNN()
 
         assert self.settings["enable_op_profiling"]
@@ -139,14 +144,13 @@ class Rknn(InferenceSdk):
         assert 0 == rknn.init_runtime(
             target=self.settings["rknn_target"], perf_debug=True)
 
-        if input_size_list is None:
-            input_size_list = [1, 299, 299, 3]
-        image = np.random.rand(*input_size_list).astype(np.float32)
+        inputs = [np.random.rand(*size).astype(np.float32)
+                  for size in input_size_list]
 
         stat = Stat()
         layerwise_info = None
         for i in range(flags["num_runs"]):
-            result = rknn.eval_perf(inputs=[image], is_print=False)
+            result = rknn.eval_perf(inputs=inputs, is_print=False)
             stat.update(result["total_time"] / 1e3)
             result_layer = result["layers"]
             if layerwise_info is None:
@@ -174,7 +178,9 @@ class Rknn(InferenceSdk):
 
         return InferenceResult(avg_ms=stat.avg(), std_ms=stat.std(), profiling_details=None, layerwise_info=layerwise_info)
 
-    def _fetch_results(self, connection: Connection, model_path, input_size_list, flags) -> InferenceResult:
+    def _fetch_results(self,
+                       connection: Connection, model_path,
+                       input_size_list: List[List[int]], flags) -> InferenceResult:
         if self.settings["rknn_target"] is None:
             return self._fetch_results_on_soc(connection, model_path, input_size_list, flags)
         else:

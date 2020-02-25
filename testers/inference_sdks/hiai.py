@@ -2,6 +2,7 @@ import tensorflow as tf
 import docker
 
 import os
+from typing import List
 
 from .inference_sdk import InferenceSdk, InferenceResult
 from utils.utils import concatenate_flags
@@ -56,7 +57,9 @@ class Hiai(InferenceSdk):
             assert 0 == result.exit_code
             print(result.output.decode('utf-8'))
 
-    def _fetch_results(self, connection: Connection, model_path, input_size_list, flags) -> InferenceResult:
+    def _fetch_results(self,
+                       connection: Connection, model_path,
+                       input_size_list: List[List[int]], flags) -> InferenceResult:
         model_path = os.path.splitext(model_path)[0]
         model_basename = os.path.basename(model_path)
 
