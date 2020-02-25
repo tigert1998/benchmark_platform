@@ -1,0 +1,40 @@
+from .sampler import Sampler
+from .utils import sparse_channels_from_imsize, available_imsizes
+
+import itertools
+
+
+class AddSampler(Sampler):
+    @staticmethod
+    def get_sample_titles():
+        return [
+            "op", "input_imsize", "current_cin"
+        ]
+
+    def _get_samples_without_filter(self):
+        # TODO
+        ...
+
+
+class ConcatSampler(Sampler):
+    @staticmethod
+    def get_sample_titles():
+        return [
+            "op", "input_imsize", "first_input_cin", "second_input_cin"
+        ]
+
+    def _get_samples_without_filter(self):
+        # TODO
+        ...
+
+
+class GlobalPoolingSampler(Sampler):
+    @staticmethod
+    def get_sample_titles():
+        return [
+            "op", "input_imsize", "current_cin"
+        ]
+
+    def _get_samples_without_filter(self):
+        for cin in [1024, 1280]:
+            yield ["GlobalAveragePooling", 7, cin]

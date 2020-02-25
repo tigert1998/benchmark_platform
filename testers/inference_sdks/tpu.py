@@ -7,48 +7,76 @@ import numpy as np
 import os
 from typing import List
 import tensorflow as tf
+import time
+
+from .tflite import Tflite
 
 
 class Tpu(InferenceSdk):
+    @staticmethod
+    def default_settings():
+        return {
+            **InferenceResult.default_settings(),
+            "edgetpu_compiler_path": "edgetpu_compiler",
+            "libedgetpu_path": "libedgetpu.so.1"
+        }
+
+    @staticmethod
+    def default_flags():
+        return {
+            **InferenceResult.default_flags(),
+            "warmup_runs": 1,
+            "num_runs": 30
+        }
+
+    def __init__(self, settings={}):
+        super().__init__(settings)
+        self.tflite_model_generator = Tflite({"quantization": "int"})
+        self.edgetpu_compiler_path = self.settings["edgetpu_compiler_path"]
+        self.delegate = tf.lite.experimental.load_delegate(
+            self.settings["libedgetpu_path"])
+
     def generate_model(self, path, inputs, outputs):
-        path = rm_ext(path)
-        assert len(inputs) == 1
-
-        with tf.Session() as sess:
-            sess.run(tf.global_variables_initializer())
-            converter = tf.lite.TFLiteConverter.from_session(
-                sess, inputs, outputs)
-
-        def representative_data_gen():
-            for _ in range(10):
-                yield [np.random.randint(0, 256, inputs[0].get_shape().as_list()).astype(np.float32)]
-
-        converter.optimizations = [tf.lite.Optimize.DEFAULT]
-        converter.representative_dataset = representative_data_gen
-        converter.target_spec.supported_ops = [
-            tf.lite.OpsSet.TFLITE_BUILTINS_INT8]
-        converter.inference_input_type = tf.uint8
-        converter.inference_output_type = tf.uint8
-        tflite_model = converter.convert()
-        open(path + '.tflite', 'wb').write(tflite_model)
+        # {path}_edgetpu.tflite
+        self.tflite_model_generator.generate_model(path, inputs, outputs)
+        cmd = "{} {}".format(self.edgetpu_compiler_path, path + ".tflite")
+        self.tflite_model_generator.local_connection.shell(cmd)
 
     def _fetch_results(self,
                        connection: Connection, model_path: str,
                        input_size_list: List[List[int]], benchmark_model_flags) -> InferenceResult:
-        model_basename = os.path.basename(model_path)
-        model_folder = "/data"
-        connection.push(model_path + ".tflite", model_folder)
 
-        cmd = "{} run /home/tigertang/edgetpu_profiling/main.py {}".format(
-            "/opt/anaconda3/bin/conda",
-            concatenate_flags({
-                "model_path": "{}/{}.tflite".format(model_folder, model_basename),
-                **benchmark_model_flags
-            })
-        )
-        print(cmd)
-        result_str = connection.shell(cmd)
-        print(result_str)
-        avg_ms = rfind_assign_float(result_str, "avg")
-        std_ms = rfind_assign_float(result_str, "std")
+        interpreter = tf.lite.Interpreter(
+            model_path=model_path + "_edgetpu.tflite",
+            experimental_delegates=[self.delegate])
+
+        interpreter.allocate_tensors()
+        input_details = interpreter.get_input_details()
+        output_details = interpreter.get_output_details()
+        interpreter.allocate_tensors()
+
+        for input_detail in input_details:
+            interpreter.set_tensor(
+                input_detail["index"],
+                np.random.randn(
+                    *input_detail["shape"]).astype(input_detail["dtype"])
+            )
+
+        for _ in range(benchmark_model_flags["warmup_runs"]):
+            interpreter.invoke()
+
+        num_runs = benchmark_model_flags["num_runs"]
+
+        sum_ms = 0
+        square_sum_ms = 0
+        for _ in range(num_runs):
+            start = time.time()
+            interpreter.invoke()
+            duration = 1000 * (time.time() - start)
+            sum_ms += duration
+            square_sum_ms += duration ** 2
+
+        avg_ms = sum_ms / num_runs
+        std_ms = square_sum_ms / num_runs - avg_ms ** 2
+
         return InferenceResult(avg_ms=avg_ms, std_ms=std_ms, profiling_details=None, layerwise_info=None)
