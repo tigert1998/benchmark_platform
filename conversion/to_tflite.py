@@ -16,7 +16,8 @@ def get_inputs_shapes(saved_model_path):
         while True:
             key = "input_{}".format(i)
             if inputs.get(key) is None:
-                return ans
+                # FIXME
+                return ans[::-1]
             dim = inputs[key].tensor_shape.dim
             ans.append([dim[i].size for i in range(len(dim))])
             i += 1
