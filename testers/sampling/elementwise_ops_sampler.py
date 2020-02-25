@@ -12,8 +12,9 @@ class AddSampler(Sampler):
         ]
 
     def _get_samples_without_filter(self):
-        # TODO
-        ...
+        for imsize in available_imsizes():
+            for cin in sparse_channels_from_imsize(imsize):
+                yield ["Add", imsize, cin]
 
 
 class ConcatSampler(Sampler):
@@ -24,8 +25,10 @@ class ConcatSampler(Sampler):
         ]
 
     def _get_samples_without_filter(self):
-        # TODO
-        ...
+        for imsize in available_imsizes():
+            for cin in sparse_channels_from_imsize(imsize):
+                for second_cin in sorted([cin, 32]):
+                    yield ["Concat", imsize, cin, second_cin]
 
 
 class GlobalPoolingSampler(Sampler):

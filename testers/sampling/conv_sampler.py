@@ -221,4 +221,4 @@ class OpExperimentConvSampler(Sampler):
                 ):
                     if ksize > imsize:
                         continue
-                    return ["", "Conv", imsize, cin, cin, "", "", stride, ksize]
+                    yield ["", "Conv", imsize, cin, cin, "", "", stride, ksize]

@@ -16,7 +16,7 @@ class Tpu(InferenceSdk):
     @staticmethod
     def default_settings():
         return {
-            **InferenceResult.default_settings(),
+            **InferenceSdk.default_settings(),
             "edgetpu_compiler_path": "edgetpu_compiler",
             "libedgetpu_path": "libedgetpu.so.1"
         }
@@ -24,7 +24,7 @@ class Tpu(InferenceSdk):
     @staticmethod
     def default_flags():
         return {
-            **InferenceResult.default_flags(),
+            **InferenceSdk.default_flags(),
             "warmup_runs": 1,
             "num_runs": 30
         }

@@ -26,4 +26,4 @@ class ResnetV1BlockSampler(Sampler):
                     else:
                         cout = 2 * cin
                         mid_channels = cin // 2
-                    return ["ResnetV1Block", imsize, cin, cout, mid_channels, stride, ksize]
+                    yield ["ResnetV1Block", imsize, cin, cout, mid_channels, stride, ksize]
