@@ -1,11 +1,11 @@
-from testers.tester import Tester
+from .test_single_layer import TestSingleLayer
 
 import tensorflow as tf
 
 from network.building_ops import mix_conv
 
 
-class TestMixConv(Tester):
+class TestMixConv(TestSingleLayer):
     def _generate_model(self, sample):
         model_path = "model"
 
@@ -19,9 +19,4 @@ class TestMixConv(Tester):
         net = mix_conv(input_im, num_groups, stride)
 
         self.inference_sdk.generate_model(model_path, [input_im], [net])
-        return model_path, input_im.get_shape().as_list()
-
-    def _test_sample(self, sample):
-        model_path, input_size_list = self._generate_model(sample)
-        return self.inference_sdk.fetch_results(
-            self.connection, model_path, input_size_list, self.benchmark_model_flags)
+        return model_path, [input_im.get_shape().as_list()]
