@@ -17,7 +17,7 @@ class Connection(ClassWithSettings):
         if "Win" in platform.platform():
             shell_exe = "powershell"
         else:
-            shell_exe = "bash"
+            shell_exe = os.environ["SHELL"]
         p = subprocess.Popen(
             shell_exe,
             stdin=subprocess.PIPE,

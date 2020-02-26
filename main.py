@@ -141,7 +141,7 @@ def layer_latency_test_tpu():
             "libedgetpu_path": "/home/xiaohu/edgetpu/libedgetpu/direct/k8/libedgetpu.so.1"
         }),
         "sampler": ChannelExperimentConvSampler({}),
-        # "resume_from": ["", "Conv", 14, 160, 612, "", "", 1, 3]
+        # "resume_from": ["","Conv",7,160,880,"","",1,3]
     })
     tester.run({})
 

@@ -84,6 +84,7 @@ def main(saved_model_path: str, quantization: str, output_path: Optional[str]):
 
 
 if __name__ == "__main__":
+    assert tf.__version__.startswith("2.1")
     parser = argparse.ArgumentParser(
         description='convert saved_model to tflite')
     parser.add_argument('--saved_model_path', type=str, required=True)
