@@ -45,12 +45,12 @@ class Tpu(InferenceSdk):
     def _fetch_results(self,
                        connection: Connection, model_path: str,
                        input_size_list: List[List[int]], benchmark_model_flags) -> InferenceResult:
+        import tflite_runtime.interpreter as tflite
 
-        interpreter = tf.lite.Interpreter(
+        interpreter = tflite.Interpreter(
             model_path=model_path + "_edgetpu.tflite",
             experimental_delegates=[self.delegate])
 
-        interpreter.allocate_tensors()
         input_details = interpreter.get_input_details()
         output_details = interpreter.get_output_details()
         interpreter.allocate_tensors()

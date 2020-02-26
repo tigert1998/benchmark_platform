@@ -135,10 +135,13 @@ def layer_latency_test_tpu():
     from testers.inference_sdks.tpu import Tpu
 
     tester = TestConv({
-        "connection": Ssh("zhongrg@zhongrg-All-Series"),
-        "inference_sdk": Tpu(),
+        "connection": Connection(),
+        "inference_sdk": Tpu({
+            "edgetpu_compiler_path": "/home/xiaohu/edgetpu/compiler/x86_64/edgetpu_compiler",
+            "libedgetpu_path": "/home/xiaohu/edgetpu/libedgetpu/direct/k8/libedgetpu.so.1"
+        }),
         "sampler": ChannelExperimentConvSampler({}),
-        "resume_from": ["", "Conv", 7, 640, 816, "", "", 1, 3]
+        # "resume_from": ["", "Conv", 14, 160, 612, "", "", 1, 3]
     })
     tester.run({})
 
@@ -165,4 +168,4 @@ def layer_latency_test_rknn():
 
 
 if __name__ == '__main__':
-    model_latency_test()
+    layer_latency_test_tpu()
