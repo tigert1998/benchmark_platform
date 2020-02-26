@@ -40,6 +40,7 @@ class Tester(ClassWithSettings):
         return dir_name
 
     def _chdir_in(self):
+        self.cwd = os.getcwd()
         dir_name = "test_results/{}".format(self._get_dir_name())
         if not os.path.isdir(dir_name):
             if os.path.exists(dir_name):
@@ -49,9 +50,8 @@ class Tester(ClassWithSettings):
                 os.makedirs(dir_name)
         os.chdir(dir_name)
 
-    @staticmethod
-    def _chdir_out():
-        os.chdir("..")
+    def _chdir_out(self):
+        os.chdir(self.cwd)
 
     def _get_csv_filename(self, sample):
         return "data.csv"
