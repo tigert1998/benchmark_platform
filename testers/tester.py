@@ -24,6 +24,7 @@ class Tester(ClassWithSettings):
             "inference_sdk": None,
             "sampler": None,
             "subdir": None,
+            "dirname": None,
             "resume_from": None
         }
 
@@ -34,7 +35,10 @@ class Tester(ClassWithSettings):
         self.sampler = self.settings["sampler"]
 
     def _get_dir_name(self):
-        dir_name = self.brief()
+        if self.settings.get("dirname") is not None:
+            dir_name = self.settings["dirname"]
+        else:
+            dir_name = self.brief()
         if self.settings.get("subdir") is not None:
             dir_name += "/" + self.settings.get("subdir")
         return dir_name

@@ -58,25 +58,25 @@ def tflite_cpu_main():
 
     connection = Adb("5e6fecf", False)
 
-    for tester_class, sampler_class in [
-        (TestConv, OpExperimentConvSampler),
-        (TestDwconv, OpExperimentDwconvSampler),
-        (TestDilatedConv, DilatedConvSampler),
-        (TestGconv, GconvSampler),
-        (TestAdd, AddSampler),
-        (TestConcat, ConcatSampler),
-        (TestGlobalPooling, GlobalPoolingSampler),
-        (TestFc, OpExperimentFcSampler),
-        (TestShuffle, ShuffleSampler),
+    for tester_class, sampler_class, name in [
+        (TestConv, OpExperimentConvSampler, "conv"),
+        (TestDwconv, OpExperimentDwconvSampler, "dwconv"),
+        (TestDilatedConv, DilatedConvSampler, "dilated_conv"),
+        (TestGconv, GconvSampler, "gconv"),
+        (TestAdd, AddSampler, "add"),
+        (TestConcat, ConcatSampler, "concat"),
+        (TestGlobalPooling, GlobalPoolingSampler, "global_pooling"),
+        (TestFc, OpExperimentFcSampler, "fc"),
+        (TestShuffle, ShuffleSampler, "shuffle"),
 
-        (TestMbnetV1Block, MbnetV1BlockSampler),
-        (TestMbnetV2Block, MbnetV2BlockSampler),
-        (TestShufflenetV1Unit, ShufflenetV1UnitSampler),
-        (TestShufflenetV2Unit, ShufflenetV2UnitSampler),
-        (TestResnetV1Block, ResnetV1BlockSampler),
-        (TestDenseBlock, DenseBlockSampler),
+        (TestMbnetV1Block, MbnetV1BlockSampler, "mbnet_v1_block"),
+        (TestMbnetV2Block, MbnetV2BlockSampler, "mbnet_v2_block"),
+        (TestShufflenetV1Unit, ShufflenetV1UnitSampler, "shufflenet_v1_unit"),
+        (TestShufflenetV2Unit, ShufflenetV2UnitSampler, "shufflenet_v2_unit"),
+        (TestResnetV1Block, ResnetV1BlockSampler, "resnet_v1_block"),
+        (TestDenseBlock, DenseBlockSampler, "dense_block"),
 
-        (TestMixConv, MixConvSampler)
+        (TestMixConv, MixConvSampler, "mix_conv")
     ]:
         for inference_sdk in inference_sdks:
             if inference_sdk.settings["quantization"] == "":
@@ -88,6 +88,7 @@ def tflite_cpu_main():
                 "connection": connection,
                 "inference_sdk": inference_sdk,
                 "sampler": sampler_class(),
+                "dirname": name,
                 "subdir": subdir,
                 "resume_from": None
             })

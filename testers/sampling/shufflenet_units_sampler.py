@@ -1,5 +1,5 @@
 from .sampler import Sampler
-from .utils import sparse_channels_from_imsize, available_imsizes
+from .utils import sparse_channels_from_imsize, available_imsizes, align
 
 import itertools
 
@@ -20,13 +20,10 @@ class ShufflenetV1UnitSampler(Sampler):
                 ):
                     if ksize > imsize:
                         continue
-                    if cin % num_groups != 0:
+                    cout = stride * cin
+                    mid_channels = align(cout // 4, num_groups)
+                    if cin % num_groups != 0 or cout % num_groups != 0:
                         continue
-                    if stride == 1:
-                        cout = cin
-                    else:
-                        cout = 2 * cin
-                    mid_channels = cout // 4
                     yield [
                         "ShufflenetV1Unit", imsize, cin, cout,
                         num_groups, mid_channels, stride, ksize
