@@ -12,15 +12,10 @@ def get_inputs_shapes(saved_model_path):
             sess, [tag_constants.SERVING], saved_model_path)
         inputs = imported.signature_def["serving_default"].inputs
         ans = []
-        i = 0
-        while True:
-            key = "input_{}".format(i)
-            if inputs.get(key) is None:
-                # FIXME
-                return ans[::-1]
-            dim = inputs[key].tensor_shape.dim
+        for _, value in inputs.items():
+            dim = value.tensor_shape.dim
             ans.append([dim[i].size for i in range(len(dim))])
-            i += 1
+        return ans
 
 
 def int_quant(
