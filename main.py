@@ -48,8 +48,8 @@ def accuracy_test_rknn():
         "dirname": "test_rknn",
         "zip_size": 50000,
         "dataset_size": 50000,
-        "model_details": get_model_details(["mobilenet", "inception_v1"], "rknn", [
-            "", "asymmetric_quantized_u8", "dynamic_fixed_point_8", "dynamic_fixed_point_16"
+        "model_details": get_model_details(["inception_v4"], "rknn", [
+            "dynamic_fixed_point_8", "dynamic_fixed_point_16"
         ]),
         "data_preparer": DataPreparerDef({
             "labels_path": "C:/Users/v-xiat/Downloads/playground/imagenet/val_labels.txt",
@@ -168,4 +168,4 @@ def layer_latency_test_rknn():
 
 
 if __name__ == '__main__':
-    layer_latency_test_tpu()
+    accuracy_test_rknn()

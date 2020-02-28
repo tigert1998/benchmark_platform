@@ -18,5 +18,7 @@ class MixConvSampler(Sampler):
                     max_ksize = num_groups * 2 + 1
                     if max_ksize > imsize:
                         continue
+                    if cin % num_groups != 0:
+                        continue
                     for stride in [1, 2]:
-                        yield ["DenseBlock", imsize, cin, cin, num_groups, stride]
+                        yield ["MixConv", imsize, cin, cin, num_groups, stride]
