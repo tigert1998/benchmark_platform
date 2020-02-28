@@ -70,6 +70,34 @@ def quant_name_from_sdk(inference_sdk):
     else:
         return quantization
 
+def tflite_gpu_main():
+    from testers.inference_sdks.tflite_modified import TfliteModified
+
+    # inference_sdks
+    inference_sdks = []
+    for quantization in ["", "float16"]:
+        inference_sdks.append(TfliteModified({
+            "benchmark_model_path": "/data/local/tmp/tf-r2.1-60afa4e/benchmark_model_modified",
+            "quantization": quantization,
+        }))
+
+    connection = Adb("5e6fecf", True)
+
+    for tester_class, sampler_class, name in tester_configs:
+        for inference_sdk in inference_sdks:
+            concrete_tester = tester_class({
+                "connection": connection,
+                "inference_sdk": inference_sdk,
+                "sampler": sampler_class(),
+                "dirname": "gpu/{}".format(name),
+                "subdir": quant_name_from_sdk(inference_sdk),
+                "resume_from": None
+            })
+            concrete_tester.run({
+                "use_gpu": True,
+                "work_group_size": "",
+                "kernel_path": "/data/local/tmp/kernel.cl"
+            })
 
 def tflite_cpu_main():
     from testers.inference_sdks.tflite import Tflite
@@ -128,4 +156,4 @@ def rknn_main():
 
 
 if __name__ == "__main__":
-    rknn_main()
+    tflite_gpu_main()
