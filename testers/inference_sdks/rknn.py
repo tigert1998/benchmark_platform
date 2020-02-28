@@ -4,6 +4,7 @@ import tensorflow as tf
 import numpy as np
 import csv
 import json
+import shutil
 from typing import List
 
 
@@ -22,7 +23,7 @@ class Rknn(InferenceSdk):
         return {
             **InferenceSdk.default_settings(),
             "rknn_target": "rk1808",
-            "pre_compile": False
+            "quantization": ""
         }
 
     @staticmethod
@@ -33,14 +34,30 @@ class Rknn(InferenceSdk):
             "enable_op_profiling": True,
         }
 
-    def __init__(self, settings={}):
-        super().__init__(settings)
-        if self.settings["pre_compile"]:
-            import docker
-            self.container: docker.models.containers.Container =\
-                docker.from_env().containers.list()[0]
+    @staticmethod
+    def _build_rknn_fake_quantization_dataset(input_size_list: List[List[int]]):
+        # batch dimension is removed
+
+        dataset_path = "fake_dataset"
+        if os.path.isdir(dataset_path):
+            shutil.rmtree(dataset_path)
+        os.makedirs(dataset_path)
+        idx_file = "{}/index.txt".format(dataset_path)
+
+        with open(idx_file, "w") as f:
+            for i in range(10):
+                for j, input_size in enumerate(input_size_list):
+                    npy_filename = os.path.abspath(
+                        "{}/{}.{}.npy".format(dataset_path, i, j))
+                    np.save(npy_filename, np.random.randn(1, *input_size))
+                    f.write("{} ".format(npy_filename))
+                f.write("\n")
+
+        return idx_file
 
     def generate_model(self, path, inputs, outputs):
+        quantization = self.settings["quantization"]
+
         outputs_ops_names = [o.op.name for o in outputs]
 
         with tf.Session() as sess:
@@ -51,43 +68,39 @@ class Rknn(InferenceSdk):
             with tf.gfile.FastGFile(path + '.pb', mode='wb') as f:
                 f.write(constant_graph.SerializeToString())
 
-            docker_path = os.path.abspath(path).split(os.path.sep)
-            docker_path = docker_path[docker_path.index("benchmark_platform"):]
-            docker_path = "/" + "/".join(["playground"] + docker_path)
             rknn_convert_config = {
-                "path": docker_path,
                 "inputs": [i.op.name for i in inputs],
                 "input_size_list": [i.get_shape().as_list()[1:] for i in inputs],
                 "outputs": outputs_ops_names
             }
 
-        if not self.settings["pre_compile"]:
-            # remember to modify RKNN.__init__
-            rknn = RKNN()
-            rknn.config(batch_size=1)
-            assert 0 == rknn.load_tensorflow(
-                path + '.pb',
-                inputs=rknn_convert_config["inputs"],
-                input_size_list=rknn_convert_config["input_size_list"],
-                outputs=rknn_convert_config["outputs"]
+        # remember to modify RKNN.__init__
+        rknn = RKNN()
+        rknn.config(batch_size=1, quantized_dtype=quantization)
+        assert 0 == rknn.load_tensorflow(
+            path + '.pb',
+            inputs=rknn_convert_config["inputs"],
+            input_size_list=rknn_convert_config["input_size_list"],
+            outputs=rknn_convert_config["outputs"]
+        )
+
+        if quantization == "":
+            assert 0 == rknn.build(
+                do_quantization=False,
+                dataset="",
+                pre_compile=False
             )
-            assert 0 == rknn.build(do_quantization=False,
-                                   dataset="", pre_compile=False)
-            assert 0 == rknn.export_rknn(path + '.rknn')
-            rknn.release()
         else:
-            host_config_path = os.path.abspath(__file__).split(os.path.sep)
-            host_config_path = os.path.sep.join(host_config_path[:host_config_path.index(
-                "benchmark_platform")])
-            host_config_path = os.path.join(
-                host_config_path, "rknn_convert_tools/config.json")
-            with open(host_config_path, "w") as f:
-                f.write(json.dumps(rknn_convert_config))
-            convert_cmd = "{} run -n rknn python /playground/rknn_convert_tools/main.py".format(
-                "/root/anaconda3/bin/conda")
-            result = self.container.exec_run(convert_cmd)
-            assert 0 == result.exit_code
-            print(result.output.decode('utf-8'))
+            dataset = self._build_rknn_fake_quantization_dataset(
+                rknn_convert_config["input_size_list"])
+            assert 0 == rknn.build(
+                do_quantization=True,
+                dataset=dataset,
+                pre_compile=False
+            )
+
+        assert 0 == rknn.export_rknn(path + '.rknn')
+        rknn.release()
 
     def _fetch_results_on_soc(self,
                               connection: Connection, model_path,
