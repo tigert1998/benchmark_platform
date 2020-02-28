@@ -34,6 +34,15 @@ class Rknn(InferenceSdk):
             "enable_op_profiling": True,
         }
 
+    def __init__(self, settings={}):
+        super().__init__(settings)
+        self.quantization = self.settings["quantization"]
+        assert self.quantization in [
+            "", "asymmetric_quantized-u8",
+            "dynamic_fixed_point-8",
+            "dynamic_fixed_point-16"
+        ]
+
     @staticmethod
     def _build_rknn_fake_quantization_dataset(input_size_list: List[List[int]]):
         # batch dimension is removed
@@ -56,8 +65,6 @@ class Rknn(InferenceSdk):
         return idx_file
 
     def generate_model(self, path, inputs, outputs):
-        quantization = self.settings["quantization"]
-
         outputs_ops_names = [o.op.name for o in outputs]
 
         with tf.Session() as sess:
@@ -76,7 +83,7 @@ class Rknn(InferenceSdk):
 
         # remember to modify RKNN.__init__
         rknn = RKNN()
-        rknn.config(batch_size=1, quantized_dtype=quantization)
+        rknn.config(batch_size=1, quantized_dtype=self.quantization)
         assert 0 == rknn.load_tensorflow(
             path + '.pb',
             inputs=rknn_convert_config["inputs"],
@@ -84,7 +91,7 @@ class Rknn(InferenceSdk):
             outputs=rknn_convert_config["outputs"]
         )
 
-        if quantization == "":
+        if self.quantization == "":
             assert 0 == rknn.build(
                 do_quantization=False,
                 dataset="",
