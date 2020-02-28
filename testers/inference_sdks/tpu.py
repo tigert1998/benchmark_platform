@@ -31,10 +31,11 @@ class Tpu(InferenceSdk):
 
     def __init__(self, settings={}):
         super().__init__(settings)
+        import tflite_runtime.interpreter as tflite
+
         self.tflite_model_generator = Tflite({"quantization": "int"})
         self.edgetpu_compiler_path = self.settings["edgetpu_compiler_path"]
-        self.delegate = tf.lite.experimental.load_delegate(
-            self.settings["libedgetpu_path"])
+        self.delegate = tflite.load_delegate(self.settings["libedgetpu_path"])
 
     def generate_model(self, path, inputs, outputs):
         # {path}_edgetpu.tflite
