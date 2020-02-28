@@ -48,9 +48,7 @@ class Rknn(InferenceSdk):
         # batch dimension is removed
 
         dataset_path = "fake_dataset"
-        if os.path.isdir(dataset_path):
-            shutil.rmtree(dataset_path)
-        os.makedirs(dataset_path)
+        os.makedirs(dataset_path, exist_ok=True)
         idx_file = "{}/index.txt".format(dataset_path)
 
         with open(idx_file, "w") as f:

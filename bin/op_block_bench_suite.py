@@ -123,6 +123,7 @@ def rknn_main():
                 "resume_from": None
             })
             concrete_tester.run({
+                "disable_timeout": True
             })
 
 
