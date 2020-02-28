@@ -139,18 +139,24 @@ class Rknn(InferenceSdk):
             std_ms = 0
             avg_ms = rfind_assign_float(result_str, 'curr')
 
-        connection.pull("{}/op_profiling.csv".format(model_folder), ".")
-        layerwise_info = []
-        with open("op_profiling.csv") as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                layerwise_info.append({
-                    "name": "{}_{}".format(row["Name"], row["Uid"]),
-                    "time": {
-                        "avg_ms": float(row["avg(us)"]) / 1e3,
-                        "std_ms": float(row["std"]) / 1e3
-                    }
-                })
+        if flags["enable_op_profiling"]:
+            connection.pull("{}/op_profiling.csv".format(model_folder), ".")
+            layerwise_info = []
+            with open("op_profiling.csv", "r") as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    layerwise_info.append({
+                        "name": "{}_{}_{}_{}_{}_{}".format(
+                            row["Layer id"], row["Name"], row["Operation id"],
+                            row["Operator"], row["Target"], row["Uid"]
+                        ),
+                        "time": {
+                            "avg_ms": float(row["avg(us)"]) / 1e3,
+                            "std_ms": float(row["std"]) / 1e3
+                        }
+                    })
+        else:
+            layerwise_info = None
 
         return InferenceResult(avg_ms=avg_ms, std_ms=std_ms, profiling_details=None, layerwise_info=layerwise_info)
 
@@ -169,6 +175,8 @@ class Rknn(InferenceSdk):
 
         stat = Stat()
         layerwise_info = None
+        # FIXME
+        assert False
         for i in range(flags["num_runs"]):
             result = rknn.eval_perf(inputs=inputs, is_print=False)
             stat.update(result["total_time"] / 1e3)
