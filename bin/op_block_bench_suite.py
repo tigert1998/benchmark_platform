@@ -41,28 +41,6 @@ from testers.tester_impls.test_mix_conv import TestMixConv
 from utils.connection import Adb
 
 
-tester_configs = [
-    (TestConv, OpExperimentConvSampler, "conv"),
-    (TestDwconv, OpExperimentDwconvSampler, "dwconv"),
-    (TestDilatedConv, DilatedConvSampler, "dilated_conv"),
-    (TestGconv, GconvSampler, "gconv"),
-    (TestAdd, AddSampler, "add"),
-    (TestConcat, ConcatSampler, "concat"),
-    (TestGlobalPooling, GlobalPoolingSampler, "global_pooling"),
-    (TestFc, OpExperimentFcSampler, "fc"),
-    (TestShuffle, ShuffleSampler, "shuffle"),
-
-    (TestMbnetV1Block, MbnetV1BlockSampler, "mbnet_v1_block"),
-    (TestMbnetV2Block, MbnetV2BlockSampler, "mbnet_v2_block"),
-    (TestShufflenetV1Unit, ShufflenetV1UnitSampler, "shufflenet_v1_unit"),
-    (TestShufflenetV2Unit, ShufflenetV2UnitSampler, "shufflenet_v2_unit"),
-    (TestResnetV1Block, ResnetV1BlockSampler, "resnet_v1_block"),
-    (TestDenseBlock, DenseBlockSampler, "dense_block"),
-
-    (TestMixConv, MixConvSampler, "mix_conv")
-]
-
-
 def quant_name_from_sdk(inference_sdk):
     quantization = inference_sdk.settings["quantization"]
     if quantization == "":
@@ -70,8 +48,30 @@ def quant_name_from_sdk(inference_sdk):
     else:
         return quantization
 
+
 def tflite_gpu_main():
     from testers.inference_sdks.tflite_modified import TfliteModified
+
+    tester_configs = [
+        (TestConv, OpExperimentConvSampler, "conv"),
+        (TestDwconv, OpExperimentDwconvSampler, "dwconv"),
+        (TestDilatedConv, DilatedConvSampler, "dilated_conv"),
+        # (TestGconv, GconvSampler, "gconv"),
+        (TestAdd, AddSampler, "add"),
+        (TestConcat, ConcatSampler, "concat"),
+        (TestGlobalPooling, GlobalPoolingSampler, "global_pooling"),
+        (TestFc, OpExperimentFcSampler, "fc"),
+        (TestShuffle, ShuffleSampler, "shuffle"),
+
+        (TestMbnetV1Block, MbnetV1BlockSampler, "mbnet_v1_block"),
+        (TestMbnetV2Block, MbnetV2BlockSampler, "mbnet_v2_block"),
+        # (TestShufflenetV1Unit, ShufflenetV1UnitSampler, "shufflenet_v1_unit"),
+        (TestShufflenetV2Unit, ShufflenetV2UnitSampler, "shufflenet_v2_unit"),
+        (TestResnetV1Block, ResnetV1BlockSampler, "resnet_v1_block"),
+        (TestDenseBlock, DenseBlockSampler, "dense_block"),
+
+        # (TestMixConv, MixConvSampler, "mix_conv")
+    ]
 
     # inference_sdks
     inference_sdks = []
@@ -99,8 +99,30 @@ def tflite_gpu_main():
                 "kernel_path": "/data/local/tmp/kernel.cl"
             })
 
+
 def tflite_cpu_main():
     from testers.inference_sdks.tflite import Tflite
+
+    tester_configs = [
+        (TestConv, OpExperimentConvSampler, "conv"),
+        (TestDwconv, OpExperimentDwconvSampler, "dwconv"),
+        (TestDilatedConv, DilatedConvSampler, "dilated_conv"),
+        (TestGconv, GconvSampler, "gconv"),
+        (TestAdd, AddSampler, "add"),
+        (TestConcat, ConcatSampler, "concat"),
+        (TestGlobalPooling, GlobalPoolingSampler, "global_pooling"),
+        (TestFc, OpExperimentFcSampler, "fc"),
+        (TestShuffle, ShuffleSampler, "shuffle"),
+
+        (TestMbnetV1Block, MbnetV1BlockSampler, "mbnet_v1_block"),
+        (TestMbnetV2Block, MbnetV2BlockSampler, "mbnet_v2_block"),
+        (TestShufflenetV1Unit, ShufflenetV1UnitSampler, "shufflenet_v1_unit"),
+        (TestShufflenetV2Unit, ShufflenetV2UnitSampler, "shufflenet_v2_unit"),
+        (TestResnetV1Block, ResnetV1BlockSampler, "resnet_v1_block"),
+        (TestDenseBlock, DenseBlockSampler, "dense_block"),
+
+        (TestMixConv, MixConvSampler, "mix_conv")
+    ]
 
     # inference_sdks
     inference_sdks = []
@@ -129,6 +151,27 @@ def tflite_cpu_main():
 
 def rknn_main():
     from testers.inference_sdks.rknn import Rknn
+
+    tester_configs = [
+        (TestConv, OpExperimentConvSampler, "conv"),
+        (TestDwconv, OpExperimentDwconvSampler, "dwconv"),
+        (TestDilatedConv, DilatedConvSampler, "dilated_conv"),
+        # (TestGconv, GconvSampler, "gconv"),
+        (TestAdd, AddSampler, "add"),
+        (TestConcat, ConcatSampler, "concat"),
+        (TestGlobalPooling, GlobalPoolingSampler, "global_pooling"),
+        (TestFc, OpExperimentFcSampler, "fc"),
+        (TestShuffle, ShuffleSampler, "shuffle"),
+
+        (TestMbnetV1Block, MbnetV1BlockSampler, "mbnet_v1_block"),
+        (TestMbnetV2Block, MbnetV2BlockSampler, "mbnet_v2_block"),
+        # (TestShufflenetV1Unit, ShufflenetV1UnitSampler, "shufflenet_v1_unit"),
+        (TestShufflenetV2Unit, ShufflenetV2UnitSampler, "shufflenet_v2_unit"),
+        (TestResnetV1Block, ResnetV1BlockSampler, "resnet_v1_block"),
+        (TestDenseBlock, DenseBlockSampler, "dense_block"),
+
+        # (TestMixConv, MixConvSampler, "mix_conv")
+    ]
 
     # inference_sdks
     inference_sdks = []
