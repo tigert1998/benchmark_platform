@@ -53,26 +53,26 @@ def tflite_gpu_main():
     from testers.inference_sdks.tflite_modified import TfliteModified
 
     tester_configs = [
-        (TestConv, OpExperimentConvSampler(), "conv"),
-        (TestDwconv, OpExperimentDwconvSampler(), "dwconv"),
-        # (TestDilatedConv, DilatedConvSampler(), "dilated_conv"), # FIXME
-        # (TestGconv, GconvSampler(), "gconv"),
-        (TestAdd, AddSampler(), "add"),
-        (TestConcat, ConcatSampler(), "concat"),
-        (TestGlobalPooling, GlobalPoolingSampler(), "global_pooling"),
-        (TestFc, OpExperimentFcSampler(), "fc"),
-        (TestShuffle, ShuffleSampler(), "shuffle"),
+        (TestConv, OpExperimentConvSampler(), "conv", {}),
+        (TestDwconv, OpExperimentDwconvSampler(), "dwconv", {}),
+        # (TestDilatedConv, DilatedConvSampler(), "dilated_conv", {}), # FIXME
+        # (TestGconv, GconvSampler(), "gconv", {}),
+        (TestAdd, AddSampler(), "add", { "num_write_kernels": 2 }),
+        (TestConcat, ConcatSampler(), "concat", { "num_write_kernels": 2 }),
+        (TestGlobalPooling, GlobalPoolingSampler(), "global_pooling", {}),
+        (TestFc, OpExperimentFcSampler(), "fc", {}),
+        (TestShuffle, ShuffleSampler(), "shuffle", {}),
 
-        (TestMbnetV1Block, MbnetV1BlockSampler(), "mbnet_v1_block"),
-        (TestMbnetV2Block, MbnetV2BlockSampler(), "mbnet_v2_block"),
-        # (TestShufflenetV1Unit, ShufflenetV1UnitSampler(), "shufflenet_v1_unit"),
+        (TestMbnetV1Block, MbnetV1BlockSampler(), "mbnet_v1_block", {}),
+        (TestMbnetV2Block, MbnetV2BlockSampler(), "mbnet_v2_block", {}),
+        # (TestShufflenetV1Unit, ShufflenetV1UnitSampler(), "shufflenet_v1_unit", {}),
         (TestShufflenetV2Unit, ShufflenetV2UnitSampler({
             "filter": lambda sample: sample[-2] == 2
-        }), "shufflenet_v2_unit"),
-        (TestResnetV1Block, ResnetV1BlockSampler(), "resnet_v1_block"),
-        (TestDenseBlock, DenseBlockSampler(), "dense_block"),
+        }), "shufflenet_v2_unit", {}),
+        (TestResnetV1Block, ResnetV1BlockSampler(), "resnet_v1_block", {}),
+        (TestDenseBlock, DenseBlockSampler(), "dense_block", {}),
 
-        # (TestMixConv, MixConvSampler(), "mix_conv")
+        # (TestMixConv, MixConvSampler(), "mix_conv", {})
     ]
 
     # inference_sdks
@@ -85,7 +85,7 @@ def tflite_gpu_main():
 
     connection = Adb("5e6fecf", True)
 
-    for tester_class, sampler, name in tester_configs:
+    for tester_class, sampler, name, additional_flags in tester_configs:
         for inference_sdk in inference_sdks:
             concrete_tester = tester_class({
                 "connection": connection,
@@ -99,7 +99,8 @@ def tflite_gpu_main():
                 "use_gpu": True,
                 "work_group_size": "",
                 "tuning_type": "EXHAUSTIVE",
-                "kernel_path": "/data/local/tmp/kernel.cl"
+                "kernel_path": "/data/local/tmp/kernel.cl",
+                **additional_flags
             })
 
 
@@ -204,4 +205,4 @@ def rknn_main():
 
 
 if __name__ == "__main__":
-    rknn_main()
+    tflite_gpu_main()
