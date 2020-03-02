@@ -19,6 +19,8 @@ class TfliteModified(Tflite):
                        connection: Connection, model_path: str,
                        input_size_list: List[List[int]], flags) -> InferenceResult:
         result_str = self._launch_benchmark(connection, model_path, flags)
+        if flags.get("kernel_path") is not None:
+            connection.pull(flags["kernel_path"], ".")
 
         profiling_details = {
             "gpu_freq":  rfind_assign_int(result_str, "gpu_freq")
