@@ -55,7 +55,7 @@ def tflite_gpu_main():
     tester_configs = [
         (TestConv, OpExperimentConvSampler, "conv"),
         (TestDwconv, OpExperimentDwconvSampler, "dwconv"),
-        (TestDilatedConv, DilatedConvSampler, "dilated_conv"),
+        # (TestDilatedConv, DilatedConvSampler, "dilated_conv"), # FIXME
         # (TestGconv, GconvSampler, "gconv"),
         (TestAdd, AddSampler, "add"),
         (TestConcat, ConcatSampler, "concat"),
@@ -153,24 +153,26 @@ def rknn_main():
     from testers.inference_sdks.rknn import Rknn
 
     tester_configs = [
-        (TestConv, OpExperimentConvSampler, "conv"),
-        (TestDwconv, OpExperimentDwconvSampler, "dwconv"),
-        (TestDilatedConv, DilatedConvSampler, "dilated_conv"),
-        # (TestGconv, GconvSampler, "gconv"),
-        (TestAdd, AddSampler, "add"),
-        (TestConcat, ConcatSampler, "concat"),
-        (TestGlobalPooling, GlobalPoolingSampler, "global_pooling"),
-        (TestFc, OpExperimentFcSampler, "fc"),
-        (TestShuffle, ShuffleSampler, "shuffle"),
+        (TestConv, OpExperimentConvSampler(), "conv"),
+        (TestDwconv, OpExperimentDwconvSampler(), "dwconv"),
+        (TestDilatedConv, DilatedConvSampler(), "dilated_conv"),
+        # (TestGconv, GconvSampler(), "gconv"),
+        (TestAdd, AddSampler(), "add"),
+        # (TestConcat, ConcatSampler(), "concat"),
+        (TestGlobalPooling, GlobalPoolingSampler(), "global_pooling"),
+        (TestFc, OpExperimentFcSampler(), "fc"),
+        (TestShuffle, ShuffleSampler(), "shuffle"),
 
-        (TestMbnetV1Block, MbnetV1BlockSampler, "mbnet_v1_block"),
-        (TestMbnetV2Block, MbnetV2BlockSampler, "mbnet_v2_block"),
-        # (TestShufflenetV1Unit, ShufflenetV1UnitSampler, "shufflenet_v1_unit"),
-        (TestShufflenetV2Unit, ShufflenetV2UnitSampler, "shufflenet_v2_unit"),
-        (TestResnetV1Block, ResnetV1BlockSampler, "resnet_v1_block"),
-        (TestDenseBlock, DenseBlockSampler, "dense_block"),
+        (TestMbnetV1Block, MbnetV1BlockSampler(), "mbnet_v1_block"),
+        (TestMbnetV2Block, MbnetV2BlockSampler({
+            "filter": lambda sample: not sample[-3]
+            }), "mbnet_v2_block"),
+        # (TestShufflenetV1Unit, ShufflenetV1UnitSampler(), "shufflenet_v1_unit"),
+        (TestShufflenetV2Unit, ShufflenetV2UnitSampler(), "shufflenet_v2_unit"),
+        (TestResnetV1Block, ResnetV1BlockSampler(), "resnet_v1_block"),
+        (TestDenseBlock, DenseBlockSampler(), "dense_block"),
 
-        # (TestMixConv, MixConvSampler, "mix_conv")
+        # (TestMixConv, MixConvSampler(), "mix_conv")
     ]
 
     # inference_sdks
@@ -183,12 +185,12 @@ def rknn_main():
 
     connection = Adb("TD033101190100171", False)
 
-    for tester_class, sampler_class, name in tester_configs:
+    for tester_class, sampler, name in tester_configs:
         for inference_sdk in inference_sdks:
             concrete_tester = tester_class({
                 "connection": connection,
                 "inference_sdk": inference_sdk,
-                "sampler": sampler_class(),
+                "sampler": sampler,
                 "dirname": "rknn/{}".format(name),
                 "subdir": quant_name_from_sdk(inference_sdk),
                 "resume_from": None
@@ -199,4 +201,4 @@ def rknn_main():
 
 
 if __name__ == "__main__":
-    tflite_gpu_main()
+    rknn_main()

@@ -65,7 +65,7 @@ def squeeze_and_excitation(features, mid_channels: int):
 
     with tf.variable_scope("squeeze_and_excitation"):
         net = tf.nn.avg_pool(
-            features, ksize=features.get_shape()[1: 3], strides=[1, 1], padding='VALID')
+            features, ksize=features.get_shape().as_list()[1: 3], strides=[1, 1], padding='VALID')
 
         net = tf.keras.layers.Conv2D(
             filters=mid_channels,
@@ -77,7 +77,7 @@ def squeeze_and_excitation(features, mid_channels: int):
         net = tf.nn.relu(net)
 
         net = tf.keras.layers.Conv2D(
-            filters=features.get_shape()[-1],
+            filters=features.get_shape().as_list()[-1],
             kernel_size=[1, 1],
             strides=[1, 1],
             padding="same",
