@@ -60,7 +60,7 @@ class Myriad(InferenceSdk):
             assert 1 == len(inputs)
             
             if os.path.exists(path + '.dir'):
-                pass#shutil.rmtree(path + '.dir')
+                shutil.rmtree(path + '.dir')
 
             args = [
                 '--input_model %s' % path + '.pb',
@@ -84,11 +84,12 @@ class Myriad(InferenceSdk):
             result = Connection().shell(convert_cmd)
             self.debug_print(result)
 
-            if os.path.exists(os.path.join(path + '.dir', model_basename.replace('.pb', '.xml'))):
+            if not os.path.exists(os.path.join(os.path.abspath(path + '.dir'), model_basename + '.xml')):
                 if self.debug_print is not print:
                     print('Fatal Error: Failed to generate required file.')
                     print("convert_cmd = \"{}\"".format(convert_cmd))
                     print(result)
+                print('Unable to find genereated model,', os.path.join(os.path.abspath(path + '.dir'), model_basename + '.xml'))
                 raise FileNotFoundError
 
     def _fetch_results(self,
@@ -138,14 +139,16 @@ class Myriad(InferenceSdk):
         tot_stat = []
         layer_stat = {}
 
-
         for i_iter in range(len(perf_counter)):
             for i_ireq in range(layer_count):
                 layer_time = float(perf_timming[i_iter * layer_count + i_ireq][2]) + float(perf_timming[i_iter * layer_count + i_ireq][3])
                 layer_name = '%s_%s' % (perf_timming[i_iter * layer_count + i_ireq][0], perf_timming[i_iter * layer_count + i_ireq][4])
 
                 if perf_timming[i_iter * layer_count + i_ireq][0] != '<Extra>':
-                    tot_stat.append(layer_time)
+                    if len(tot_stat) <= i_iter:
+                        tot_stat.append(layer_time)
+                    else:
+                        tot_stat[i_iter] = tot_stat[i_iter] + layer_time
 
                 if layer_name not in layer_stat:
                     layer_stat[layer_name] = []
