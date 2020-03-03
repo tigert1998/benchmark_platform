@@ -35,7 +35,7 @@ def int_quant(
             for image_path in glob("{}/*.JPEG".format(validation_folder))[:1000]:
                 yield [preprocess.execute(image_path)]
 
-    converter.optimizations = [tf.lite.Optimize.DEFAULT]
+    converter.optimizations = [tf.lite.Optimize.OPTIMIZE_FOR_SIZE]
     converter.representative_dataset = representative_data_gen
     converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS_INT8]
     converter.inference_input_type = tf.uint8

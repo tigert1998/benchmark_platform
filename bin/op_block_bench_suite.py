@@ -39,6 +39,7 @@ from testers.tester_impls.test_dense_block import TestDenseBlock
 from testers.tester_impls.test_mix_conv import TestMixConv
 
 from utils.connection import Adb
+from utils.connection import Connection
 
 
 def quant_name_from_sdk(inference_sdk):
@@ -57,8 +58,8 @@ def tflite_gpu_main():
         (TestDwconv, OpExperimentDwconvSampler(), "dwconv", {}),
         # (TestDilatedConv, DilatedConvSampler(), "dilated_conv", {}), # FIXME
         # (TestGconv, GconvSampler(), "gconv", {}),
-        (TestAdd, AddSampler(), "add", { "num_write_kernels": 2 }),
-        (TestConcat, ConcatSampler(), "concat", { "num_write_kernels": 2 }),
+        (TestAdd, AddSampler(), "add", {"num_write_kernels": 2}),
+        (TestConcat, ConcatSampler(), "concat", {"num_write_kernels": 2}),
         (TestGlobalPooling, GlobalPoolingSampler(), "global_pooling", {}),
         (TestFc, OpExperimentFcSampler(), "fc", {}),
         (TestShuffle, ShuffleSampler(), "shuffle", {}),
@@ -204,5 +205,51 @@ def rknn_main():
             })
 
 
+def tflite_tpu_main():
+    from testers.inference_sdks.tpu import Tpu
+
+    tester_configs = [
+        (TestConv, OpExperimentConvSampler, "conv"),
+        (TestDwconv, OpExperimentDwconvSampler, "dwconv"),
+        (TestDilatedConv, DilatedConvSampler, "dilated_conv"),
+        (TestGconv, GconvSampler, "gconv"),
+        (TestAdd, AddSampler, "add"),
+        (TestConcat, ConcatSampler, "concat"),
+        (TestGlobalPooling, GlobalPoolingSampler, "global_pooling"),
+        (TestFc, OpExperimentFcSampler, "fc"),
+        (TestShuffle, ShuffleSampler, "shuffle"),
+
+        (TestMbnetV1Block, MbnetV1BlockSampler, "mbnet_v1_block"),
+        (TestMbnetV2Block, MbnetV2BlockSampler, "mbnet_v2_block"),
+        # (TestShufflenetV1Unit, ShufflenetV1UnitSampler, "shufflenet_v1_unit"),
+        (TestShufflenetV2Unit, ShufflenetV2UnitSampler, "shufflenet_v2_unit"),
+        (TestResnetV1Block, ResnetV1BlockSampler, "resnet_v1_block"),
+        (TestDenseBlock, DenseBlockSampler, "dense_block"),
+
+        (TestMixConv, MixConvSampler, "mix_conv")
+    ]
+
+    # inference_sdks
+    inference_sdks = [
+        Tpu({
+            "edgetpu_compiler_path": "/home/xiaohu/edgetpu/compiler/x86_64/edgetpu_compiler",
+            "libedgetpu_path": "/home/xiaohu/edgetpu/libedgetpu/direct/k8/libedgetpu.so.1"
+        })
+    ]
+
+    connection = Connection()
+
+    for tester_class, sampler_class, name in tester_configs:
+        for inference_sdk in inference_sdks:
+            concrete_tester = tester_class({
+                "connection": connection,
+                "inference_sdk": inference_sdk,
+                "sampler": sampler_class(),
+                "dirname": "tpu/{}".format(name),
+                "resume_from": None
+            })
+            concrete_tester.run({})
+
+
 if __name__ == "__main__":
-    tflite_gpu_main()
+    tflite_tpu_main()
