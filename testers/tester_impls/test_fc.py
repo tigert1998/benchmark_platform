@@ -4,14 +4,13 @@ import tensorflow as tf
 
 
 class TestFc(TestSingleLayer):
-    def _generate_model(self, sample):
-        model_path = "model"
-
+    def _generate_tf_model(self, sample):
         _, _, cin, cout, _, _ = sample
-        tf.reset_default_graph()
-        input_im = tf.placeholder(
-            name="input_im", dtype=tf.float32, shape=(1, cin))
-        net = tf.keras.layers.Dense(units=cout, name="the_fc")(input_im)
-        self.inference_sdk.generate_model(model_path, [input_im], [net])
 
-        return model_path, [input_im.get_shape().as_list()]
+        inputs, nets = self._pad_before_input([[1, cin]])
+
+        net = nets[0]
+        net = tf.keras.layers.Dense(units=cout, name="the_fc")(net)
+
+        outputs = self._pad_after_output([net])
+        return inputs, outputs

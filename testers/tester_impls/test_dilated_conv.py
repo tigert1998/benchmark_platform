@@ -4,20 +4,21 @@ import tensorflow as tf
 
 
 class TestDilatedConv(TestSingleLayer):
-    def _generate_model(self, sample):
-        model_path = "model"
-
+    def _generate_tf_model(self, sample):
         _, input_imsize, cin, cout, dilation, stride, kernel_size = sample
 
-        tf.reset_default_graph()
-        input_im = tf.placeholder(
-            name="input_im", dtype=tf.float32, shape=(1, input_imsize, input_imsize, cin))
+        inputs, nets = self._pad_before_input(
+            [[1, input_imsize, input_imsize, cin]])
+
+        net = nets[0]
         net = tf.keras.layers.Conv2D(
             filters=cout,
             kernel_size=[kernel_size, kernel_size],
             strides=[stride, stride],
             padding='same',
             dilation_rate=dilation,
-            name="the_dilated_conv")(input_im)
-        self.inference_sdk.generate_model(model_path, [input_im], [net])
-        return model_path, [input_im.get_shape().as_list()]
+            name="the_dilated_conv"
+        )(net)
+
+        outputs = self._pad_after_output([net])
+        return inputs, outputs
