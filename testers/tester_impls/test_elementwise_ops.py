@@ -2,7 +2,7 @@ from .test_single_layer import TestSingleLayer
 
 import tensorflow as tf
 
-from network.building_ops import channel_shuffle
+from network.building_ops import channel_shuffle, global_pooling
 
 
 class TestAdd(TestSingleLayer):
@@ -41,7 +41,7 @@ class TestGlobalPooling(TestSingleLayer):
             [[1, input_imsize, input_imsize, cin]])
 
         net = nets[0]
-        net = tf.keras.layers.GlobalAveragePooling2D()(net)
+        net = global_pooling(net)
 
         outputs = self._pad_after_output([net])
         return inputs, outputs
