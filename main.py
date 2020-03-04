@@ -17,26 +17,27 @@ from preprocess.model_archive import get_model_details
 def model_latency_test():
     from testers.tester_impls.test_model import TestModel
     from testers.inference_sdks.tflite import Tflite
-    from testers.inference_sdks.rknn import Rknn
+    # from testers.inference_sdks.rknn import Rknn
     from testers.sampling.model_sampler import ModelSampler
 
     tester = TestModel(settings={
-        "connection": Adb("TD033101190100171", False),
-        "inference_sdk": Rknn({"rknn_target": None}),
+        "connection": Adb("2e98c8a5", False),
+        "inference_sdk": Tflite({
+            "benchmark_model_path": "/data/local/tmp/tf-r2.1-60afa4e/benchmark_model",
+        }),
         "sampler": ModelSampler({
             "model_paths":
             list(map(
                 lambda x: x.model_path,
-                get_model_details(["inception_v4"], "rknn", [
-                    "", "asymmetric_quantized_u8", "dynamic_fixed_point_8", "dynamic_fixed_point_16"
-                ])
+                get_model_details(None, "tflite", [
+                    "", "float16",
+                ], "mobile_gpu")
             ))
         })
     })
 
     tester.run(benchmark_model_flags={
-        "enable_op_profiling": False,
-        "disable_timeout": True
+        "use_gpu": True
     })
 
 
@@ -168,4 +169,4 @@ def layer_latency_test_rknn():
 
 
 if __name__ == '__main__':
-    accuracy_test_rknn()
+    model_latency_test()
