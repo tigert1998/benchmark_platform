@@ -32,7 +32,7 @@ class Tflite(AccuracyEvaluatorDef):
 
     def snapshot(self):
         res = super().snapshot()
-        if isinstance(self.connection, Connection):
+        if type(self.connection) is Connection:
             dummys = [
                 "imagenet_accuracy_eval_path",
                 "guest_path", "imagenet_accuracy_eval_flags"
