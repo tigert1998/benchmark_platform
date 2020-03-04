@@ -13,20 +13,23 @@ class CSVWriter:
 
     def __init__(self):
         self.fd = None
+        self.writer = None
+
         self.previous_filename = None
         self.previous_titles = None
 
     def _write_titles(self, titles):
-        self.fd.write(','.join(titles) + '\n')
+        self.writer.writerow(titles)
         self.fd.flush()
 
     def _write_data(self, data):
-        self.fd.write(','.join(map(str, data)) + '\n')
+        self.writer.writerow(list(map(str, data)))
         self.fd.flush()
 
     def _close(self):
         if self.fd is not None:
             self.fd.close()
+            self.writer = None
 
     def update_data(self, filename, data, is_resume):
         if self.previous_filename is None:
@@ -34,11 +37,16 @@ class CSVWriter:
                 self.fd = open(filename, 'a')
             else:
                 self.fd = open(filename, 'w')
+            self.writer = csv.writer(self.fd, lineterminator='\n')
+
             self._write_titles(data.keys())
             self._write_data(data.values())
         elif self.previous_filename != filename:
             self._close()
+
             self.fd = open(filename, 'w')
+            self.writer = csv.writer(self.fd, lineterminator='\n')
+
             self._write_titles(data.keys())
             self._write_data(data.values())
         elif self.previous_titles != data.keys():
@@ -67,7 +75,7 @@ class CSVSpliter:
         return True
 
     @classmethod
-    def split(cls, csv_path: str, output_folder: Optional[str]):
+    def split(cls, csv_path: str, output_folder: Optional[str] = None):
         if output_folder is None:
             output_folder = os.path.dirname(csv_path)
 
