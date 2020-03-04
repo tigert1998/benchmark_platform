@@ -183,9 +183,11 @@ def rknn_main():
         (TestShuffle, ShuffleSampler, "shuffle", always_true),
 
         (TestMbnetV1Block, MbnetV1BlockSampler, "mbnet_v1_block", always_true),
-        (TestMbnetV2Block, MbnetV2BlockSampler, "mbnet_v2_block", mbnet_v2_block_sampler_filter),
+        (TestMbnetV2Block, MbnetV2BlockSampler,
+         "mbnet_v2_block", mbnet_v2_block_sampler_filter),
         # (TestShufflenetV1Unit, ShufflenetV1UnitSampler, "shufflenet_v1_unit", always_true),
-        (TestShufflenetV2Unit, ShufflenetV2UnitSampler, "shufflenet_v2_unit", always_true),
+        (TestShufflenetV2Unit, ShufflenetV2UnitSampler,
+         "shufflenet_v2_unit", always_true),
         (TestResnetV1Block, ResnetV1BlockSampler, "resnet_v1_block", always_true),
         (TestDenseBlock, DenseBlockSampler, "dense_block", always_true),
 
@@ -264,5 +266,46 @@ def tflite_tpu_main():
             concrete_tester.run({})
 
 
+def flops_main():
+    from testers.inference_sdks.flops_calculator import FlopsCalculator
+
+    tester_configs = [
+        (TestConv, OpExperimentConvSampler, "conv"),
+        (TestDwconv, OpExperimentDwconvSampler, "dwconv"),
+        (TestDilatedConv, DilatedConvSampler, "dilated_conv"),
+        (TestGconv, GconvSampler, "gconv"),
+        (TestAdd, AddSampler, "add"),
+        (TestConcat, ConcatSampler, "concat"),
+        (TestGlobalPooling, GlobalPoolingSampler, "global_pooling"),
+        (TestFc, OpExperimentFcSampler, "fc"),
+        (TestShuffle, ShuffleSampler, "shuffle"),
+
+        (TestMbnetV1Block, MbnetV1BlockSampler, "mbnet_v1_block"),
+        (TestMbnetV2Block, MbnetV2BlockSampler, "mbnet_v2_block"),
+        (TestShufflenetV1Unit, ShufflenetV1UnitSampler, "shufflenet_v1_unit"),
+        (TestShufflenetV2Unit, ShufflenetV2UnitSampler, "shufflenet_v2_unit"),
+        (TestResnetV1Block, ResnetV1BlockSampler, "resnet_v1_block"),
+        (TestDenseBlock, DenseBlockSampler, "dense_block"),
+
+        (TestMixConv, MixConvSampler, "mix_conv")
+    ]
+
+    # inference_sdks
+    inference_sdks = [FlopsCalculator()]
+
+    connection = Connection()
+
+    for tester_class, sampler_class, name in tester_configs:
+        for inference_sdk in inference_sdks:
+            concrete_tester = tester_class({
+                "connection": connection,
+                "inference_sdk": inference_sdk,
+                "sampler": sampler_class(),
+                "dirname": "flops/{}".format(name),
+                "resume_from": None
+            })
+            concrete_tester.run({})
+
+
 if __name__ == "__main__":
-    rknn_main()
+    flops_main()
