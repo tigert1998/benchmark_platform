@@ -51,7 +51,7 @@ def shufflenet_v2_unit(features, stride: int, kernel_size: int):
             major_branch = features
 
         major_branch = tf.keras.layers.Conv2D(
-            filters=major_branch.get_shape()[-1],
+            filters=major_branch.get_shape().as_list()[-1],
             kernel_size=[1, 1],
             strides=[1, 1],
             padding='same')(major_branch)
@@ -59,7 +59,7 @@ def shufflenet_v2_unit(features, stride: int, kernel_size: int):
         major_branch = depthwise_conv(major_branch, stride, kernel_size)
         major_branch = batch_normalization(major_branch)
         major_branch = tf.keras.layers.Conv2D(
-            filters=major_branch.get_shape()[-1],
+            filters=major_branch.get_shape().as_list()[-1],
             kernel_size=[1, 1],
             strides=[1, 1],
             padding='same')(major_branch)
@@ -69,7 +69,7 @@ def shufflenet_v2_unit(features, stride: int, kernel_size: int):
             minor_branch = depthwise_conv(minor_branch, 2, kernel_size)
             minor_branch = batch_normalization(minor_branch)
             minor_branch = tf.keras.layers.Conv2D(
-                filters=minor_branch.get_shape()[-1],
+                filters=minor_branch.get_shape().as_list()[-1],
                 kernel_size=[1, 1],
                 strides=[1, 1],
                 padding='same')(minor_branch)

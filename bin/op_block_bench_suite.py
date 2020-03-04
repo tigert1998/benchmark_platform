@@ -164,12 +164,17 @@ def rknn_main():
         _, input_imsize, cin, cout, with_se, stride, ksize = sample
         if with_se:
             return False
-        if quant_name == "none":
+        if quant_name == "none" or quant_name == "dynamic_fixed_point-16":
             if [input_imsize, cin, cout] >= [7, 240, 480]:
                 return ksize == 3
             return True
         else:
             return True
+
+    def shufflenet_v2_unit_sampler_filter(quant_name:str, sample):
+        _, imsize, cin, stride, ksize = sample
+        return stride == 2
+
 
     tester_configs = [
         (TestConv, OpExperimentConvSampler, "conv", always_true),
@@ -187,7 +192,7 @@ def rknn_main():
          "mbnet_v2_block", mbnet_v2_block_sampler_filter),
         # (TestShufflenetV1Unit, ShufflenetV1UnitSampler, "shufflenet_v1_unit", always_true),
         (TestShufflenetV2Unit, ShufflenetV2UnitSampler,
-         "shufflenet_v2_unit", always_true),
+         "shufflenet_v2_unit", shufflenet_v2_unit_sampler_filter),
         (TestResnetV1Block, ResnetV1BlockSampler, "resnet_v1_block", always_true),
         (TestDenseBlock, DenseBlockSampler, "dense_block", always_true),
 
@@ -308,4 +313,4 @@ def flops_main():
 
 
 if __name__ == "__main__":
-    flops_main()
+    rknn_main()
