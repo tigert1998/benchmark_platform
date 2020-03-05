@@ -138,11 +138,11 @@ class Snpe(InferenceSdk):
                         "name": '%s_%s_%s' % (layer_info[:3]),
                         "time": {
                             'avg_ms': float(layer_info[3]) / 1e3,
-                            'std_ms': math.sqrt(((float(layer_info[4])-float(layer_info[3])) ** 2 + (float(layer_info[5])-float(layer_info[3])) ** 2) /3) / 1e3
+                            'std_ms': math.sqrt(((float(layer_info[4])-float(layer_info[3])) ** 2 + (float(layer_info[5])-float(layer_info[3])) ** 2) / 2) / 1e3
                             }
                     })
             avg_stat = avg_stat + float(layer_info[3]) / 1e3
-            std_stat = std_stat + math.sqrt(((float(layer_info[4])-float(layer_info[3])) ** 2 + (float(layer_info[5])-float(layer_info[3])) ** 2) /3) / 1e3
+            std_stat = std_stat + math.sqrt(((float(layer_info[4])-float(layer_info[3])) ** 2 + (float(layer_info[5])-float(layer_info[3])) ** 2) / 2) / 1e3
                 
         self.debug_print('Layer Stat, Avg_ms: %.02fms, Std_ms: %.02fms' % (avg_stat, std_stat))
 
