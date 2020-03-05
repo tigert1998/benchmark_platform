@@ -4,6 +4,11 @@ import shutil
 
 from typing import List
 
+from subprocess import Popen, PIPE
+import fcntl
+
+USBDEVFS_RESET = 21780
+
 import tensorflow as tf
 import numpy as np
 
@@ -31,7 +36,7 @@ class Myriad(InferenceSdk):
         return {
             **InferenceSdk.default_flags(),
             "niter": 1,
-            "nireq": 500,
+            "nireq": 250,
         }
 
     def __init__(self, settings={}):
@@ -113,23 +118,46 @@ class Myriad(InferenceSdk):
 
         args_line = ' '.join(args)
 
-        convert_cmd = '; '.join([
-            'source %s/bin/setupvars.sh' % self.openvino_sdk_path,
-            '%s/bin/benchmark_app %s' %
-                        (self.openvino_sdk_path, args_line)
-        ])
+        retry_counter = 10
+        while retry_counter:
+            convert_cmd = '; '.join([
+                'source %s/bin/setupvars.sh' % self.openvino_sdk_path,
+                '%s/bin/benchmark_app %s' %
+                            (self.openvino_sdk_path, args_line)
+            ])
 
-        convert_cmd = "bash -c \"{}\"".format(convert_cmd)
+            convert_cmd = "bash -c \"{}\"".format(convert_cmd)
 
-        self.debug_print("convert_cmd = \"{}\"".format(convert_cmd))
+            self.debug_print("convert_cmd = \"{}\"".format(convert_cmd))
 
-        result = Connection().shell(convert_cmd)
+            result = Connection().shell(convert_cmd)
+            
+            perf_timming = re.findall(self.perf_regex, result)
+            perf_counter = re.findall(self.perf_counter_regex, result)
+
+            self.debug_print('Find %d reports, with %d layers' % (len(perf_counter), len(perf_timming)))
+
+            if result.find('NC_ERROR') == -1 and len(perf_counter) == 250:
+                break
+            else: 
+                retry_counter = retry_counter - 1
+                self.debug_print('Error detected, retrying.')
+                try:
+                    lsusb_out = Popen('lsusb | grep -i 03e7:2485', shell=True, bufsize=64, stdin=PIPE, stdout=PIPE, close_fds=True).stdout.read().strip().split()
+                    bus = lsusb_out[1]
+                    device = lsusb_out[3][:-1]
+                    f = open("/dev/bus/usb/%s/%s"%(bus.decode('utf-8'), device.decode('utf-8')), 'w', os.O_WRONLY)
+                    fcntl.ioctl(f, USBDEVFS_RESET, 0)
+                    f.close()
+                except Exception as msg:
+                    self.debug_print('Failed to reset myriad,', msg)
+                continue
+        
+        if retry_counter == 0:
+            self.debug_print('#############FAILED TO RECOVER FROM FATAL ERROR###################')
+            return InferenceResult(avg_ms=0.0, std_ms=0.0, profiling_details=None, layerwise_info=None)
+        
         #self.debug_print(result)
-
-        perf_timming = re.findall(self.perf_regex, result)
-        perf_counter = re.findall(self.perf_counter_regex, result)
-
-        #self.debug_print('Find %d reports, with %d layers' % (len(perf_counter), len(perf_timming)))
 
         assert len(perf_timming) % len(perf_counter) == 0
 
