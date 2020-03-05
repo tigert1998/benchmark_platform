@@ -135,9 +135,7 @@ class Tester(ClassWithSettings):
                 resumed = (sample == self.settings['resume_from'])
                 continue
 
-            sample_dic = {
-                key: value for key, value in zip(self.sampler.get_sample_titles(), sample)
-            }
+            sample_dic = self.sampler.get_sample_dict(sample)
             result = self._test_sample(sample)
             result = self._process_inference_result(result)
 

@@ -63,9 +63,8 @@ def analyze_inputs_outputs(graph):
     outputs_set = set(ops)
     inputs = []
 
-    not_input_types = [
-        "Const",
-        "VariableV2",
+    input_types = [
+        "Placeholder"
     ]
     not_output_types = [
         "Const",
@@ -73,7 +72,7 @@ def analyze_inputs_outputs(graph):
     ]
 
     for op in ops:
-        if len(op.inputs) == 0 and (op.type not in not_input_types) and (len(op.outputs) >= 1):
+        if len(op.inputs) == 0 and (op.type in input_types) and (len(op.outputs) >= 1):
             inputs.append(op)
         else:
             for input_tensor in op.inputs:

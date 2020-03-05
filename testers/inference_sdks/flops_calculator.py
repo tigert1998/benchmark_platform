@@ -18,12 +18,17 @@ class FlopsCalculator(InferenceSdk):
             with tf.gfile.FastGFile(path + '.pb', mode='wb') as f:
                 f.write(constant_graph.SerializeToString())
 
-    def _fetch_results(self,
-                       connection: Connection, model_path: str,
-                       input_size_list: List[List[int]], benchmark_model_flags) -> InferenceResult:
+    def _fetch_results(
+        self,
+        connection: Connection, model_path: str,
+        input_size_list: List[List[int]],
+        benchmark_model_flags
+    ) -> InferenceResult:
         graph = load_graph(model_path + ".pb")
         with graph.as_default():
             flops = tf.profiler.profile(
-                graph, options=tf.profiler.ProfileOptionBuilder.float_operation())
+                graph,
+                options=tf.profiler.ProfileOptionBuilder.float_operation(),
+            )
             flops = flops.total_float_ops
         return InferenceResult(avg_ms=None, std_ms=None, profiling_details={"flops": flops}, layerwise_info=None)

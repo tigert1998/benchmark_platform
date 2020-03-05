@@ -26,19 +26,32 @@ def model_latency_test():
             "benchmark_model_path": "/data/local/tmp/tf-r2.1-60afa4e/benchmark_model",
         }),
         "sampler": ModelSampler({
-            "model_paths":
-            list(map(
-                lambda x: x.model_path,
+            "model_details":
                 get_model_details(None, "tflite", [
                     "", "float16",
                 ], "mobile_gpu")
-            ))
         })
     })
 
     tester.run(benchmark_model_flags={
         "use_gpu": True
     })
+
+
+def model_flops_test():
+    from testers.tester_impls.test_model import TestModel
+    from testers.inference_sdks.flops_calculator import FlopsCalculator
+    from testers.sampling.model_sampler import ModelSampler
+
+    tester = TestModel(settings={
+        "connection": Connection(),
+        "inference_sdk": FlopsCalculator({}),
+        "sampler": ModelSampler({
+            "model_details": get_model_details(None, "pb", ["patched"])
+        })
+    })
+
+    tester.run(benchmark_model_flags={})
 
 
 def accuracy_test_rknn():
@@ -70,7 +83,7 @@ def accuracy_test_pb():
     tester = AccuracyTester({
         "zip_size": 50000,
         "dataset_size": 100,
-        "model_details": get_model_details(["shufflenet"], "pb", [""]),
+        "model_details": get_model_details(None, "pb", ["patched"]),
         "data_preparer": DataPreparerDef({
             "labels_path": "C:/Users/tigertang/Projects/dataset/val_labels.txt",
             "validation_set_path": "C:/Users/tigertang/Projects/dataset/validation",
@@ -89,12 +102,12 @@ def accuracy_test_tflite():
     tester = AccuracyTester({
         "zip_size": 50000,
         "dataset_size": 100,
-        "model_details": get_model_details(["shufflenet"], "pb", [""]),
+        "model_details": get_model_details(["proxyless_mobile"], "tflite", [""]),
         "data_preparer": AndroidDataPreparer({
             "labels_path": "C:/Users/tigertang/Projects/dataset/val_labels.txt",
             "validation_set_path": "C:/Users/tigertang/Projects/dataset/validation",
             "skip_dataset_preparation": True,
-            "skip_models_preparation": True,
+            "skip_models_preparation": False,
 
             "connection": Adb("2e98c8a5", False),
         }),
@@ -104,6 +117,8 @@ def accuracy_test_tflite():
             # on guest
             "imagenet_accuracy_eval_path": "/data/local/tmp/tf-r2.1-60afa4e/imagenet_accuracy_eval",
             "imagenet_accuracy_eval_flags": {
+                "num_images": 100,
+                "delegate": "gpu"
             },
         })
     })

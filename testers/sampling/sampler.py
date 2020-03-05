@@ -11,10 +11,26 @@ class Sampler(ClassWithSettings):
 
     @staticmethod
     def get_sample_titles():
-        """get sample points' titles
+        """Get sample' titles. This method should not be called outside the class.
         Returns: List of titles
         """
         pass
+
+    @staticmethod
+    def _get_serializable_sample(sample):
+        """Make sample writable. This method should not be called outside the class.
+        """
+        return sample
+
+    def get_sample_dict(self, sample):
+        """Call self.get_sample_titles and self._get_serializable_sample and concatenate results to a dict.
+        """
+        return {
+            key: value for key, value in zip(
+                self.get_sample_titles(),
+                self._get_serializable_sample(sample)
+            )
+        }
 
     def _get_samples_without_filter(self):
         pass
