@@ -101,25 +101,29 @@ def accuracy_test_tflite():
 
     tester = AccuracyTester({
         "zip_size": 50000,
-        "dataset_size": 100,
-        "model_details": get_model_details(["proxyless_mobile"], "tflite", [""]),
+        "dataset_size": 50000,
+        "model_details": get_model_details([
+            "resnet", "nasnet_a_mobile", "mnasnet", "efficientnet", 
+            "inception_v4"
+        ], "tflite", ["", "float16"]),
         "data_preparer": AndroidDataPreparer({
-            "labels_path": "C:/Users/tigertang/Projects/dataset/val_labels.txt",
-            "validation_set_path": "C:/Users/tigertang/Projects/dataset/validation",
+            "labels_path": "C:/Users/v-xiat/Downloads/playground/imagenet/val_labels.txt",
+            "validation_set_path": "C:/Users/v-xiat/Downloads/playground/imagenet/validation",
             "skip_dataset_preparation": True,
-            "skip_models_preparation": False,
+            "skip_models_preparation": True,
 
-            "connection": Adb("2e98c8a5", False),
+            "connection": Adb("5e6fecf", False),
         }),
         "accuracy_evaluator": Tflite({
-            "connection": Adb("2e98c8a5", False),
+            "connection": Adb("5e6fecf", False),
 
             # on guest
             "imagenet_accuracy_eval_path": "/data/local/tmp/tf-r2.1-60afa4e/imagenet_accuracy_eval",
-            "imagenet_accuracy_eval_flags": {
-                "num_images": 100,
-                "delegate": "gpu"
-            },
+            "imagenet_accuracy_eval_flags": {},
+            "charging_opts": {
+                "min": 0.3,
+                "max": 0.5
+            }
         })
     })
     tester.run()
@@ -176,12 +180,13 @@ def layer_latency_test_rknn():
         "connection": Adb("TD033101190100171", False),
         "inference_sdk": Rknn({
             "rknn_target": None,
+            "quantization": "asymmetric_quantized-u8"
         }),
         "sampler": ChannelExperimentConvSampler({}),
-        "resume_from": ["", "Conv", 7, 640, 344, "", "", 2, 3]
+        "resume_from": ["", "Conv", 7, 64, 656, "", "", 2, 5]
     })
     tester.run({})
 
 
 if __name__ == '__main__':
-    model_latency_test()
+    accuracy_test_tflite()
