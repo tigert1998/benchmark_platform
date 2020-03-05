@@ -22,13 +22,15 @@ class MetaModelDetail:
             self,
             model_path: str, preprocess: Preprocess,
             input_node: str, output_node: str,
-            available_model_formats: List[str]
+            available_model_formats: List[str],
+            available_hardware: List[str],
     ):
         self.model_path = model_path
         self.preprocess = preprocess
         self.input_node = input_node
         self.output_node = output_node
         self.available_model_formats = available_model_formats
+        self.available_hardware = available_hardware
         self._onedrive_path = os.path.expanduser(
             "~/Microsoft/Shihao Han (FA Talent) - ChannelNas/models")
 
@@ -78,97 +80,113 @@ meta_model_details = [
         "shufflenet_v1/shufflenet_v1_g3_1.5",
         shufflenet_preprocess,
         "input.1", "535",
-        ["pb", "tflite", "saved_model"]
+        ["pb", "tflite", "saved_model"],
+        ["cpu"]
     ),
     MetaModelDetail(
         "shufflenet_v1/shufflenet_v1_g8_1.0",
         shufflenet_preprocess,
         "input.1", "535",
-        ["pb", "tflite", "saved_model"]
+        ["pb", "tflite", "saved_model"],
+        ["cpu"]
     ),
     MetaModelDetail(
         "shufflenet_v2/shufflenet_v2_1.0",
         shufflenet_preprocess,
         "input.1", "626",
-        ["pb", "tflite", "saved_model"]
+        ["pb", "tflite", "saved_model"],
+        ["cpu"]
     ),
     MetaModelDetail(
         "shufflenet_v2/shufflenet_v2_1.5",
         shufflenet_preprocess,
         "input.1", "626",
-        ["pb", "tflite", "saved_model"]
+        ["pb", "tflite", "saved_model"],
+        ["cpu"]
     ),
     MetaModelDetail(
         "mobilenet_v1/mobilenet_v1_1.0_224",
         inception_224_preprocess,
         "input", "MobilenetV1/Predictions/Reshape_1",
-        ["pb", "tflite", "saved_model", "rknn"]
+        ["pb", "tflite", "saved_model", "rknn"],
+        ["cpu", "mobile_gpu", "rk"]
     ),
     MetaModelDetail(
         "mobilenet_v2/mobilenet_v2_1.0_224",
         inception_224_preprocess,
         "input", "MobilenetV2/Predictions/Reshape_1",
-        ["pb", "tflite", "saved_model", "rknn"]
+        ["pb", "tflite", "saved_model", "rknn"],
+        ["cpu", "mobile_gpu", "rk"]
     ),
     MetaModelDetail(
         "mobilenet_v3/mobilenet_v3_large_224_1.0",
         inception_224_preprocess,
         "input", "MobilenetV3/Predictions/Softmax",
-        ["pb", "tflite", "saved_model", "rknn"]
+        ["pb", "tflite", "saved_model", "rknn"],
+        ["cpu", "mobile_gpu", "rk"]
     ),
     MetaModelDetail(
         "inception_v1/inception_v1",
         inception_224_preprocess,
         "input", "InceptionV1/Logits/Predictions/Reshape_1",
-        ["pb", "tflite", "saved_model", "rknn"]
+        ["pb", "tflite", "saved_model", "rknn"],
+        ["cpu", "mobile_gpu", "rk"]
     ),
     MetaModelDetail(
         "inception_v4/inception_v4",
         inception_299_preprocess,
         "input", "InceptionV4/Logits/Predictions",
-        ["pb", "tflite", "saved_model", "rknn"]
+        ["pb", "tflite", "saved_model", "rknn"],
+        ["cpu", "mobile_gpu", "rk"]
     ),
     MetaModelDetail(
         "mnasnet/mnasnet_a1",
         mnasnet_preprocess,
         "Placeholder", "logits",
-        ["pb", "tflite", "saved_model"]
+        ["pb", "tflite", "saved_model"],
+        ["cpu"]
     ),
     MetaModelDetail(
         "nasnet/nasnet_a_mobile",
         inception_224_preprocess,
         "input", "final_layer/predictions",
-        ["pb", "tflite", "saved_model"]
+        ["pb", "tflite", "saved_model"],
+        ["cpu"]
     ),
     MetaModelDetail(
         "proxyless/proxyless_mobile",
         proxyless_preprocess,
         "input_images", "classifier/linear/add",
-        ["pb", "tflite", "saved_model"]
+        ["pb", "tflite", "saved_model"],
+        ["cpu", "mobile_gpu"]
     ),
     MetaModelDetail(
         "proxyless/proxyless_mobile_14",
         proxyless_preprocess,
         "input_images", "classifier/linear/add",
-        ["pb", "tflite", "saved_model"]
+        ["pb", "tflite", "saved_model"],
+        ["cpu", "mobile_gpu"]
     ),
     MetaModelDetail(
         "resnet_v2/resnet_v2_50_299",
         inception_299_preprocess,
         "input", "resnet_v2_50/predictions/Reshape_1",
-        ["pb", "tflite", "saved_model", "rknn"]
+        ["pb", "tflite", "saved_model", "rknn"],
+        ["cpu", "rk"]
     ),
     MetaModelDetail(
         "efficientnet/efficientnet_b0",
         efficientnet_b0_preprocess,
         "images", "Softmax",
-        ["pb", "tflite", "saved_model"]
+        ["pb", "tflite", "saved_model"],
+        ["cpu"]
     ),
     MetaModelDetail(
         "efficientnet/efficientnet_b1",
         efficientnet_b1_preprocess,
         "images", "Softmax",
-        ["pb", "tflite", "saved_model"]
+        ["pb", "tflite", "saved_model"],
+        ["cpu"]
     )
 ]
 
@@ -176,10 +194,11 @@ meta_model_details = [
 def get_model_details(
         model_names: Optional[List[str]],
         model_format: str,
-        quantizations: List[str]
+        quantizations: List[str],
+        hardware: str = "cpu"
 ) -> List[ModelDetail]:
     ans = []
-    for i in meta_model_details:
+    for i in filter(lambda i: hardware in i.available_hardware, meta_model_details):
         if model_names is not None:
             skip = True
             for model_name in model_names:

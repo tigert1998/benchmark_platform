@@ -12,15 +12,10 @@ def get_inputs_shapes(saved_model_path):
             sess, [tag_constants.SERVING], saved_model_path)
         inputs = imported.signature_def["serving_default"].inputs
         ans = []
-        i = 0
-        while True:
-            key = "input_{}".format(i)
-            if inputs.get(key) is None:
-                # FIXME
-                return ans[::-1]
-            dim = inputs[key].tensor_shape.dim
+        for _, value in inputs.items():
+            dim = value.tensor_shape.dim
             ans.append([dim[i].size for i in range(len(dim))])
-            i += 1
+        return ans
 
 
 def int_quant(
@@ -40,7 +35,7 @@ def int_quant(
             for image_path in glob("{}/*.JPEG".format(validation_folder))[:1000]:
                 yield [preprocess.execute(image_path)]
 
-    converter.optimizations = [tf.lite.Optimize.DEFAULT]
+    converter.optimizations = [tf.lite.Optimize.OPTIMIZE_FOR_SIZE]
     converter.representative_dataset = representative_data_gen
     converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS_INT8]
     converter.inference_input_type = tf.uint8
@@ -84,6 +79,7 @@ def main(saved_model_path: str, quantization: str, output_path: Optional[str]):
 
 
 if __name__ == "__main__":
+    assert tf.__version__.startswith("2.1.")
     parser = argparse.ArgumentParser(
         description='convert saved_model to tflite')
     parser.add_argument('--saved_model_path', type=str, required=True)

@@ -17,7 +17,7 @@ class Connection(ClassWithSettings):
         if "Win" in platform.platform():
             shell_exe = "powershell"
         else:
-            shell_exe = "bash"
+            shell_exe = os.environ["SHELL"]
         p = subprocess.Popen(
             shell_exe,
             stdin=subprocess.PIPE,
@@ -80,6 +80,13 @@ class Adb(Connection):
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE)
         return p.communicate(bytes(shell, 'utf-8'))[0].decode('utf-8')
+
+    def query_battery(self):
+        s = self.shell("dumpsys battery")
+        ans = s.split('\n')
+        ans = map(lambda s: list(map(lambda s: s.strip(), s.split(':'))), ans)
+        ans = filter(lambda arr: len(arr) >= 2 and len(arr[1]) >= 1, ans)
+        return {key: value for key, value in ans}
 
     def snapshot(self):
         getprop_items = [

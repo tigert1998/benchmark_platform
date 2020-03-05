@@ -59,14 +59,23 @@ def batch_normalization(features):
     )
 
 
-# https://github.com/tensorflow/models/blob/89dd9a4e2548e8a5214bd4e564428d01c206a7db/research/slim/nets/mobilenet/conv_blocks.py#L408
+def global_pooling(features):
+    return tf.nn.avg_pool(
+        features,
+        ksize=features.get_shape().as_list()[1: 3],
+        strides=[1, 1],
+        padding='VALID'
+    )
+
+
 def squeeze_and_excitation(features, mid_channels: int):
+    """SE layer
+    https://github.com/tensorflow/models/blob/89dd9a4e2548e8a5214bd4e564428d01c206a7db/research/slim/nets/mobilenet/conv_blocks.py#L408
+    """
     def gating_fn(features): return tf.nn.relu6(features + 3) * 0.16667
 
     with tf.variable_scope("squeeze_and_excitation"):
-        net = tf.nn.avg_pool(
-            features, ksize=features.get_shape()[1: 3], strides=[1, 1], padding='VALID')
-
+        net = global_pooling(features)
         net = tf.keras.layers.Conv2D(
             filters=mid_channels,
             kernel_size=[1, 1],
@@ -77,7 +86,7 @@ def squeeze_and_excitation(features, mid_channels: int):
         net = tf.nn.relu(net)
 
         net = tf.keras.layers.Conv2D(
-            filters=features.get_shape()[-1],
+            filters=features.get_shape().as_list()[-1],
             kernel_size=[1, 1],
             strides=[1, 1],
             padding="same",

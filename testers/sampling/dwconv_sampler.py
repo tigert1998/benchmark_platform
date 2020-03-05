@@ -120,4 +120,4 @@ class OpExperimentDwconvSampler(Sampler):
                 ):
                     if ksize > imsize:
                         continue
-                    return ["", "Dwconv", imsize, cin, cin, "", "", stride, ksize]
+                    yield ["", "Dwconv", imsize, cin, cin, "", "", stride, ksize]

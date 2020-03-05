@@ -37,9 +37,9 @@ class DiagramGenerator:
 
     def _plot_figure(self, xs, ys_list, xlabel, ylabel_list, title, filename):
         fig = plt.figure()
-        fig.set_size_inches(19, 11)
+        fig.set_size_inches(16, 9)
         for ys, ylabel in zip(ys_list, ylabel_list):
-            plt.plot(xs, ys, label=ylabel)
+            plt.plot(xs, ys, 'bo', label=ylabel)
         plt.xlabel(xlabel)
         plt.title(title)
         plt.legend()

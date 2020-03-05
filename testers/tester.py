@@ -24,6 +24,7 @@ class Tester(ClassWithSettings):
             "inference_sdk": None,
             "sampler": None,
             "subdir": None,
+            "dirname": None,
             "resume_from": None
         }
 
@@ -34,12 +35,16 @@ class Tester(ClassWithSettings):
         self.sampler = self.settings["sampler"]
 
     def _get_dir_name(self):
-        dir_name = self.brief()
+        if self.settings.get("dirname") is not None:
+            dir_name = self.settings["dirname"]
+        else:
+            dir_name = self.brief()
         if self.settings.get("subdir") is not None:
             dir_name += "/" + self.settings.get("subdir")
         return dir_name
 
     def _chdir_in(self):
+        self.cwd = os.getcwd()
         dir_name = "test_results/{}".format(self._get_dir_name())
         if not os.path.isdir(dir_name):
             if os.path.exists(dir_name):
@@ -49,9 +54,8 @@ class Tester(ClassWithSettings):
                 os.makedirs(dir_name)
         os.chdir(dir_name)
 
-    @staticmethod
-    def _chdir_out():
-        os.chdir("..")
+    def _chdir_out(self):
+        os.chdir(self.cwd)
 
     def _get_csv_filename(self, sample):
         return "data.csv"
@@ -60,10 +64,13 @@ class Tester(ClassWithSettings):
         ...
 
     def _process_inference_result(self, result: InferenceResult):
-        ret = {
-            "latency_ms": result.avg_ms,
-            "std_ms": result.std_ms
-        }
+        ret = {}
+        if result.avg_ms is not None:
+            ret = {
+                **ret,
+                "latency_ms": result.avg_ms,
+                "std_ms": result.std_ms
+            }
 
         # layerwise info
         if result.layerwise_info is not None:
@@ -74,15 +81,22 @@ class Tester(ClassWithSettings):
         # profiling details
         if result.profiling_details is not None:
             for stage in ["write", "comp", "read"]:
+                if result.profiling_details.get(stage) is None:
+                    continue
                 for metric in ["avg", "std"]:
-                    metric_title = "{}_{}".format(stage, metric)
+                    metric_title = "{}_{}_ms".format(stage, metric)
                     ret[metric_title] = result.profiling_details[stage][metric]
 
-            ret["gpu_freq"] = result.profiling_details["gpu_freq"]
+            if result.profiling_details.get("gpu_freq") is not None:
+                ret["gpu_freq"] = result.profiling_details["gpu_freq"]
 
-            local_work_size = result.profiling_details["local_work_size"]
-            for i in range(len(local_work_size)):
-                ret["local_work_size[{}]".format(i)] = local_work_size[i]
+            if result.profiling_details.get("local_work_size") is not None:
+                local_work_size = result.profiling_details["local_work_size"]
+                for i in range(len(local_work_size)):
+                    ret["local_work_size[{}]".format(i)] = local_work_size[i]
+
+            if result.profiling_details.get("flops") is not None:
+                ret["flops"] = result.profiling_details["flops"]
 
         return ret
 
@@ -121,9 +135,7 @@ class Tester(ClassWithSettings):
                 resumed = (sample == self.settings['resume_from'])
                 continue
 
-            sample_dic = {
-                key: value for key, value in zip(self.sampler.get_sample_titles(), sample)
-            }
+            sample_dic = self.sampler.get_sample_dict(sample)
             result = self._test_sample(sample)
             result = self._process_inference_result(result)
 

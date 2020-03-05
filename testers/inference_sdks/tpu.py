@@ -16,7 +16,7 @@ class Tpu(InferenceSdk):
     @staticmethod
     def default_settings():
         return {
-            **InferenceResult.default_settings(),
+            **InferenceSdk.default_settings(),
             "edgetpu_compiler_path": "edgetpu_compiler",
             "libedgetpu_path": "libedgetpu.so.1"
         }
@@ -24,17 +24,18 @@ class Tpu(InferenceSdk):
     @staticmethod
     def default_flags():
         return {
-            **InferenceResult.default_flags(),
+            **InferenceSdk.default_flags(),
             "warmup_runs": 1,
             "num_runs": 30
         }
 
     def __init__(self, settings={}):
         super().__init__(settings)
+        import tflite_runtime.interpreter as tflite
+
         self.tflite_model_generator = Tflite({"quantization": "int"})
         self.edgetpu_compiler_path = self.settings["edgetpu_compiler_path"]
-        self.delegate = tf.lite.experimental.load_delegate(
-            self.settings["libedgetpu_path"])
+        self.delegate = tflite.load_delegate(self.settings["libedgetpu_path"])
 
     def generate_model(self, path, inputs, outputs):
         # {path}_edgetpu.tflite
@@ -45,12 +46,12 @@ class Tpu(InferenceSdk):
     def _fetch_results(self,
                        connection: Connection, model_path: str,
                        input_size_list: List[List[int]], benchmark_model_flags) -> InferenceResult:
+        import tflite_runtime.interpreter as tflite
 
-        interpreter = tf.lite.Interpreter(
+        interpreter = tflite.Interpreter(
             model_path=model_path + "_edgetpu.tflite",
             experimental_delegates=[self.delegate])
 
-        interpreter.allocate_tensors()
         input_details = interpreter.get_input_details()
         output_details = interpreter.get_output_details()
         interpreter.allocate_tensors()

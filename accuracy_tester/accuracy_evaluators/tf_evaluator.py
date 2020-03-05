@@ -1,13 +1,12 @@
 from .accuracy_evaluator_def import AccuracyEvaluatorDef
 from .utils import count_dataset_size, construct_evaluating_progressbar, evaluate_outputs
 
-from utils.tf_model_utils import load_graph, analyze_inputs_outputs
+from utils.tf_model_utils import load_graph
 
 import tensorflow as tf
 import itertools
 import os
 import numpy as np
-import cv2
 
 
 class TfEvaluator(AccuracyEvaluatorDef):

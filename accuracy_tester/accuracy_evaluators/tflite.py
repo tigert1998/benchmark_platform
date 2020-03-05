@@ -1,5 +1,6 @@
 import os
 import datetime
+import time
 import itertools
 
 import numpy as np
@@ -10,7 +11,6 @@ from utils.connection import Connection
 from .utils import evaluate_outputs, count_dataset_size, construct_evaluating_progressbar
 
 import tensorflow as tf
-import cv2
 
 
 class Tflite(AccuracyEvaluatorDef):
@@ -24,6 +24,7 @@ class Tflite(AccuracyEvaluatorDef):
             "imagenet_accuracy_eval_path": None,
             "guest_path": "/sdcard/accuracy_test",
             "imagenet_accuracy_eval_flags": None,
+            "charging_opts": None
         }
 
     def __init__(self, settings):
@@ -33,16 +34,40 @@ class Tflite(AccuracyEvaluatorDef):
 
     def snapshot(self):
         res = super().snapshot()
-        if isinstance(self.connection, Connection):
+        if type(self.connection) is Connection:
             dummys = [
                 "imagenet_accuracy_eval_path",
-                "guest_path", "imagenet_accuracy_eval_flags"
+                "guest_path",
+                "imagenet_accuracy_eval_flags",
+                "charging_opts"
             ]
         else:
             dummys = []
         for item in dummys:
             res.pop(item)
         return res
+
+    def _check_and_wait_battery(self):
+        charging_opts = self.settings["charging_opts"]
+        if charging_opts is None:
+            return
+
+        def get_level():
+            info = self.connection.query_battery()
+            level = float(info["level"])
+            scale = float(info["scale"])
+            return level / scale
+
+        if get_level() >= charging_opts["min"]:
+            return
+        # enter charging mode
+        while True:
+            print("Wait for battery charging...")
+            time.sleep(10)
+            level = get_level()
+            print("Current battery level: {}%".format(level * 100))
+            if level >= charging_opts["max"]:
+                return
 
     def _eval_on_guest(self, model_details, image_path_label_gen):
         guest_path = self.settings["guest_path"]
@@ -55,6 +80,7 @@ class Tflite(AccuracyEvaluatorDef):
             image_path_label_gen)
 
         for model_detail in model_details:
+            self._check_and_wait_battery()
             model_basename = os.path.basename(model_detail.model_path)
 
             model_output_labels = "{}_output_labels.txt".format(
