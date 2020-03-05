@@ -49,7 +49,6 @@ class Myriad(InferenceSdk):
         self.perf_counter_regex = self.settings["perf_counter_regex"]
 
     def generate_model(self, path, inputs, outputs):
-        path = os.path.splitext(path)[0]
         model_basename = os.path.basename(path)
 
         outputs_ops_names = [o.op.name for o in outputs]
@@ -100,8 +99,6 @@ class Myriad(InferenceSdk):
     def _fetch_results(self,
                        connection: Connection, model_path,
                        input_size_list: List[List[int]], flags) -> InferenceResult:
-
-        model_path = os.path.splitext(model_path)[0]
         model_basename = os.path.basename(model_path)
 
         args = [
@@ -192,7 +189,7 @@ class Myriad(InferenceSdk):
                             }
                     })
                 
-        #self.debug_print(tot_stat)
+        # self.debug_print(tot_stat)
         self.debug_print('Layer Stat, Avg_ms: %.02fms, Std_ms: %.02fms' % (np.mean(tot_stat) / 1e3, np.std(tot_stat, ddof=1) / 1e3))
 
         return InferenceResult(avg_ms=np.mean(tot_stat) / 1e3, std_ms=np.std(tot_stat, ddof=1) / 1e3, profiling_details=None, layerwise_info=layerwise_info)
