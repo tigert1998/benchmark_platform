@@ -53,8 +53,9 @@ class Tflite(AccuracyEvaluatorDef):
             return
 
         def get_level():
-            level = float(self.connection.query_battery()["level"])
-            scale = float(self.connection.query_battery()["scale"])
+            info = self.connection.query_battery()
+            level = float(info["level"])
+            scale = float(info["scale"])
             return level / scale
 
         if get_level() >= charging_opts["min"]:

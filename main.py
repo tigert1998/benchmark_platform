@@ -121,8 +121,8 @@ def accuracy_test_tflite():
             "imagenet_accuracy_eval_path": "/data/local/tmp/tf-r2.1-60afa4e/imagenet_accuracy_eval",
             "imagenet_accuracy_eval_flags": {},
             "charging_opts": {
-                "min": 0.3,
-                "max": 0.5
+                "min": 0.8,
+                "max": 0.95
             }
         })
     })
