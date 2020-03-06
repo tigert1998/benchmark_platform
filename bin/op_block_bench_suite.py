@@ -171,10 +171,9 @@ def rknn_main():
         else:
             return True
 
-    def shufflenet_v2_unit_sampler_filter(quant_name:str, sample):
+    def shufflenet_v2_unit_sampler_filter(quant_name: str, sample):
         _, imsize, cin, stride, ksize = sample
         return stride == 2
-
 
     tester_configs = [
         (TestConv, OpExperimentConvSampler, "conv", always_true),
@@ -313,4 +312,4 @@ def flops_main():
 
 
 if __name__ == "__main__":
-    rknn_main()
+    tflite_gpu_main()

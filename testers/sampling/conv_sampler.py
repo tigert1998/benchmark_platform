@@ -214,7 +214,8 @@ class OpExperimentConvSampler(Sampler):
         return ConvSampler.get_sample_titles()
 
     def _get_samples_without_filter(self):
-        imsizes = available_imsizes().remove(224)
+        imsizes = available_imsizes()
+        imsizes.remove(224)
         for imsize in imsizes:
             for cin in sparse_channels_from_imsize(imsize):
                 for stride, ksize in itertools.product(
@@ -225,6 +226,6 @@ class OpExperimentConvSampler(Sampler):
                     yield ["", "Conv", imsize, cin, cin, "", "", stride, ksize]
 
         for cout, stride, ksize in itertools.product(
-            sparse_channels_from_imsize(224), [1, 2], [1, 3, 5, 7]
+            [16, 32, 64, 96], [1, 2], [1, 3, 5, 7]
         ):
             yield ["", "Conv", 224, 3, cout, "", "", stride, ksize]

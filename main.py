@@ -103,7 +103,7 @@ def accuracy_test_tflite():
         "zip_size": 50000,
         "dataset_size": 50000,
         "model_details": get_model_details([
-            "resnet", "nasnet_a_mobile", "mnasnet", "efficientnet", 
+            "resnet", "nasnet_a_mobile", "mnasnet", "efficientnet",
             "inception_v4"
         ], "tflite", ["", "float16"]),
         "data_preparer": AndroidDataPreparer({
@@ -161,20 +161,13 @@ def layer_latency_test_tpu():
             "libedgetpu_path": "/home/xiaohu/edgetpu/libedgetpu/direct/k8/libedgetpu.so.1"
         }),
         "sampler": ChannelExperimentConvSampler({}),
-        # "resume_from": ["","Conv",7,160,880,"","",1,3]
+        # "resume_from": ["", "Conv", 7, 160, 880, "", "", 1, 3]
     })
     tester.run({})
 
 
 def layer_latency_test_rknn():
     from testers.inference_sdks.rknn import Rknn
-
-    # tester = TestDwconv({
-    #     "inference_sdk": Rknn({}),
-    #     "sampler": ChannelExperimentDwconvSampler({}),
-    #     "resume_from": ["", "DWConv", 224, 424, 424, "", "", 1, 3]
-    # })
-    # tester.run({})
 
     tester = TestConv({
         "connection": Adb("TD033101190100171", False),
@@ -183,10 +176,10 @@ def layer_latency_test_rknn():
             "quantization": "asymmetric_quantized-u8"
         }),
         "sampler": ChannelExperimentConvSampler({}),
-        "resume_from": ["", "Conv", 7, 64, 656, "", "", 2, 5]
+        "resume_from": ["", "Conv", 7, 576, 640, "", "", 1, 3]
     })
     tester.run({})
 
 
 if __name__ == '__main__':
-    accuracy_test_tflite()
+    layer_latency_test_rknn()
