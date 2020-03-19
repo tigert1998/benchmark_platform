@@ -99,10 +99,10 @@ def accuracy_test_tflite():
 
     tester = AccuracyTester({
         "zip_size": 50000,
-        "dataset_size": 100,
+        "dataset_size": 50000,
         "model_details": get_model_details(None, "tflite", ["edgetpu"], "edgetpu"),
         "data_preparer": DataPreparerDef({
-            "labels_path": "/home/hanxiao/benchmarks/val.txt",
+            "labels_path": "/home/xiaohu/val_labels.txt",
             "validation_set_path": "/home/hanxiao/benchmarks/imagenet_dataset",
             "skip_dataset_preparation": True,
             "skip_models_preparation": True,
@@ -165,4 +165,4 @@ def layer_latency_test_rknn():
 
 
 if __name__ == '__main__':
-    model_latency_test()
+    accuracy_test_tflite()

@@ -44,6 +44,7 @@ class AccuracyTester(ClassWithSettings):
             f.write(json.dumps(regularize_for_json(self.snapshot()), indent=4))
 
     def _chdir_in(self):
+        self.cwd = os.getcwd()
         if self.settings.get("dirname") is not None:
             dir_name = self.settings["dirname"]
         else:
@@ -106,9 +107,8 @@ class AccuracyTester(ClassWithSettings):
             model_accuracies[model_basename] *= 100 / dataset_size
         return model_accuracies
 
-    @staticmethod
-    def _chdir_out():
-        os.chdir("..")
+    def _chdir_out(self):
+        os.chdir(self.cwd)
 
     def run(self):
         self._chdir_in()
