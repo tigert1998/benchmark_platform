@@ -111,14 +111,14 @@ meta_model_details = [
         inception_224_preprocess,
         "input", "MobilenetV1/Predictions/Reshape_1",
         ["pb", "tflite", "saved_model", "rknn"],
-        ["cpu", "mobile_gpu", "rk"]
+        ["cpu", "mobile_gpu", "rk", "edgetpu"]
     ),
     MetaModelDetail(
         "mobilenet_v2/mobilenet_v2_1.0_224",
         inception_224_preprocess,
         "input", "MobilenetV2/Predictions/Reshape_1",
         ["pb", "tflite", "saved_model", "rknn"],
-        ["cpu", "mobile_gpu", "rk"]
+        ["cpu", "mobile_gpu", "rk", "edgetpu"]
     ),
     MetaModelDetail(
         "mobilenet_v3/mobilenet_v3_large_224_1.0",
@@ -132,49 +132,49 @@ meta_model_details = [
         inception_224_preprocess,
         "input", "InceptionV1/Logits/Predictions/Reshape_1",
         ["pb", "tflite", "saved_model", "rknn"],
-        ["cpu", "mobile_gpu", "rk"]
+        ["cpu", "mobile_gpu", "rk", "edgetpu"]
     ),
     MetaModelDetail(
         "inception_v4/inception_v4",
         inception_299_preprocess,
         "input", "InceptionV4/Logits/Predictions",
         ["pb", "tflite", "saved_model", "rknn"],
-        ["cpu", "mobile_gpu", "rk"]
+        ["cpu", "mobile_gpu", "rk", "edgetpu"]
     ),
     MetaModelDetail(
         "mnasnet/mnasnet_a1",
         mnasnet_preprocess,
         "Placeholder", "logits",
         ["pb", "tflite", "saved_model"],
-        ["cpu"]
+        ["cpu", "edgetpu"]
     ),
     MetaModelDetail(
         "nasnet/nasnet_a_mobile",
         inception_224_preprocess,
         "input", "final_layer/predictions",
         ["pb", "tflite", "saved_model"],
-        ["cpu"]
+        ["cpu", "edgetpu"]
     ),
     MetaModelDetail(
         "proxyless/proxyless_mobile",
         proxyless_preprocess,
         "input_images", "classifier/linear/add",
         ["pb", "tflite", "saved_model"],
-        ["cpu", "mobile_gpu"]
+        ["cpu", "mobile_gpu", "edgetpu"]
     ),
     MetaModelDetail(
         "proxyless/proxyless_mobile_14",
         proxyless_preprocess,
         "input_images", "classifier/linear/add",
         ["pb", "tflite", "saved_model"],
-        ["cpu", "mobile_gpu"]
+        ["cpu", "mobile_gpu", "edgetpu"]
     ),
     MetaModelDetail(
         "resnet_v2/resnet_v2_50_299",
         inception_299_preprocess,
         "input", "resnet_v2_50/predictions/Reshape_1",
         ["pb", "tflite", "saved_model", "rknn"],
-        ["cpu", "rk"]
+        ["cpu", "rk", "edgetpu"]
     ),
     MetaModelDetail(
         "efficientnet/efficientnet_b0",
