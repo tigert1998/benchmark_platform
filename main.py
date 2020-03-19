@@ -17,25 +17,22 @@ from preprocess.model_archive import get_model_details
 def model_latency_test():
     from testers.tester_impls.test_model import TestModel
     from testers.inference_sdks.tflite import Tflite
+    from testers.inference_sdks.tpu import Tpu
     # from testers.inference_sdks.rknn import Rknn
     from testers.sampling.model_sampler import ModelSampler
 
     tester = TestModel(settings={
-        "connection": Adb("2e98c8a5", False),
-        "inference_sdk": Tflite({
-            "benchmark_model_path": "/data/local/tmp/tf-r2.1-60afa4e/benchmark_model",
+        # "connection": Adb("2e98c8a5", False),
+        "connection": Connection(),
+        "inference_sdk": Tpu({
         }),
         "sampler": ModelSampler({
             "model_details":
-                get_model_details(None, "tflite", [
-                    "", "float16",
-                ], "mobile_gpu")
+                get_model_details(None, "tflite", ["edgetpu"], "edgetpu")
         })
     })
 
-    tester.run(benchmark_model_flags={
-        "use_gpu": True
-    })
+    tester.run({})
 
 
 def model_flops_test():
@@ -168,4 +165,4 @@ def layer_latency_test_rknn():
 
 
 if __name__ == '__main__':
-    accuracy_test_tflite()
+    model_latency_test()
