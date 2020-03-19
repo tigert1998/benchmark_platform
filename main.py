@@ -98,33 +98,19 @@ def accuracy_test_pb():
 def accuracy_test_tflite():
     from accuracy_tester.accuracy_tester import AccuracyTester
     from accuracy_tester.accuracy_evaluators.tflite import Tflite
+    from accuracy_tester.accuracy_evaluators.tpu import Tpu
 
     tester = AccuracyTester({
         "zip_size": 50000,
-        "dataset_size": 50000,
-        "model_details": get_model_details([
-            "resnet", "nasnet_a_mobile", "mnasnet", "efficientnet",
-            "inception_v4"
-        ], "tflite", ["", "float16"]),
-        "data_preparer": AndroidDataPreparer({
-            "labels_path": "C:/Users/v-xiat/Downloads/playground/imagenet/val_labels.txt",
-            "validation_set_path": "C:/Users/v-xiat/Downloads/playground/imagenet/validation",
+        "dataset_size": 100,
+        "model_details": get_model_details(None, "tflite", ["edgetpu"], "edgetpu"),
+        "data_preparer": DataPreparerDef({
+            "labels_path": "/home/hanxiao/benchmarks/val.txt",
+            "validation_set_path": "/home/hanxiao/benchmarks/imagenet_dataset",
             "skip_dataset_preparation": True,
             "skip_models_preparation": True,
-
-            "connection": Adb("5e6fecf", False),
         }),
-        "accuracy_evaluator": Tflite({
-            "connection": Adb("5e6fecf", False),
-
-            # on guest
-            "imagenet_accuracy_eval_path": "/data/local/tmp/tf-r2.1-60afa4e/imagenet_accuracy_eval",
-            "imagenet_accuracy_eval_flags": {},
-            "charging_opts": {
-                "min": 0.8,
-                "max": 0.95
-            }
-        })
+        "accuracy_evaluator": Tpu({})
     })
     tester.run()
 
@@ -182,4 +168,4 @@ def layer_latency_test_rknn():
 
 
 if __name__ == '__main__':
-    layer_latency_test_rknn()
+    accuracy_test_tflite()

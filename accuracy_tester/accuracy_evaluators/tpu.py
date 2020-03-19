@@ -11,11 +11,11 @@ class Tpu(AccuracyEvaluatorDef):
     @staticmethod
     def default_settings():
         return {
-            **InferenceSdk.default_settings(),
+            **AccuracyEvaluatorDef.default_settings(),
             "libedgetpu_path": "libedgetpu.so.1"
         }
 
-    def __init__(settings={}):
+    def __init__(self, settings={}):
         super().__init__(settings)
 
         import tflite_runtime.interpreter as tflite
