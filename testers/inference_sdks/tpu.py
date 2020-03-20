@@ -41,7 +41,7 @@ class Tpu(InferenceSdk):
         self.tflite_model_generator.generate_model(path, inputs, outputs)
         cmd = "; ".join([
             "{} {}.tflite".format(self.edgetpu_compiler_path, path),
-            "mv {}.tflite {}_f32.tflite".format(path, path),
+            "mv {}.tflite {}_int_quant.tflite".format(path, path),
             "mv {}_edgetpu.tflite {}.tflite".format(path, path)
         ])
         self.tflite_model_generator.local_connection.shell(cmd)
