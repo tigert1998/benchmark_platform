@@ -17,22 +17,27 @@ from preprocess.model_archive import get_model_details
 def model_latency_test():
     from testers.tester_impls.test_model import TestModel
     from testers.inference_sdks.tflite import Tflite
-    from testers.inference_sdks.tpu import Tpu
+    # from testers.inference_sdks.tpu import Tpu
     # from testers.inference_sdks.rknn import Rknn
     from testers.sampling.model_sampler import ModelSampler
 
     tester = TestModel(settings={
-        # "connection": Adb("2e98c8a5", False),
-        "connection": Connection(),
-        "inference_sdk": Tpu({
+        "connection": Adb("5e6fecf", False),
+        "inference_sdk": Tflite({
+            "benchmark_model_path": "/data/local/tmp/tf-r2.1-60afa4e/benchmark_model",
         }),
         "sampler": ModelSampler({
             "model_details":
-                get_model_details(None, "tflite", ["edgetpu"], "edgetpu")
+                get_model_details(
+                    ["resnet"], "tflite",
+                    ["", "float16"], "mobile_gpu"
+                )
         })
     })
 
-    tester.run({})
+    tester.run({
+        "use_gpu": True
+    })
 
 
 def model_flops_test():
@@ -92,9 +97,8 @@ def accuracy_test_pb():
     tester.run()
 
 
-def accuracy_test_tflite():
+def accuracy_test_tpu():
     from accuracy_tester.accuracy_tester import AccuracyTester
-    from accuracy_tester.accuracy_evaluators.tflite import Tflite
     from accuracy_tester.accuracy_evaluators.tpu import Tpu
 
     tester = AccuracyTester({
@@ -108,6 +112,35 @@ def accuracy_test_tflite():
             "skip_models_preparation": True,
         }),
         "accuracy_evaluator": Tpu({})
+    })
+    tester.run()
+
+
+def accuracy_test_tflite():
+    from accuracy_tester.accuracy_tester import AccuracyTester
+    from accuracy_tester.accuracy_evaluators.tflite import Tflite
+
+    tester = AccuracyTester({
+        "zip_size": 50000,
+        "dataset_size": 50000,
+        "model_details": get_model_details(["resnet"], "tflite", ["", "float16"], "mobile_gpu"),
+        "data_preparer": AndroidDataPreparer({
+            "connection": Adb("5e6fecf", False),
+            "labels_path": "C:/Users/v-xiat/Downloads/playground/imagenet/val.txt",
+            "validation_set_path": "C:/Users/v-xiat/Downloads/playground/imagenet/validation",
+            "skip_dataset_preparation": True,
+            "skip_models_preparation": False,
+        }),
+        "accuracy_evaluator": Tflite({
+            "connection": Adb("5e6fecf", False),
+            "imagenet_accuracy_eval_path": "/data/local/tmp/tf-r2.1-60afa4e/imagenet_accuracy_eval",
+            "imagenet_accuracy_eval_flags": {
+                "delegate": "gpu",
+            },
+            "charging_opts": {
+                "min": 0.8, "max": 0.95
+            }
+        })
     })
     tester.run()
 

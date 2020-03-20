@@ -174,7 +174,7 @@ meta_model_details = [
         inception_299_preprocess,
         "input", "resnet_v2_50/predictions/Reshape_1",
         ["pb", "tflite", "saved_model", "rknn"],
-        ["cpu", "rk", "edgetpu"]
+        ["cpu", "mobile_gpu", "rk", "edgetpu"]
     ),
     MetaModelDetail(
         "efficientnet/efficientnet_b0",

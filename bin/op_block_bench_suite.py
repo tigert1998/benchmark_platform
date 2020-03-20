@@ -230,18 +230,18 @@ def tflite_tpu_main():
     tester_configs = [
         (TestConv, OpExperimentConvSampler, "conv"),
         (TestDwconv, OpExperimentDwconvSampler, "dwconv"),
-        (TestDilatedConv, DilatedConvSampler, "dilated_conv"),
+        # (TestDilatedConv, DilatedConvSampler, "dilated_conv"),
         (TestGconv, GconvSampler, "gconv"),
         (TestAdd, AddSampler, "add"),
         (TestConcat, ConcatSampler, "concat"),
         (TestGlobalPooling, GlobalPoolingSampler, "global_pooling"),
         (TestFc, OpExperimentFcSampler, "fc"),
-        (TestShuffle, ShuffleSampler, "shuffle"),
+        # (TestShuffle, ShuffleSampler, "shuffle"),
 
         (TestMbnetV1Block, MbnetV1BlockSampler, "mbnet_v1_block"),
         (TestMbnetV2Block, MbnetV2BlockSampler, "mbnet_v2_block"),
         # (TestShufflenetV1Unit, ShufflenetV1UnitSampler, "shufflenet_v1_unit"),
-        (TestShufflenetV2Unit, ShufflenetV2UnitSampler, "shufflenet_v2_unit"),
+        # (TestShufflenetV2Unit, ShufflenetV2UnitSampler, "shufflenet_v2_unit"),
         (TestResnetV1Block, ResnetV1BlockSampler, "resnet_v1_block"),
         (TestDenseBlock, DenseBlockSampler, "dense_block"),
 
