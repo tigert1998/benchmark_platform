@@ -56,7 +56,7 @@ def tflite_gpu_main():
     tester_configs = [
         (TestConv, OpExperimentConvSampler(), "conv", {}),
         (TestDwconv, OpExperimentDwconvSampler(), "dwconv", {}),
-        # (TestDilatedConv, DilatedConvSampler(), "dilated_conv", {}), # FIXME
+        (TestDilatedConv, DilatedConvSampler(), "dilated_conv", {}),
         # (TestGconv, GconvSampler(), "gconv", {}),
         (TestAdd, AddSampler(), "add", {"num_write_kernels": 2}),
         (TestConcat, ConcatSampler(), "concat", {"num_write_kernels": 2}),
@@ -230,7 +230,7 @@ def tflite_tpu_main():
     tester_configs = [
         (TestConv, OpExperimentConvSampler, "conv"),
         (TestDwconv, OpExperimentDwconvSampler, "dwconv"),
-        # (TestDilatedConv, DilatedConvSampler, "dilated_conv"),
+        (TestDilatedConv, DilatedConvSampler, "dilated_conv"),
         (TestGconv, GconvSampler, "gconv"),
         (TestAdd, AddSampler, "add"),
         (TestConcat, ConcatSampler, "concat"),
