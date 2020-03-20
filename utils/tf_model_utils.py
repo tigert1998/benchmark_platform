@@ -3,6 +3,7 @@ import tensorflow as tf
 import warnings
 import os
 import shutil
+from typing import List, Union, Tuple
 
 
 def load_graph(frozen_graph_filepath):
@@ -14,7 +15,13 @@ def load_graph(frozen_graph_filepath):
     return graph
 
 
-def to_saved_model(sess, inputs, outputs, path: str, replace_original_dir: bool):
+def to_saved_model(
+    sess,
+    inputs: List[Union[tf.Tensor, tf.Operation]],
+    outputs: List[Union[tf.Tensor, tf.Operation]],
+    path: str,
+    replace_original_dir: bool
+):
     from tensorflow.python.saved_model import signature_constants
     from tensorflow.python.saved_model import tag_constants
 
@@ -23,11 +30,11 @@ def to_saved_model(sess, inputs, outputs, path: str, replace_original_dir: bool)
             shutil.rmtree(path)
 
     inputs_dic = {
-        "input_{}".format(idx): i
+        "input_{}".format(idx): i if isinstance(i, tf.Tensor) else i.outputs[0]
         for idx, i in zip(range(len(inputs)), inputs)
     }
     outputs_dic = {
-        "output_{}".format(idx): o
+        "output_{}".format(idx): o if isinstance(o, tf.Tensor) else o.outputs[0]
         for idx, o in zip(range(len(outputs)), outputs)
     }
 
@@ -56,7 +63,7 @@ def check_frozen(graph):
         warnings.warn(warn_msg)
 
 
-def analyze_inputs_outputs(graph):
+def analyze_inputs_outputs(graph) -> Tuple[List[tf.Operation], List[tf.Operation]]:
     check_frozen(graph)
 
     ops = graph.get_operations()
