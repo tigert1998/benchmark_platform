@@ -95,7 +95,9 @@ def analyze_inputs_outputs(graph) -> Tuple[List[tf.Operation], List[tf.Operation
 def calc_graph_mac(graph: tf.Graph):
     ans = 0
     not_involved_op_types = [
-        "Identity"
+        "Identity",
+        "Shape",
+        "Squeeze"
     ]
     involved_op_types = dict()
     for op in graph.get_operations():
@@ -108,7 +110,11 @@ def calc_graph_mac(graph: tf.Graph):
             involved_op_types[op.type] += 1
 
         for tensor in itertools.chain(op.inputs, op.outputs):
-            shape = tensor.get_shape().as_list()
+            if tensor.get_shape()._dims is None:
+                warnings.warn("Not calculated: {}".format(tensor))
+                continue
+            else:
+                shape = tensor.get_shape().as_list()
             if len(shape) >= 1 and not isinstance(shape[0], int):
                 shape[0] = 1
             ans += reduce(lambda x, y: x * y, shape, 1)
@@ -120,35 +126,53 @@ def calc_graph_mac(graph: tf.Graph):
 def load_graph_and_fix_shape(
     model_path: str,
     input_op_name: str,
-    input_shape: List[int]
+    input_shape: List[int],
+    output_op_name: str
 ) -> tf.Graph:
+    from tensorflow.tools.graph_transforms import TransformGraph
+
     assert model_path.endswith(".pb")
 
-    tf.reset_default_graph()
     graph = load_graph(model_path)
 
-    new_graph = tf.Graph()
-    with new_graph.as_default():
-        input_tensor = tf.placeholder(
-            shape=input_shape,
-            dtype=tf.float32,
-            name=input_op_name
-        )
-        tf.import_graph_def(
-            graph.as_graph_def(), name='',
-            input_map={
-                input_tensor.name: input_tensor
-            }
-        )
+    new_graph_def = TransformGraph(
+        graph.as_graph_def(),
+        [input_op_name], [output_op_name],
+        [
+            'strip_unused_nodes(type=float, shape="{}")'.format(
+                ','.join(map(str, input_shape))
+            )
+        ]
+    )
+
+    with tf.Graph().as_default() as new_graph:
+        tf.import_graph_def(new_graph_def, name="")
     return new_graph
 
 
-def prune_graph(graph: tf.Graph, output_op_names: List[str], output_model_path: str = "model.pb"):
+def prune_graph(
+    graph: tf.Graph,
+    input_op_names: List[str],
+    output_op_names: List[str],
+    output_model_path: str = "model.pb"
+):
+    from tensorflow.tools.graph_transforms import TransformGraph
+
+    transforms = [
+        'remove_nodes(op=Identity)',
+        'strip_unused_nodes',
+        'fold_constants(ignore_errors=false)',
+        'fold_batch_norms'
+    ]
+
     with tf.Session(graph=graph) as sess:
         output_graph_def = tf.graph_util.convert_variables_to_constants(
             sess,
             tf.get_default_graph().as_graph_def(),
             output_op_names
         )
+        optimized_graph_def = TransformGraph(
+            output_graph_def, input_op_names, output_op_names, transforms
+        )
         with tf.gfile.GFile(output_model_path, "wb") as f:
-            f.write(output_graph_def.SerializeToString())
+            f.write(optimized_graph_def.SerializeToString())
