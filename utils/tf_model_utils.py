@@ -115,3 +115,40 @@ def calc_graph_mac(graph: tf.Graph):
 
     print("MAC is collected in these ops: {}".format(involved_op_types))
     return ans
+
+
+def load_graph_and_fix_shape(
+    model_path: str,
+    input_op_name: str,
+    input_shape: List[int]
+) -> tf.Graph:
+    assert model_path.endswith(".pb")
+
+    tf.reset_default_graph()
+    graph = load_graph(model_path)
+
+    new_graph = tf.Graph()
+    with new_graph.as_default():
+        input_tensor = tf.placeholder(
+            shape=input_shape,
+            dtype=tf.float32,
+            name=input_op_name
+        )
+        tf.import_graph_def(
+            graph.as_graph_def(), name='',
+            input_map={
+                input_tensor.name: input_tensor
+            }
+        )
+    return new_graph
+
+
+def prune_graph(graph: tf.Graph, output_op_names: List[str], output_model_path: str = "model.pb"):
+    with tf.Session(graph=graph) as sess:
+        output_graph_def = tf.graph_util.convert_variables_to_constants(
+            sess,
+            tf.get_default_graph().as_graph_def(),
+            output_op_names
+        )
+        with tf.gfile.GFile(output_model_path, "wb") as f:
+            f.write(output_graph_def.SerializeToString())
