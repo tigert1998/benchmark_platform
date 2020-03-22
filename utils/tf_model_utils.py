@@ -3,10 +3,12 @@ import tensorflow as tf
 import warnings
 import os
 import shutil
+import itertools
+from functools import reduce
 from typing import List, Union, Tuple
 
 
-def load_graph(frozen_graph_filepath):
+def load_graph(frozen_graph_filepath) -> tf.Graph:
     with tf.compat.v1.gfile.GFile(frozen_graph_filepath, "rb") as f:
         graph_def = tf.compat.v1.GraphDef()
         graph_def.ParseFromString(f.read())
@@ -88,3 +90,28 @@ def analyze_inputs_outputs(graph) -> Tuple[List[tf.Operation], List[tf.Operation
     outputs = list(
         filter(lambda op: (op.type not in not_output_types) and (len(op.outputs) >= 1), outputs_set))
     return (inputs, outputs)
+
+
+def calc_graph_mac(graph: tf.Graph):
+    ans = 0
+    not_involved_op_types = [
+        "Identity"
+    ]
+    involved_op_types = dict()
+    for op in graph.get_operations():
+        if len(op.inputs) == 0 or len(op.outputs) == 0 or (op.type in not_involved_op_types):
+            continue
+
+        if involved_op_types.get(op.type) is None:
+            involved_op_types[op.type] = 1
+        else:
+            involved_op_types[op.type] += 1
+
+        for tensor in itertools.chain(op.inputs, op.outputs):
+            shape = tensor.get_shape().as_list()
+            if len(shape) >= 1 and not isinstance(shape[0], int):
+                shape[0] = 1
+            ans += reduce(lambda x, y: x * y, shape, 1)
+
+    print("MAC is collected in these ops: {}".format(involved_op_types))
+    return ans

@@ -31,4 +31,8 @@ class FlopsCalculator(InferenceSdk):
                 options=tf.profiler.ProfileOptionBuilder.float_operation(),
             )
             flops = flops.total_float_ops
-        return InferenceResult(avg_ms=None, std_ms=None, profiling_details={"flops": flops}, layerwise_info=None)
+        return InferenceResult(
+            avg_ms=None, std_ms=None,
+            profiling_details={"flops": flops},
+            layerwise_info=None
+        )
