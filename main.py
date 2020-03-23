@@ -14,6 +14,26 @@ from utils.connection import Adb, Ssh, Connection
 from preprocess.model_archive import get_model_details
 
 
+def hardware_computational_intensity():
+    from testers.sampling.matmul_sampler import MatmulSampler
+    from testers.tester_impls.test_matmul import TestMatmul
+    from testers.inference_sdks.tflite import Tflite
+
+    tester = TestMatmul({
+        "connection": Adb("5e6fecf", True),
+        "inference_sdk": TfliteModified({
+            "benchmark_model_path": "/data/local/tmp/tf-r2.1-60afa4e/benchmark_model_modified",
+        }),
+        "sampler": MatmulSampler({}),
+    })
+    tester.run({
+        "use_gpu": True,
+        "work_group_size": "",
+        "tuning_type": "EXHAUSTIVE",
+        "kernel_path": "/data/local/tmp/kernel.cl"
+    })
+
+
 def model_latency_test():
     from testers.tester_impls.test_model import TestModel
     from testers.inference_sdks.tflite import Tflite
