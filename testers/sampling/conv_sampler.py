@@ -126,9 +126,12 @@ class ChannelExperimentConvSampler(ConvSampler):
     def default_settings():
         return {
             **Sampler.default_settings(),
+            "channel_step": None
         }
 
     def _get_channel_step(self, input_imsize):
+        if self.settings["channel_step"] is not None:
+            return self.settings["channel_step"]
         if input_imsize <= 56:
             return 4
         elif input_imsize <= 224:
