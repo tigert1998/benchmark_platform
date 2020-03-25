@@ -14,6 +14,24 @@ from utils.connection import Adb, Ssh, Connection
 from preprocess.model_archive import get_model_details
 
 
+def overhead_test():
+    from testers.tester_impls.test_overhead import TestOverhead
+    from testers.sampling.overhead_sampler import OverheadSampler
+    from testers.inference_sdks.tflite import Tflite
+
+    tester = TestOverhead({
+        "connection": Adb("5e6fecf", False),
+        "inference_sdk": Tflite({
+            "benchmark_model_path": "/data/local/tmp/tf-r2.1-60afa4e/benchmark_model",
+        }),
+        "sampler": OverheadSampler()
+    })
+
+    tester.run({
+        "use_gpu": False
+    })
+
+
 def hardware_computational_intensity():
     from testers.sampling.matmul_sampler import MatmulSampler
     from testers.tester_impls.test_matmul import TestMatmul
@@ -218,4 +236,4 @@ def layer_latency_test_rknn():
 
 
 if __name__ == '__main__':
-    hardware_computational_intensity()
+    overhead_test()
