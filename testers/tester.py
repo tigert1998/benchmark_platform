@@ -97,6 +97,7 @@ class Tester(ClassWithSettings):
 
             if result.profiling_details.get("flops") is not None:
                 ret["flops"] = result.profiling_details["flops"]
+                ret["mac"] = result.profiling_details["mac"]
 
         return ret
 

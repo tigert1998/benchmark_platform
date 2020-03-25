@@ -14,26 +14,48 @@ from utils.connection import Adb, Ssh, Connection
 from preprocess.model_archive import get_model_details
 
 
+def hardware_computational_intensity():
+    from testers.sampling.matmul_sampler import MatmulSampler
+    from testers.tester_impls.test_matmul import TestMatmul
+    from testers.inference_sdks.tflite_modified import TfliteModified
+
+    tester = TestMatmul({
+        "connection": Adb("5e6fecf", True),
+        "inference_sdk": TfliteModified({
+            "benchmark_model_path": "/data/local/tmp/tf-r2.1-60afa4e/benchmark_model_modified",
+        }),
+        "sampler": MatmulSampler({}),
+    })
+    tester.run({
+        "use_gpu": True,
+        "work_group_size": "",
+        "tuning_type": "EXHAUSTIVE",
+        "kernel_path": "/data/local/tmp/kernel.cl"
+    })
+
+
 def model_latency_test():
     from testers.tester_impls.test_model import TestModel
     from testers.inference_sdks.tflite import Tflite
+    # from testers.inference_sdks.tpu import Tpu
     # from testers.inference_sdks.rknn import Rknn
     from testers.sampling.model_sampler import ModelSampler
 
     tester = TestModel(settings={
-        "connection": Adb("2e98c8a5", False),
+        "connection": Adb("5e6fecf", False),
         "inference_sdk": Tflite({
             "benchmark_model_path": "/data/local/tmp/tf-r2.1-60afa4e/benchmark_model",
         }),
         "sampler": ModelSampler({
             "model_details":
-                get_model_details(None, "tflite", [
-                    "", "float16",
-                ], "mobile_gpu")
+                get_model_details(
+                    ["resnet"], "tflite",
+                    ["", "float16"], "mobile_gpu"
+                )
         })
     })
 
-    tester.run(benchmark_model_flags={
+    tester.run({
         "use_gpu": True
     })
 
@@ -95,6 +117,25 @@ def accuracy_test_pb():
     tester.run()
 
 
+def accuracy_test_tpu():
+    from accuracy_tester.accuracy_tester import AccuracyTester
+    from accuracy_tester.accuracy_evaluators.tpu import Tpu
+
+    tester = AccuracyTester({
+        "zip_size": 50000,
+        "dataset_size": 50000,
+        "model_details": get_model_details(None, "tflite", ["edgetpu"], "edgetpu"),
+        "data_preparer": DataPreparerDef({
+            "labels_path": "/home/xiaohu/val_labels.txt",
+            "validation_set_path": "/home/hanxiao/benchmarks/imagenet_dataset",
+            "skip_dataset_preparation": True,
+            "skip_models_preparation": True,
+        }),
+        "accuracy_evaluator": Tpu({})
+    })
+    tester.run()
+
+
 def accuracy_test_tflite():
     from accuracy_tester.accuracy_tester import AccuracyTester
     from accuracy_tester.accuracy_evaluators.tflite import Tflite
@@ -102,27 +143,22 @@ def accuracy_test_tflite():
     tester = AccuracyTester({
         "zip_size": 50000,
         "dataset_size": 50000,
-        "model_details": get_model_details([
-            "resnet", "nasnet_a_mobile", "mnasnet", "efficientnet", 
-            "inception_v4"
-        ], "tflite", ["", "float16"]),
+        "model_details": get_model_details(["resnet"], "tflite", ["", "float16"], "mobile_gpu"),
         "data_preparer": AndroidDataPreparer({
-            "labels_path": "C:/Users/v-xiat/Downloads/playground/imagenet/val_labels.txt",
+            "connection": Adb("5e6fecf", False),
+            "labels_path": "C:/Users/v-xiat/Downloads/playground/imagenet/val.txt",
             "validation_set_path": "C:/Users/v-xiat/Downloads/playground/imagenet/validation",
             "skip_dataset_preparation": True,
-            "skip_models_preparation": True,
-
-            "connection": Adb("5e6fecf", False),
+            "skip_models_preparation": False,
         }),
         "accuracy_evaluator": Tflite({
             "connection": Adb("5e6fecf", False),
-
-            # on guest
             "imagenet_accuracy_eval_path": "/data/local/tmp/tf-r2.1-60afa4e/imagenet_accuracy_eval",
-            "imagenet_accuracy_eval_flags": {},
+            "imagenet_accuracy_eval_flags": {
+                "delegate": "gpu",
+            },
             "charging_opts": {
-                "min": 0.8,
-                "max": 0.95
+                "min": 0.8, "max": 0.95
             }
         })
     })
@@ -161,20 +197,13 @@ def layer_latency_test_tpu():
             "libedgetpu_path": "/home/xiaohu/edgetpu/libedgetpu/direct/k8/libedgetpu.so.1"
         }),
         "sampler": ChannelExperimentConvSampler({}),
-        # "resume_from": ["","Conv",7,160,880,"","",1,3]
+        # "resume_from": ["", "Conv", 7, 160, 880, "", "", 1, 3]
     })
     tester.run({})
 
 
 def layer_latency_test_rknn():
     from testers.inference_sdks.rknn import Rknn
-
-    # tester = TestDwconv({
-    #     "inference_sdk": Rknn({}),
-    #     "sampler": ChannelExperimentDwconvSampler({}),
-    #     "resume_from": ["", "DWConv", 224, 424, 424, "", "", 1, 3]
-    # })
-    # tester.run({})
 
     tester = TestConv({
         "connection": Adb("TD033101190100171", False),
@@ -183,10 +212,10 @@ def layer_latency_test_rknn():
             "quantization": "asymmetric_quantized-u8"
         }),
         "sampler": ChannelExperimentConvSampler({}),
-        "resume_from": ["", "Conv", 7, 64, 656, "", "", 2, 5]
+        "resume_from": ["", "Conv", 7, 576, 640, "", "", 1, 3]
     })
     tester.run({})
 
 
 if __name__ == '__main__':
-    accuracy_test_tflite()
+    hardware_computational_intensity()

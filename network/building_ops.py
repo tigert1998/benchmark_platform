@@ -62,8 +62,8 @@ def batch_normalization(features):
 def global_pooling(features):
     return tf.nn.avg_pool(
         features,
-        ksize=features.get_shape().as_list()[1: 3],
-        strides=[1, 1],
+        ksize=[1] + features.get_shape().as_list()[1: 3] + [1],
+        strides=[1, 1, 1, 1],
         padding='VALID'
     )
 

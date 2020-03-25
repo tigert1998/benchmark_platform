@@ -5,7 +5,7 @@ from utils.utils import concatenate_flags, rm_ext
 from typing import List
 
 import tensorflow as tf
-from utils.tf_model_utils import load_graph
+from utils.tf_model_utils import load_graph, calc_graph_mac
 
 
 class FlopsCalculator(InferenceSdk):
@@ -31,4 +31,13 @@ class FlopsCalculator(InferenceSdk):
                 options=tf.profiler.ProfileOptionBuilder.float_operation(),
             )
             flops = flops.total_float_ops
-        return InferenceResult(avg_ms=None, std_ms=None, profiling_details={"flops": flops}, layerwise_info=None)
+            mac = calc_graph_mac(graph)
+
+        return InferenceResult(
+            avg_ms=None, std_ms=None,
+            profiling_details={
+                "flops": flops,
+                "mac": mac
+            },
+            layerwise_info=None
+        )

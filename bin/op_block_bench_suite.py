@@ -56,7 +56,7 @@ def tflite_gpu_main():
     tester_configs = [
         (TestConv, OpExperimentConvSampler(), "conv", {}),
         (TestDwconv, OpExperimentDwconvSampler(), "dwconv", {}),
-        # (TestDilatedConv, DilatedConvSampler(), "dilated_conv", {}), # FIXME
+        (TestDilatedConv, DilatedConvSampler(), "dilated_conv", {}),
         # (TestGconv, GconvSampler(), "gconv", {}),
         (TestAdd, AddSampler(), "add", {"num_write_kernels": 2}),
         (TestConcat, ConcatSampler(), "concat", {"num_write_kernels": 2}),
@@ -171,10 +171,9 @@ def rknn_main():
         else:
             return True
 
-    def shufflenet_v2_unit_sampler_filter(quant_name:str, sample):
+    def shufflenet_v2_unit_sampler_filter(quant_name: str, sample):
         _, imsize, cin, stride, ksize = sample
         return stride == 2
-
 
     tester_configs = [
         (TestConv, OpExperimentConvSampler, "conv", always_true),
@@ -237,12 +236,12 @@ def tflite_tpu_main():
         (TestConcat, ConcatSampler, "concat"),
         (TestGlobalPooling, GlobalPoolingSampler, "global_pooling"),
         (TestFc, OpExperimentFcSampler, "fc"),
-        (TestShuffle, ShuffleSampler, "shuffle"),
+        # (TestShuffle, ShuffleSampler, "shuffle"),
 
         (TestMbnetV1Block, MbnetV1BlockSampler, "mbnet_v1_block"),
         (TestMbnetV2Block, MbnetV2BlockSampler, "mbnet_v2_block"),
         # (TestShufflenetV1Unit, ShufflenetV1UnitSampler, "shufflenet_v1_unit"),
-        (TestShufflenetV2Unit, ShufflenetV2UnitSampler, "shufflenet_v2_unit"),
+        # (TestShufflenetV2Unit, ShufflenetV2UnitSampler, "shufflenet_v2_unit"),
         (TestResnetV1Block, ResnetV1BlockSampler, "resnet_v1_block"),
         (TestDenseBlock, DenseBlockSampler, "dense_block"),
 
@@ -313,4 +312,4 @@ def flops_main():
 
 
 if __name__ == "__main__":
-    rknn_main()
+    tflite_gpu_main()

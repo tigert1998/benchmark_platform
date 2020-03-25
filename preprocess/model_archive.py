@@ -11,9 +11,9 @@ ModelDetail = namedtuple("ModelDetail", [
 
 
 class MetaModelDetail:
-    AVAILABLE_QUANTIZATIONS = {
+    AVAILABLE_VERSIONS = {
         "pb": ["", "patched"],
-        "tflite": ["", "float16", "weight", "int"],
+        "tflite": ["", "float16", "weight", "int", "edgetpu"],
         "saved_model": [""],
         "rknn": ["", "asymmetric_quantized_u8", "dynamic_fixed_point_8", "dynamic_fixed_point_16"]
     }
@@ -34,42 +34,44 @@ class MetaModelDetail:
         self._onedrive_path = os.path.expanduser(
             "~/Microsoft/Shihao Han (FA Talent) - ChannelNas/models")
 
-    def _get_model_path(self, model_format, quantization):
+    def _get_model_path(self, model_format, version):
         if model_format == "pb":
-            if quantization != "":
-                quantization = "_{}".format(quantization)
-            return "{}/pb/{}{}.pb".format(self._onedrive_path, self.model_path, quantization)
+            if version != "":
+                version = "_{}".format(version)
+            return "{}/pb/{}{}.pb".format(self._onedrive_path, self.model_path, version)
 
         elif model_format == "tflite":
-            if quantization != "":
-                quantization = "_{}_quant".format(quantization)
-            return "{}/tflite/{}{}.tflite".format(self._onedrive_path, self.model_path, quantization)
+            if version in ["float16", "weight", "int"]:
+                version = "_{}_quant".format(version)
+            elif version in ["edgetpu"]:
+                version = "_{}".format(version)
+            return "{}/tflite/{}{}.tflite".format(self._onedrive_path, self.model_path, version)
 
         elif model_format == "saved_model":
             return "{}/saved_model/{}".format(self._onedrive_path, self.model_path)
 
         elif model_format == "rknn":
-            if quantization != "":
-                quantization = "_{}".format(quantization)
-            return "{}/rknn/{}{}.rknn".format(self._onedrive_path, self.model_path, quantization)
+            if version != "":
+                version = "_{}".format(version)
+            return "{}/rknn/{}{}.rknn".format(self._onedrive_path, self.model_path, version)
 
-    def _get_preprocess(self, model_format, quantization):
+    def _get_preprocess(self, model_format, version):
         if model_format == "rknn":
             return Preprocess({
                 "preprocessor": self.preprocess.preprocessor,
                 "func": "resize",
-                "args": [np.float32 if quantization == "" else np.uint8]
+                "args": [np.float32 if version == "" else np.uint8]
             })
         else:
             return self.preprocess
 
-    def get_model_detail(self, model_format, quantization) -> ModelDetail:
-        assert model_format in self.AVAILABLE_QUANTIZATIONS
-        assert quantization in self.AVAILABLE_QUANTIZATIONS[model_format]
+    def get_model_detail(self, model_format, version) -> ModelDetail:
+        assert model_format in self.AVAILABLE_VERSIONS
+        assert version in self.AVAILABLE_VERSIONS[model_format]
 
         return ModelDetail(
-            model_path=self._get_model_path(model_format, quantization),
-            preprocess=self._get_preprocess(model_format, quantization),
+            model_path=self._get_model_path(model_format, version),
+            preprocess=self._get_preprocess(model_format, version),
             input_node=self.input_node,
             output_node=self.output_node
         )
@@ -109,14 +111,14 @@ meta_model_details = [
         inception_224_preprocess,
         "input", "MobilenetV1/Predictions/Reshape_1",
         ["pb", "tflite", "saved_model", "rknn"],
-        ["cpu", "mobile_gpu", "rk"]
+        ["cpu", "mobile_gpu", "rk", "edgetpu"]
     ),
     MetaModelDetail(
         "mobilenet_v2/mobilenet_v2_1.0_224",
         inception_224_preprocess,
         "input", "MobilenetV2/Predictions/Reshape_1",
         ["pb", "tflite", "saved_model", "rknn"],
-        ["cpu", "mobile_gpu", "rk"]
+        ["cpu", "mobile_gpu", "rk", "edgetpu"]
     ),
     MetaModelDetail(
         "mobilenet_v3/mobilenet_v3_large_224_1.0",
@@ -130,49 +132,49 @@ meta_model_details = [
         inception_224_preprocess,
         "input", "InceptionV1/Logits/Predictions/Reshape_1",
         ["pb", "tflite", "saved_model", "rknn"],
-        ["cpu", "mobile_gpu", "rk"]
+        ["cpu", "mobile_gpu", "rk", "edgetpu"]
     ),
     MetaModelDetail(
         "inception_v4/inception_v4",
         inception_299_preprocess,
         "input", "InceptionV4/Logits/Predictions",
         ["pb", "tflite", "saved_model", "rknn"],
-        ["cpu", "mobile_gpu", "rk"]
+        ["cpu", "mobile_gpu", "rk", "edgetpu"]
     ),
     MetaModelDetail(
         "mnasnet/mnasnet_a1",
         mnasnet_preprocess,
         "Placeholder", "logits",
         ["pb", "tflite", "saved_model"],
-        ["cpu"]
+        ["cpu", "edgetpu"]
     ),
     MetaModelDetail(
         "nasnet/nasnet_a_mobile",
         inception_224_preprocess,
         "input", "final_layer/predictions",
         ["pb", "tflite", "saved_model"],
-        ["cpu"]
+        ["cpu", "edgetpu"]
     ),
     MetaModelDetail(
         "proxyless/proxyless_mobile",
         proxyless_preprocess,
         "input_images", "classifier/linear/add",
         ["pb", "tflite", "saved_model"],
-        ["cpu", "mobile_gpu"]
+        ["cpu", "mobile_gpu", "edgetpu"]
     ),
     MetaModelDetail(
         "proxyless/proxyless_mobile_14",
         proxyless_preprocess,
         "input_images", "classifier/linear/add",
         ["pb", "tflite", "saved_model"],
-        ["cpu", "mobile_gpu"]
+        ["cpu", "mobile_gpu", "edgetpu"]
     ),
     MetaModelDetail(
         "resnet_v2/resnet_v2_50_299",
         inception_299_preprocess,
         "input", "resnet_v2_50/predictions/Reshape_1",
         ["pb", "tflite", "saved_model", "rknn"],
-        ["cpu", "rk"]
+        ["cpu", "mobile_gpu", "rk", "edgetpu"]
     ),
     MetaModelDetail(
         "efficientnet/efficientnet_b0",
@@ -194,7 +196,7 @@ meta_model_details = [
 def get_model_details(
         model_names: Optional[List[str]],
         model_format: str,
-        quantizations: List[str],
+        versions: List[str],
         hardware: str = "cpu"
 ) -> List[ModelDetail]:
     ans = []
@@ -208,6 +210,6 @@ def get_model_details(
                 continue
         if not (model_format in i.available_model_formats):
             continue
-        for quantization in quantizations:
-            ans.append(i.get_model_detail(model_format, quantization))
+        for version in versions:
+            ans.append(i.get_model_detail(model_format, version))
     return ans
