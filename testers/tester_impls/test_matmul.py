@@ -11,7 +11,12 @@ class TestMatmul(TestSingleLayer):
         inputs, nets = self._pad_before_input([[1, n, n]])
 
         net = nets[0]
-        net = tf.linalg.matmul(net, tf.constant(np.random.randn(n, n)))
+        net = tf.linalg.matmul(
+            net,
+            tf.constant(
+                np.random.randn(1, n, n).astype(np.float32)
+            )
+        )
 
         outputs = self._pad_after_output([net])
         return inputs, outputs

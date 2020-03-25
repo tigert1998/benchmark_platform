@@ -17,7 +17,7 @@ from preprocess.model_archive import get_model_details
 def hardware_computational_intensity():
     from testers.sampling.matmul_sampler import MatmulSampler
     from testers.tester_impls.test_matmul import TestMatmul
-    from testers.inference_sdks.tflite import Tflite
+    from testers.inference_sdks.tflite_modified import TfliteModified
 
     tester = TestMatmul({
         "connection": Adb("5e6fecf", True),
@@ -218,4 +218,4 @@ def layer_latency_test_rknn():
 
 
 if __name__ == '__main__':
-    accuracy_test_tflite()
+    hardware_computational_intensity()
