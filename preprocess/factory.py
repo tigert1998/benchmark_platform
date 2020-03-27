@@ -22,7 +22,7 @@ inception_224_preprocess = Preprocess({
         "imsize": 224,
         "use_crop_padding": False,
         "resize_func": "resize_bilinear",
-        "use_inception": True,
+        "normalization": "inception",
     })
 })
 
@@ -33,7 +33,7 @@ inception_299_preprocess = Preprocess({
         "imsize": 299,
         "use_crop_padding": False,
         "resize_func": "resize_bilinear",
-        "use_inception": True,
+        "normalization": "inception",
     })
 })
 
@@ -65,7 +65,7 @@ efficientnet_b0_preprocess = Preprocess({
         "imsize": 224,
         "use_crop_padding": True,
         "resize_func": "resize_bicubic",
-        "use_inception": True,
+        "normalization": "inception",
     })
 })
 
@@ -75,6 +75,16 @@ efficientnet_b1_preprocess = Preprocess({
         "imsize": 240,
         "use_crop_padding": True,
         "resize_func": "resize_bicubic",
-        "use_inception": True,
+        "normalization": "inception",
+    })
+})
+
+# resnet v1: https://github.com/tensorflow/models/blob/master/research/slim/nets/resnet_v1.py
+resnet_v1_preprocess = Preprocess({
+    "preprocessor": TfPreprocessor({
+        "imsize": 224,
+        "use_crop_padding": True,
+        "resize_func": "resize_bilinear",
+        "normalization": "vgg",
     })
 })

@@ -5,8 +5,6 @@ import numpy as np
 class TfPreprocessor(Preprocessor):
     CROP_PADDING = 32
     CENTRAL_FRACTION = 0.875
-    MEAN_RGB = [0.485 * 255, 0.456 * 255, 0.406 * 255]
-    STDDEV_RGB = [0.229 * 255, 0.224 * 255, 0.225 * 255]
 
     @staticmethod
     def default_settings():
@@ -14,14 +12,16 @@ class TfPreprocessor(Preprocessor):
             **Preprocessor.default_settings(),
             "use_crop_padding": True,
             "resize_func": "resize_bicubic",
-            "use_inception": True,
+            "normalization": "inception",
         }
 
     def get_normalization_parameter(self):
-        if self.settings["use_inception"]:
+        if self.normalization == "inception":
             return [[127.5, 127.5, 127.5], [127.5, 127.5, 127.5]]
+        elif self.normalization == "vgg":
+            return [[123.68, 116.78, 103.94], [1, 1, 1]]
         else:
-            return [self.MEAN_RGB, self.STDDEV_RGB]
+            assert False
 
     def _imagenet_accuracy_eval_flags(self):
         return {
@@ -30,6 +30,9 @@ class TfPreprocessor(Preprocessor):
 
     def __init__(self, settings={}):
         super().__init__(settings)
+        self.normalization = self.settings["normalization"]
+        assert self.normalization in ["inception", "vgg"]
+
         import tensorflow as tf
 
         self.use_crop_padding = self.settings["use_crop_padding"]
@@ -39,7 +42,6 @@ class TfPreprocessor(Preprocessor):
             self.resize_func = tf.compat.v1.image.resize_bilinear
         else:
             assert False
-        self.use_inception = self.settings["use_inception"]
 
         self._construct_tf_graph()
 
@@ -78,21 +80,19 @@ class TfPreprocessor(Preprocessor):
             self.ret_resize = self.resize_func(
                 [image], [self.imsize, self.imsize])[0]
 
-            if self.use_inception:
-                self.ret_preprocess = self.ret_resize * 2.0 / 255 - 1.0
-            else:
-                self.ret_preprocess = (
-                    self.ret_resize -
-                    tf.constant(
-                        self.MEAN_RGB,
-                        shape=[1, 1, 3],
-                        dtype=tf.float32
-                    )
-                ) / tf.constant(
-                    self.STDDEV_RGB,
+            mean_rgb, stddev_rgb = self.get_normalization_parameter()
+            self.ret_preprocess = (
+                self.ret_resize -
+                tf.constant(
+                    mean_rgb,
                     shape=[1, 1, 3],
                     dtype=tf.float32
                 )
+            ) / tf.constant(
+                stddev_rgb,
+                shape=[1, 1, 3],
+                dtype=tf.float32
+            )
 
         self.sess = tf.compat.v1.Session(graph=graph)
 

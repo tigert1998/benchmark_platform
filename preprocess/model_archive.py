@@ -170,6 +170,13 @@ meta_model_details = [
         ["cpu", "mobile_gpu", "edgetpu"]
     ),
     MetaModelDetail(
+        "resnet_v1/resnet_v1_50",
+        resnet_v1_preprocess,
+        "input", "resnet_v1_50/predictions/Reshape_1",
+        ["pb"],
+        ["cpu"]
+    ),
+    MetaModelDetail(
         "resnet_v2/resnet_v2_50_299",
         inception_299_preprocess,
         "input", "resnet_v2_50/predictions/Reshape_1",
