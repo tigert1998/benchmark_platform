@@ -10,3 +10,5 @@ class OverheadSampler(Sampler):
 
     def _get_samples_without_filter(self):
         yield [28, 320]
+        for i in [16, 100]:
+            yield [28, i]

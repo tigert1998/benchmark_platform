@@ -104,7 +104,7 @@ class TestOverhead(Tester):
         }
 
         if self.is_id:
-            estimated_overhead = results[1].avg_ms / 2
+            estimated_overhead = results[1][0] / 2
         else:
             max_res = results[self.settings["max"]]
             min_res = results[self.settings["min"]]
