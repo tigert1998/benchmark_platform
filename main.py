@@ -236,4 +236,4 @@ def layer_latency_test_rknn():
 
 
 if __name__ == '__main__':
-    overhead_test()
+    accuracy_test_pb()

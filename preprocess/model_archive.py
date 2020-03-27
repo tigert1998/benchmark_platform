@@ -173,8 +173,8 @@ meta_model_details = [
         "resnet_v1/resnet_v1_50",
         resnet_v1_preprocess,
         "input", "resnet_v1_50/predictions/Reshape_1",
-        ["pb"],
-        ["cpu"]
+        ["pb", "tflite", "saved_model", "rknn"],
+        ["cpu", "mobile_gpu", "rk", "edgetpu"]
     ),
     MetaModelDetail(
         "resnet_v2/resnet_v2_50_299",

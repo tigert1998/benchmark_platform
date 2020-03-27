@@ -146,7 +146,15 @@ def load_graph_and_fix_shape(
     )
 
     with tf.Graph().as_default() as new_graph:
-        tf.import_graph_def(new_graph_def, name="")
+        input_tensor = tf.placeholder(
+            shape=input_shape,
+            dtype=tf.float32,
+            name=input_op_name
+        )
+        tf.import_graph_def(new_graph_def, name="", input_map={
+            input_tensor.name: input_tensor
+        })
+
     return new_graph
 
 
