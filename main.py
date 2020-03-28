@@ -60,21 +60,24 @@ def model_latency_test():
     from testers.sampling.model_sampler import ModelSampler
 
     tester = TestModel(settings={
-        "connection": Adb("5e6fecf", False),
+        "connection": Adb("5e6fecf", True),
         "inference_sdk": Tflite({
             "benchmark_model_path": "/data/local/tmp/tf-r2.1-60afa4e/benchmark_model",
         }),
         "sampler": ModelSampler({
             "model_details":
                 get_model_details(
-                    ["resnet"], "tflite",
-                    ["", "float16"], "mobile_gpu"
+                    ["resnet_v1"], "tflite",
+                    ["", "float16"], "cpu"
                 )
         })
     })
 
     tester.run({
         "use_gpu": True
+        # "use_gpu": True,
+        # "kernel_path": "/data/local/tmp/kernel.cl",
+        # "precision": "F32"
     })
 
 
@@ -102,11 +105,11 @@ def accuracy_test_rknn():
         "dirname": "test_rknn",
         "zip_size": 50000,
         "dataset_size": 50000,
-        "model_details": get_model_details(["inception_v4"], "rknn", [
-            "dynamic_fixed_point_8", "dynamic_fixed_point_16"
+        "model_details": get_model_details(["resnet_v1"], "rknn", [
+            "", "dynamic_fixed_point_8", "dynamic_fixed_point_16", "asymmetric_quantized_u8"
         ]),
         "data_preparer": DataPreparerDef({
-            "labels_path": "C:/Users/v-xiat/Downloads/playground/imagenet/val_labels.txt",
+            "labels_path": "C:/Users/v-xiat/Downloads/playground/imagenet/val.txt",
             "validation_set_path": "C:/Users/v-xiat/Downloads/playground/imagenet/validation",
             "skip_dataset_preparation": True,
             "skip_models_preparation": True,
@@ -160,8 +163,8 @@ def accuracy_test_tflite():
 
     tester = AccuracyTester({
         "zip_size": 50000,
-        "dataset_size": 50000,
-        "model_details": get_model_details(["resnet"], "tflite", ["", "float16"], "mobile_gpu"),
+        "dataset_size": 100,
+        "model_details": get_model_details(["resnet_v1"], "tflite", ["int"], "cpu"),
         "data_preparer": AndroidDataPreparer({
             "connection": Adb("5e6fecf", False),
             "labels_path": "C:/Users/v-xiat/Downloads/playground/imagenet/val.txt",
@@ -187,15 +190,19 @@ def layer_latency_test_tflite():
     from testers.inference_sdks.tflite_modified import TfliteModified
     from testers.inference_sdks.tflite import Tflite
 
+    def sampler_filter(sample):
+        _, _, imsize, cin, _, _, _, stride, ksize = sample
+        return imsize == 7 and stride == 1 and 200 <= cin and cin <= 250
+
     tester = TestDwconv({
         "connection": Adb("5e6fecf", True),
         "inference_sdk": TfliteModified({
             "benchmark_model_path": "/data/local/tmp/tf-r2.1-60afa4e/benchmark_model_modified",
         }),
         "sampler": ChannelExperimentDwconvSampler({
-            # "filter": lambda sample: sample[2: 5] == [7, 960, 960]
+            "filter": sampler_filter,
+            "channel_step": 1
         }),
-        "resume_from": ["", "DWConv", 224, 64, 64, "", "", 2, 7]
     })
     tester.run({
         "use_gpu": True,
@@ -236,4 +243,4 @@ def layer_latency_test_rknn():
 
 
 if __name__ == '__main__':
-    accuracy_test_pb()
+    layer_latency_test_tflite()

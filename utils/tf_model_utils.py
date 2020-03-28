@@ -40,10 +40,15 @@ def to_saved_model(
         for idx, o in zip(range(len(outputs)), outputs)
     }
 
-    builder = tf.compat.v1.saved_model.builder.SavedModelBuilder(path)
+    if tf.__version__.startswith("1."):
+        saved_model = tf.saved_model
+    else:
+        saved_model = tf.compat.v1.saved_model
+
+    builder = saved_model.builder.SavedModelBuilder(path)
     sigs = {}
     sigs[signature_constants.DEFAULT_SERVING_SIGNATURE_DEF_KEY] = \
-        tf.compat.v1.saved_model.signature_def_utils.predict_signature_def(
+        saved_model.signature_def_utils.predict_signature_def(
         inputs_dic, outputs_dic
     )
     builder.add_meta_graph_and_variables(
