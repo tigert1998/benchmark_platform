@@ -20,6 +20,11 @@ class TfPreprocessor(Preprocessor):
             return [[127.5, 127.5, 127.5], [127.5, 127.5, 127.5]]
         elif self.normalization == "vgg":
             return [[123.68, 116.78, 103.94], [1, 1, 1]]
+        elif self.normalization == "mnasnet":
+            return [
+                [123.67500305175781, 116.27999877929688, 103.52999877929688],
+                [58.39500045776367, 57.119998931884766, 57.375]
+            ]
         else:
             assert False
 
@@ -31,7 +36,7 @@ class TfPreprocessor(Preprocessor):
     def __init__(self, settings={}):
         super().__init__(settings)
         self.normalization = self.settings["normalization"]
-        assert self.normalization in ["inception", "vgg"]
+        assert self.normalization in ["inception", "vgg", "mnasnet"]
 
         import tensorflow as tf
 

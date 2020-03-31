@@ -44,9 +44,8 @@ mnasnet_preprocess = Preprocess({
         "imsize": 224,
         "use_crop_padding": True,
         "resize_func": "resize_bilinear",
-    }),
-    "func": "resize",
-    "args": [np.float32]
+        "normalization": "mnasnet"
+    })
 })
 
 # proxyless nas net:
