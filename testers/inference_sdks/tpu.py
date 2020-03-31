@@ -39,12 +39,13 @@ class Tpu(InferenceSdk):
 
     def generate_model(self, path, inputs, outputs):
         self.tflite_model_generator.generate_model(path, inputs, outputs)
-        cmd = "; ".join([
+        cmds = [
             "{} {}.tflite".format(self.edgetpu_compiler_path, path),
             "mv {}.tflite {}_int_quant.tflite".format(path, path),
             "mv {}_edgetpu.tflite {}.tflite".format(path, path)
-        ])
-        self.tflite_model_generator.local_connection.shell(cmd)
+        ]
+        for cmd in cmds:
+            self.tflite_model_generator.local_connection.shell(cmd)
 
     def _fetch_results(self,
                        connection: Connection, model_path: str,

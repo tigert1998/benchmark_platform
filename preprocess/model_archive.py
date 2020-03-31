@@ -146,14 +146,14 @@ meta_model_details = [
         mnasnet_preprocess,
         "Placeholder", "logits",
         ["pb", "tflite", "saved_model"],
-        ["cpu", "edgetpu"]
+        ["cpu", "mobile_gpu", "edgetpu"]
     ),
     MetaModelDetail(
         "nasnet/nasnet_a_mobile",
         inception_224_preprocess,
         "input", "final_layer/predictions",
         ["pb", "tflite", "saved_model"],
-        ["cpu", "edgetpu"]
+        ["cpu", "mobile_gpu", "edgetpu"]
     ),
     MetaModelDetail(
         "proxyless/proxyless_mobile",
@@ -188,14 +188,14 @@ meta_model_details = [
         efficientnet_b0_preprocess,
         "images", "Softmax",
         ["pb", "tflite", "saved_model"],
-        ["cpu"]
+        ["cpu", "mobile_gpu"]
     ),
     MetaModelDetail(
         "efficientnet/efficientnet_b1",
         efficientnet_b1_preprocess,
         "images", "Softmax",
         ["pb", "tflite", "saved_model"],
-        ["cpu"]
+        ["cpu", "mobile_gpu"]
     )
 ]
 

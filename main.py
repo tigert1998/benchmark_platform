@@ -17,25 +17,25 @@ from preprocess.model_archive import get_model_details
 def overhead_test():
     from testers.tester_impls.test_stacked import TestStacked
     from testers.sampling.overhead_sampler import OverheadSampler
-    from testers.inference_sdks.tflite import Tflite
-    from network.mbnet_blocks import mbnet_v2_block
+    from testers.inference_sdks.tpu import Tpu
+    from network.resnet_blocks import resnet_v1_block
 
     tester = TestStacked({
-        "connection": Adb("5e6fecf", False),
-        "inference_sdk": Tflite({
-            "benchmark_model_path": "/data/local/tmp/tf-r2.1-60afa4e/benchmark_model",
+        "inference_sdk": Tpu({
+            "edgetpu_compiler_path": "/home/xiaohu/edgetpu/compiler/x86_64/edgetpu_compiler",
+            "libedgetpu_path": "/home/xiaohu/edgetpu/libedgetpu/direct/k8/libedgetpu.so.1"
         }),
-        "sampler": OverheadSampler()
+        "sampler": OverheadSampler(),
+        "min": 1,
+        "max": 5
     })
 
     def add_layer(net):
         cin = net.get_shape().as_list()[-1]
-        return mbnet_v2_block(net, 6, 1, 3, cin)
+        return resnet_v1_block(net, [cin // 4, cin // 4, cin], 1, 3)
     tester.add_layer = add_layer
 
-    tester.run({
-        "use_gpu": False
-    })
+    tester.run({})
 
 
 def hardware_computational_intensity():
@@ -249,4 +249,4 @@ def layer_latency_test_rknn():
 
 
 if __name__ == '__main__':
-    accuracy_test_pb()
+    overhead_test()
