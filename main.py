@@ -15,17 +15,23 @@ from preprocess.model_archive import get_model_details
 
 
 def overhead_test():
-    from testers.tester_impls.test_overhead import TestOverhead
+    from testers.tester_impls.test_stacked import TestStacked
     from testers.sampling.overhead_sampler import OverheadSampler
     from testers.inference_sdks.tflite import Tflite
+    from network.mbnet_blocks import mbnet_v2_block
 
-    tester = TestOverhead({
+    tester = TestStacked({
         "connection": Adb("5e6fecf", False),
         "inference_sdk": Tflite({
             "benchmark_model_path": "/data/local/tmp/tf-r2.1-60afa4e/benchmark_model",
         }),
         "sampler": OverheadSampler()
     })
+
+    def add_layer(net):
+        cin = net.get_shape().as_list()[-1]
+        return mbnet_v2_block(net, 6, 1, 3, cin)
+    tester.add_layer = add_layer
 
     tester.run({
         "use_gpu": False
@@ -90,7 +96,7 @@ def model_flops_test():
         "connection": Connection(),
         "inference_sdk": FlopsCalculator({}),
         "sampler": ModelSampler({
-            "model_details": get_model_details(None, "pb", ["patched"])
+            "model_details": get_model_details(["resnet_v1"], "pb", ["patched"])
         })
     })
 
@@ -126,7 +132,7 @@ def accuracy_test_pb():
     tester = AccuracyTester({
         "zip_size": 50000,
         "dataset_size": 100,
-        "model_details": get_model_details(None, "pb", ["patched"]),
+        "model_details": get_model_details(["mnasnet"], "pb", ["patched"]),
         "data_preparer": DataPreparerDef({
             "labels_path": "C:/Users/tigertang/Projects/dataset/val_labels.txt",
             "validation_set_path": "C:/Users/tigertang/Projects/dataset/validation",
@@ -243,4 +249,4 @@ def layer_latency_test_rknn():
 
 
 if __name__ == '__main__':
-    layer_latency_test_tflite()
+    accuracy_test_pb()
