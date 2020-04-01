@@ -232,6 +232,10 @@ def tflite_tpu_main():
 
     def mbnet_v2_block_sampler_filter(sample):
         _, input_imsize, cin, cout, with_se, stride, ksize = sample
+        if with_se:
+            if input_imsize >= 56:
+                return cin < 64
+            return True
         return True
 
     tester_configs = [

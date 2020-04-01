@@ -22,8 +22,10 @@ class TestMbnetV1Block(TestSingleLayer):
 class TestMbnetV2Block(TestSingleLayer):
     def _generate_tf_model(self, sample):
         _, input_imsize, cin, cout, with_se, stride, kernel_size = sample
+
+        expansion_rate = 6
         if with_se:
-            se_mid_channels = cin // 4
+            se_mid_channels = cin * expansion_rate // 4
         else:
             se_mid_channels = None
 
@@ -32,7 +34,7 @@ class TestMbnetV2Block(TestSingleLayer):
         net = nets[0]
 
         net = mbnet_v2_block(
-            net, 6, stride, kernel_size,
+            net, expansion_rate, stride, kernel_size,
             cout, se_mid_channels=se_mid_channels
         )
 
