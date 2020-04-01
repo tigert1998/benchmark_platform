@@ -98,6 +98,8 @@ class Tester(ClassWithSettings):
             if result.profiling_details.get("flops") is not None:
                 ret["flops"] = result.profiling_details["flops"]
                 ret["mac"] = result.profiling_details["mac"]
+                ret["output_imsize"] = result.profiling_details["output_imsize"]
+                ret["cout"] = result.profiling_details["cout"]
 
         return ret
 
