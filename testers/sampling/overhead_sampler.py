@@ -1,6 +1,7 @@
 from .sampler import Sampler
 
 import itertools
+from .utils import sparse_channels_from_imsize, available_imsizes
 
 
 class OverheadSampler(Sampler):
@@ -9,6 +10,6 @@ class OverheadSampler(Sampler):
         return ["imsize", "cin"]
 
     def _get_samples_without_filter(self):
-        yield [28, 320]
-        for i in [16, 100, 160]:
-            yield [28, i]
+        for imsize in available_imsizes():
+            for cin in sparse_channels_from_imsize(imsize):
+                yield [imsize, cin]
