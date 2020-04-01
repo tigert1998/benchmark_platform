@@ -87,13 +87,9 @@ class DwconvSampler(Sampler):
 
 
 class ChannelExperimentDwconvSampler(DwconvSampler):
-    @staticmethod
-    def default_settings():
-        return Sampler.default_settings()
-
     def _get_samples_without_filter(self):
         configs = {}
-        channel_step = 4
+        channel_step = self.settings["channel_step"]
         for imsize in [7, 14, 28, 56]:
             configs[imsize] = list(
                 range(16, 1000 + channel_step, channel_step))

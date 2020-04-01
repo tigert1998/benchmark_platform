@@ -126,9 +126,12 @@ class ChannelExperimentConvSampler(ConvSampler):
     def default_settings():
         return {
             **Sampler.default_settings(),
+            "channel_step": None
         }
 
     def _get_channel_step(self, input_imsize):
+        if self.settings["channel_step"] is not None:
+            return self.settings["channel_step"]
         if input_imsize <= 56:
             return 4
         elif input_imsize <= 224:
@@ -214,7 +217,9 @@ class OpExperimentConvSampler(Sampler):
         return ConvSampler.get_sample_titles()
 
     def _get_samples_without_filter(self):
-        for imsize in available_imsizes():
+        imsizes = available_imsizes()
+        imsizes.remove(224)
+        for imsize in imsizes:
             for cin in sparse_channels_from_imsize(imsize):
                 for stride, ksize in itertools.product(
                     [1, 2], [1, 3, 5, 7]
@@ -222,3 +227,8 @@ class OpExperimentConvSampler(Sampler):
                     if ksize > imsize:
                         continue
                     yield ["", "Conv", imsize, cin, cin, "", "", stride, ksize]
+
+        for cout, stride, ksize in itertools.product(
+            [16, 32, 64, 96], [1, 2], [1, 3, 5, 7]
+        ):
+            yield ["", "Conv", 224, 3, cout, "", "", stride, ksize]

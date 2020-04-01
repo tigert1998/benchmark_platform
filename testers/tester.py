@@ -64,10 +64,13 @@ class Tester(ClassWithSettings):
         ...
 
     def _process_inference_result(self, result: InferenceResult):
-        ret = {
-            "latency_ms": result.avg_ms,
-            "std_ms": result.std_ms
-        }
+        ret = {}
+        if result.avg_ms is not None:
+            ret = {
+                **ret,
+                "latency_ms": result.avg_ms,
+                "std_ms": result.std_ms
+            }
 
         # layerwise info
         if result.layerwise_info is not None:
@@ -78,15 +81,25 @@ class Tester(ClassWithSettings):
         # profiling details
         if result.profiling_details is not None:
             for stage in ["write", "comp", "read"]:
+                if result.profiling_details.get(stage) is None:
+                    continue
                 for metric in ["avg", "std"]:
-                    metric_title = "{}_{}".format(stage, metric)
+                    metric_title = "{}_{}_ms".format(stage, metric)
                     ret[metric_title] = result.profiling_details[stage][metric]
 
-            ret["gpu_freq"] = result.profiling_details["gpu_freq"]
+            if result.profiling_details.get("gpu_freq") is not None:
+                ret["gpu_freq"] = result.profiling_details["gpu_freq"]
 
-            local_work_size = result.profiling_details["local_work_size"]
-            for i in range(len(local_work_size)):
-                ret["local_work_size[{}]".format(i)] = local_work_size[i]
+            if result.profiling_details.get("local_work_size") is not None:
+                local_work_size = result.profiling_details["local_work_size"]
+                for i in range(len(local_work_size)):
+                    ret["local_work_size[{}]".format(i)] = local_work_size[i]
+
+            if result.profiling_details.get("flops") is not None:
+                ret["flops"] = result.profiling_details["flops"]
+                ret["mac"] = result.profiling_details["mac"]
+                ret["output_imsize"] = result.profiling_details["output_imsize"]
+                ret["cout"] = result.profiling_details["cout"]
 
         return ret
 
@@ -125,9 +138,7 @@ class Tester(ClassWithSettings):
                 resumed = (sample == self.settings['resume_from'])
                 continue
 
-            sample_dic = {
-                key: value for key, value in zip(self.sampler.get_sample_titles(), sample)
-            }
+            sample_dic = self.sampler.get_sample_dict(sample)
             result = self._test_sample(sample)
             result = self._process_inference_result(result)
 

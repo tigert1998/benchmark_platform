@@ -83,3 +83,7 @@ def sparse_channels_from_imsize(imsize: int):
 
 def available_imsizes():
     return [1, 3, 7, 14, 28, 56, 112, 224]
+
+
+def available_num_groups():
+    return [2, 3, 4, 8]

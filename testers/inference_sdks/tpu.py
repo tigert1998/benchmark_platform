@@ -38,10 +38,14 @@ class Tpu(InferenceSdk):
         self.delegate = tflite.load_delegate(self.settings["libedgetpu_path"])
 
     def generate_model(self, path, inputs, outputs):
-        # {path}_edgetpu.tflite
         self.tflite_model_generator.generate_model(path, inputs, outputs)
-        cmd = "{} {}".format(self.edgetpu_compiler_path, path + ".tflite")
-        self.tflite_model_generator.local_connection.shell(cmd)
+        cmds = [
+            "{} {}.tflite".format(self.edgetpu_compiler_path, path),
+            "mv {}.tflite {}_int_quant.tflite".format(path, path),
+            "mv {}_edgetpu.tflite {}.tflite".format(path, path)
+        ]
+        for cmd in cmds:
+            self.tflite_model_generator.local_connection.shell(cmd)
 
     def _fetch_results(self,
                        connection: Connection, model_path: str,
@@ -49,7 +53,7 @@ class Tpu(InferenceSdk):
         import tflite_runtime.interpreter as tflite
 
         interpreter = tflite.Interpreter(
-            model_path=model_path + "_edgetpu.tflite",
+            model_path=model_path + ".tflite",
             experimental_delegates=[self.delegate])
 
         input_details = interpreter.get_input_details()

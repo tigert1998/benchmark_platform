@@ -31,7 +31,7 @@ class TfliteModified(Tflite):
         while True:
             try:
                 mark = "local_work_size[{}]".format(i)
-                ans = '"{}"'.format(rfind_assign(result_str, mark).strip())
+                ans = rfind_assign(result_str, mark).strip()
                 profiling_details["local_work_size"].append(ans)
             except:
                 break

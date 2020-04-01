@@ -56,7 +56,7 @@ def tflite_gpu_main():
     tester_configs = [
         (TestConv, OpExperimentConvSampler(), "conv", {}),
         (TestDwconv, OpExperimentDwconvSampler(), "dwconv", {}),
-        # (TestDilatedConv, DilatedConvSampler(), "dilated_conv", {}), # FIXME
+        (TestDilatedConv, DilatedConvSampler(), "dilated_conv", {}),
         # (TestGconv, GconvSampler(), "gconv", {}),
         (TestAdd, AddSampler(), "add", {"num_write_kernels": 2}),
         (TestConcat, ConcatSampler(), "concat", {"num_write_kernels": 2}),
@@ -157,27 +157,45 @@ def tflite_cpu_main():
 def rknn_main():
     from testers.inference_sdks.rknn import Rknn
 
+    def always_true(quant_name: str, sample):
+        return True
+
+    def mbnet_v2_block_sampler_filter(quant_name: str, sample):
+        _, input_imsize, cin, cout, with_se, stride, ksize = sample
+        if with_se:
+            return False
+        if quant_name == "none" or quant_name == "dynamic_fixed_point-16":
+            if [input_imsize, cin, cout] >= [7, 240, 480]:
+                return ksize == 3
+            return True
+        else:
+            return True
+
+    def shufflenet_v2_unit_sampler_filter(quant_name: str, sample):
+        _, imsize, cin, stride, ksize = sample
+        return stride == 2
+
     tester_configs = [
-        (TestConv, OpExperimentConvSampler(), "conv"),
-        (TestDwconv, OpExperimentDwconvSampler(), "dwconv"),
-        (TestDilatedConv, DilatedConvSampler(), "dilated_conv"),
-        # (TestGconv, GconvSampler(), "gconv"),
-        (TestAdd, AddSampler(), "add"),
-        # (TestConcat, ConcatSampler(), "concat"),
-        (TestGlobalPooling, GlobalPoolingSampler(), "global_pooling"),
-        (TestFc, OpExperimentFcSampler(), "fc"),
-        (TestShuffle, ShuffleSampler(), "shuffle"),
+        (TestConv, OpExperimentConvSampler, "conv", always_true),
+        (TestDwconv, OpExperimentDwconvSampler, "dwconv", always_true),
+        (TestDilatedConv, DilatedConvSampler, "dilated_conv", always_true),
+        # (TestGconv, GconvSampler, "gconv", always_true),
+        (TestAdd, AddSampler, "add", always_true),
+        # (TestConcat, ConcatSampler, "concat", always_true),
+        (TestGlobalPooling, GlobalPoolingSampler, "global_pooling", always_true),
+        (TestFc, OpExperimentFcSampler, "fc", always_true),
+        (TestShuffle, ShuffleSampler, "shuffle", always_true),
 
-        (TestMbnetV1Block, MbnetV1BlockSampler(), "mbnet_v1_block"),
-        (TestMbnetV2Block, MbnetV2BlockSampler({
-            "filter": lambda sample: not sample[-3]
-        }), "mbnet_v2_block"),
-        # (TestShufflenetV1Unit, ShufflenetV1UnitSampler(), "shufflenet_v1_unit"),
-        (TestShufflenetV2Unit, ShufflenetV2UnitSampler(), "shufflenet_v2_unit"),
-        (TestResnetV1Block, ResnetV1BlockSampler(), "resnet_v1_block"),
-        (TestDenseBlock, DenseBlockSampler(), "dense_block"),
+        (TestMbnetV1Block, MbnetV1BlockSampler, "mbnet_v1_block", always_true),
+        (TestMbnetV2Block, MbnetV2BlockSampler,
+         "mbnet_v2_block", mbnet_v2_block_sampler_filter),
+        # (TestShufflenetV1Unit, ShufflenetV1UnitSampler, "shufflenet_v1_unit", always_true),
+        (TestShufflenetV2Unit, ShufflenetV2UnitSampler,
+         "shufflenet_v2_unit", shufflenet_v2_unit_sampler_filter),
+        (TestResnetV1Block, ResnetV1BlockSampler, "resnet_v1_block", always_true),
+        (TestDenseBlock, DenseBlockSampler, "dense_block", always_true),
 
-        # (TestMixConv, MixConvSampler(), "mix_conv")
+        # (TestMixConv, MixConvSampler, "mix_conv", always_true)
     ]
 
     # inference_sdks
@@ -190,14 +208,15 @@ def rknn_main():
 
     connection = Adb("TD033101190100171", False)
 
-    for tester_class, sampler, name in tester_configs:
+    for tester_class, sampler_class, name, sampler_filter in tester_configs:
         for inference_sdk in inference_sdks:
+            quant_name = quant_name_from_sdk(inference_sdk)
             concrete_tester = tester_class({
                 "connection": connection,
                 "inference_sdk": inference_sdk,
-                "sampler": sampler,
+                "sampler": sampler_class({"filter": lambda sample: sampler_filter(quant_name, sample)}),
                 "dirname": "rknn/{}".format(name),
-                "subdir": quant_name_from_sdk(inference_sdk),
+                "subdir": quant_name,
                 "resume_from": None
             })
             concrete_tester.run({
@@ -207,6 +226,64 @@ def rknn_main():
 
 def tflite_tpu_main():
     from testers.inference_sdks.tpu import Tpu
+
+    def always_true(sample):
+        return True
+
+    def mbnet_v2_block_sampler_filter(sample):
+        _, input_imsize, cin, cout, with_se, stride, ksize = sample
+        if with_se:
+            if input_imsize >= 56:
+                return cin < 64
+            return True
+        return True
+
+    tester_configs = [
+        (TestConv, OpExperimentConvSampler, "conv", always_true),
+        (TestDwconv, OpExperimentDwconvSampler, "dwconv", always_true),
+        (TestDilatedConv, DilatedConvSampler, "dilated_conv", always_true),
+        (TestGconv, GconvSampler, "gconv", always_true),
+        (TestAdd, AddSampler, "add", always_true),
+        (TestConcat, ConcatSampler, "concat", always_true),
+        (TestGlobalPooling, GlobalPoolingSampler, "global_pooling", always_true),
+        (TestFc, OpExperimentFcSampler, "fc", always_true),
+        # (TestShuffle, ShuffleSampler, "shuffle",always_true),
+
+        (TestMbnetV1Block, MbnetV1BlockSampler, "mbnet_v1_block", always_true),
+        (TestMbnetV2Block, MbnetV2BlockSampler,
+         "mbnet_v2_block", mbnet_v2_block_sampler_filter),
+        # (TestShufflenetV1Unit, ShufflenetV1UnitSampler, "shufflenet_v1_unit",always_true),
+        # (TestShufflenetV2Unit, ShufflenetV2UnitSampler, "shufflenet_v2_unit",always_true),
+        (TestResnetV1Block, ResnetV1BlockSampler, "resnet_v1_block", always_true),
+        (TestDenseBlock, DenseBlockSampler, "dense_block", always_true),
+
+        (TestMixConv, MixConvSampler, "mix_conv", always_true)
+    ]
+
+    # inference_sdks
+    inference_sdks = [
+        Tpu({
+            "edgetpu_compiler_path": "/home/xiaohu/edgetpu/compiler/x86_64/edgetpu_compiler",
+            "libedgetpu_path": "/home/xiaohu/edgetpu/libedgetpu/direct/k8/libedgetpu.so.1"
+        })
+    ]
+
+    connection = Connection()
+
+    for tester_class, sampler_class, name, sampler_filter in tester_configs:
+        for inference_sdk in inference_sdks:
+            concrete_tester = tester_class({
+                "connection": connection,
+                "inference_sdk": inference_sdk,
+                "sampler": sampler_class({"filter": sampler_filter}),
+                "dirname": "tpu/{}".format(name),
+                "resume_from": None
+            })
+            concrete_tester.run({})
+
+
+def flops_main():
+    from testers.inference_sdks.flops_calculator import FlopsCalculator
 
     tester_configs = [
         (TestConv, OpExperimentConvSampler, "conv"),
@@ -221,7 +298,7 @@ def tflite_tpu_main():
 
         (TestMbnetV1Block, MbnetV1BlockSampler, "mbnet_v1_block"),
         (TestMbnetV2Block, MbnetV2BlockSampler, "mbnet_v2_block"),
-        # (TestShufflenetV1Unit, ShufflenetV1UnitSampler, "shufflenet_v1_unit"),
+        (TestShufflenetV1Unit, ShufflenetV1UnitSampler, "shufflenet_v1_unit"),
         (TestShufflenetV2Unit, ShufflenetV2UnitSampler, "shufflenet_v2_unit"),
         (TestResnetV1Block, ResnetV1BlockSampler, "resnet_v1_block"),
         (TestDenseBlock, DenseBlockSampler, "dense_block"),
@@ -230,12 +307,7 @@ def tflite_tpu_main():
     ]
 
     # inference_sdks
-    inference_sdks = [
-        Tpu({
-            "edgetpu_compiler_path": "/home/xiaohu/edgetpu/compiler/x86_64/edgetpu_compiler",
-            "libedgetpu_path": "/home/xiaohu/edgetpu/libedgetpu/direct/k8/libedgetpu.so.1"
-        })
-    ]
+    inference_sdks = [FlopsCalculator()]
 
     connection = Connection()
 
@@ -245,7 +317,7 @@ def tflite_tpu_main():
                 "connection": connection,
                 "inference_sdk": inference_sdk,
                 "sampler": sampler_class(),
-                "dirname": "tpu/{}".format(name),
+                "dirname": "flops/{}".format(name),
                 "resume_from": None
             })
             concrete_tester.run({})

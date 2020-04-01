@@ -65,9 +65,9 @@ class AndroidDataPreparer(DataPreparerDef):
             )
         )
 
-        for i in image_id_range:
+        for image_path, _ in self.image_path_label_gen(image_id_range):
             self.connection.push(
-                "{}/{}".format(validation_set_path, self.image_basenames[i]),
+                image_path,
                 "{}/{}".format(self.guest_path, "ground_truth_images")
             )
 

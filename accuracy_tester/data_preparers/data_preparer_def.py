@@ -1,4 +1,6 @@
 from utils.class_with_settings import ClassWithSettings
+from glob import glob
+import os
 
 
 class DataPreparerDef(ClassWithSettings):
@@ -26,13 +28,15 @@ class DataPreparerDef(ClassWithSettings):
                 self.image_labels.append(image_label)
                 self.image_basenames.append(image_basename)
 
+        self.basename_to_path = dict()
+        for r, _, fs in os.walk(self.settings["validation_set_path"]):
+            for f in fs:
+                self.basename_to_path[f] = os.path.join(r, f)
+
     def image_path_label_gen(self, image_id_range):
         for i in image_id_range:
             yield (
-                "{}/{}".format(
-                    self.settings["validation_set_path"],
-                    self.image_basenames[i]
-                ),
+                self.basename_to_path[self.image_basenames[i]],
                 self.image_labels[i]
             )
 

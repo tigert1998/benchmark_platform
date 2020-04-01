@@ -1,5 +1,5 @@
 from .sampler import Sampler
-from .utils import sparse_channels_from_imsize, available_imsizes
+from .utils import sparse_channels_from_imsize, available_imsizes, available_num_groups
 
 import itertools
 
@@ -53,7 +53,7 @@ class ShuffleSampler(Sampler):
     def _get_samples_without_filter(self):
         for imsize in available_imsizes():
             for cin in sparse_channels_from_imsize(imsize):
-                for num_groups in [2, 3, 4, 8]:
+                for num_groups in available_num_groups():
                     if cin % num_groups != 0:
                         continue
                     yield ["Shuffle", imsize, cin, num_groups]

@@ -6,38 +6,37 @@ from network.mbnet_blocks import mbnet_v1_block, mbnet_v2_block
 
 
 class TestMbnetV1Block(TestSingleLayer):
-    def _generate_model(self, sample):
-        model_path = "model"
+    def _generate_tf_model(self, sample):
         _, input_imsize, cin, cout, stride, kernel_size = sample
 
-        tf.reset_default_graph()
-        input_im = tf.placeholder(
-            name="input_im", dtype=tf.float32,
-            shape=(1, input_imsize, input_imsize, cin))
+        inputs, nets = self._pad_before_input(
+            [[1, input_imsize, input_imsize, cin]])
+        net = nets[0]
 
-        net = mbnet_v1_block(input_im, stride, kernel_size, cout)
+        net = mbnet_v1_block(net, stride, kernel_size, cout)
 
-        self.inference_sdk.generate_model(model_path, [input_im], [net])
-        return model_path, [input_im.get_shape().as_list()]
+        outputs = self._pad_after_output([net])
+        return inputs, outputs
 
 
 class TestMbnetV2Block(TestSingleLayer):
-    def _generate_model(self, sample):
-        model_path = "model"
+    def _generate_tf_model(self, sample):
         _, input_imsize, cin, cout, with_se, stride, kernel_size = sample
 
-        tf.reset_default_graph()
-
-        input_im = tf.placeholder(
-            name="input_im", dtype=tf.float32,
-            shape=(1, input_imsize, input_imsize, cin))
-
+        expansion_rate = 6
         if with_se:
-            se_mid_channels = cin // 4
+            se_mid_channels = cin * expansion_rate // 4
         else:
             se_mid_channels = None
-        net = mbnet_v2_block(input_im, 6, stride, kernel_size,
-                             cout, se_mid_channels=se_mid_channels)
 
-        self.inference_sdk.generate_model(model_path, [input_im], [net])
-        return model_path, [input_im.get_shape().as_list()]
+        inputs, nets = self._pad_before_input(
+            [[1, input_imsize, input_imsize, cin]])
+        net = nets[0]
+
+        net = mbnet_v2_block(
+            net, expansion_rate, stride, kernel_size,
+            cout, se_mid_channels=se_mid_channels
+        )
+
+        outputs = self._pad_after_output([net])
+        return inputs, outputs

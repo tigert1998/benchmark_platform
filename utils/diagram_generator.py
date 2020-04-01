@@ -7,18 +7,14 @@ import matplotlib.pyplot as plt
 
 from .utils import set_multilevel_dict
 
+from typing import Tuple, Optional
+
 
 class DiagramGenerator:
     CIN = "current_cin"
     COUT = "current_cout"
     METRIC_START = "latency_ms"
     IRRELEVANTS = ["model", "original_cin", "original_cout"]
-
-    def __init__(self, output_folder, metric_lists, point_threshold=10):
-        self.output_folder = output_folder
-        self.metric_lists = metric_lists
-        self.point_threshold = point_threshold
-        assert os.path.isdir(output_folder)
 
     @staticmethod
     def _concatenate_diagram_title(xs, ys, space):
@@ -36,10 +32,21 @@ class DiagramGenerator:
         return sep.join(ls)
 
     def _plot_figure(self, xs, ys_list, xlabel, ylabel_list, title, filename):
+        self.num_output_pics += 1
+
+        if self.channel_range is not None:
+            l, r = self.channel_range
+            tmp = zip(*filter(
+                lambda t: l <= t[0] and t[0] <= r,
+                zip(xs, *ys_list)
+            ))
+            xs = next(tmp)
+            ys_list = list(tmp)
+
         fig = plt.figure()
-        fig.set_size_inches(19, 11)
+        fig.set_size_inches(16, 9)
         for ys, ylabel in zip(ys_list, ylabel_list):
-            plt.plot(xs, ys, label=ylabel)
+            plt.plot(xs, ys, 'bo', label=ylabel)
         plt.xlabel(xlabel)
         plt.title(title)
         plt.legend()
@@ -125,7 +132,19 @@ class DiagramGenerator:
                     diagram_title, diagram_filename
                 )
 
-    def generate(self, csv_filepath):
+    def generate(
+        self,
+        csv_filepath, output_folder, metric_lists,
+        point_threshold=10,
+        channel_range: Optional[Tuple[int, int]] = None
+    ):
+        self.output_folder = output_folder
+        self.metric_lists = metric_lists
+        self.point_threshold = point_threshold
+        self.num_output_pics = 0
+        self.channel_range = channel_range
+        assert os.path.isdir(output_folder)
+
         with open(csv_filepath, "r") as f:
             reader = csv.reader(f)
             for row in reader:
@@ -167,3 +186,4 @@ class DiagramGenerator:
         self._generate_cin_eq_cout(dic, sample_titles, metric_titles)
         self._generate_with_fixed_cin_or_cout(
             dic, sample_titles, metric_titles)
+        print("num_output_pics = {}".format(self.num_output_pics))
