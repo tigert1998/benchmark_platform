@@ -224,7 +224,7 @@ class OpExperimentConvSampler(Sampler):
                 for stride, ksize in itertools.product(
                     [1, 2], [1, 3, 5, 7]
                 ):
-                    if ksize > imsize:
+                    if imsize < ksize or imsize < stride:
                         continue
                     yield ["", "Conv", imsize, cin, cin, "", "", stride, ksize]
 

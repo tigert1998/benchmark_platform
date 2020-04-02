@@ -17,6 +17,6 @@ class GconvSampler(Sampler):
             for cin in sparse_channels_from_imsize(imsize):
                 for num_groups, stride, ksize in itertools.product(
                         available_num_groups(), [1, 2], [1, 3, 5, 7]):
-                    if ksize > imsize or cin % num_groups != 0:
+                    if imsize < ksize or imsize < stride or cin % num_groups != 0:
                         continue
                     yield ["GroupedConv", imsize, cin, cin, num_groups, stride, ksize]
