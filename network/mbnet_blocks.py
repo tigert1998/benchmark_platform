@@ -51,6 +51,6 @@ def mbnet_v2_block(features, expansion_rate: int,
             )(net)
 
         if stride == 1:
-            net = features + net
+            net = tf.math.add(features, net)
 
     return net
