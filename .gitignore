@@ -1,3 +1,8 @@
 __pycache__
 .vscode
 test_results
+kendryte-*
+openvino_*
+ncc
+*.log
+op_block_bench_suite_*.py

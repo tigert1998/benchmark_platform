@@ -121,7 +121,7 @@ class K210(InferenceSdk):
                     
                     'make -j',
                     
-                    'python3 -mkflash -b1500000 -p%s -BgoB %s' % (self.k210_usb_port, 'benchmarks.bin')
+                    'python3 -mkflash -b1500000 -p%s %s' % (self.k210_usb_port, 'benchmarks.bin')
             ])
 
             map(str,inputs[0].get_shape().as_list())
@@ -135,18 +135,20 @@ class K210(InferenceSdk):
 
             if not os.path.exists(os.path.abspath(path + '.tflite').replace('.tflite', '.kmodel')):
                 if self.debug_print is not print:
-                    print('Fatal Error: Failed to generate required file.')
+                    print('====== Fatal Error: Failed to generate required file. ======nvidia')
                     print("convert_cmd = \"{}\"".format(convert_cmd))
                     print(result)
                 print('Generated DLC file:', os.path.abspath(path + '.pb').replace('.pb', '.dlc'))
-                raise FileNotFoundError
 
     def _fetch_results(self,
                        connection: Connection, model_path,
                        input_size_list: List[List[int]], flags) -> InferenceResult:
 
-        model_path = os.path.splitext(model_path)[0]
+        path = os.path.splitext(model_path)[0]
         model_basename = os.path.basename(model_path)
+
+        if not os.path.exists(os.path.abspath(path + '.tflite').replace('.tflite', '.kmodel')):
+            return InferenceResult(avg_ms=0.0, std_ms=0.0, profiling_details=None, layerwise_info=None)
         
         layerwise_info = []
         avg_stat = 0.0
@@ -160,6 +162,9 @@ class K210(InferenceSdk):
                     if '######BENCHMARK_START######' in line:
                         pass
                     if '######BENCHMARK_END######' in line:
+                        break
+                    if 'SYSCALL: Out of memory' in line:
+                        avg_stat = -1
                         break
                     if ': ' in line and 'Total' not in line:
                         layerwise_info.append({

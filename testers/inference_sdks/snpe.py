@@ -42,6 +42,7 @@ class Snpe(InferenceSdk):
 
 
     def generate_model(self, path, inputs, outputs):
+        path = os.path.splitext(path)[0]
         model_basename = os.path.basename(path)
 
         outputs_ops_names = [o.op.name for o in outputs]
@@ -51,22 +52,28 @@ class Snpe(InferenceSdk):
 
             constant_graph = tf.graph_util.convert_variables_to_constants(
                 sess, sess.graph_def, outputs_ops_names)
+            
+
             with tf.gfile.FastGFile(path + '.pb', mode='wb') as f:
                 f.write(constant_graph.SerializeToString())
+            
 
             assert 1 == len(inputs)
             assert 1 == len(outputs_ops_names)
-            
+        
+
             if os.path.exists(path + '.dir'):
                 shutil.rmtree(path + '.dir')
 
+            #print('OUTPUT_NODE_NAME>>>>>>>',outputs_ops_names)
             args = [
                 '--input_network %s' % os.path.abspath(path + '.pb'),
                 '--output_path %s'  % os.path.abspath(path + '.pb').replace('.pb', '.dlc'),
                 '--input_dim "%s" "%s"' % (inputs[0].op.name,
                         ','.join(map(str,inputs[0].get_shape().as_list()))),
-                '--out_node %s' % outputs_ops_names[0],
-                '--allow_unconsumed_nodes'
+                '--out_node "%s"' % outputs_ops_names[0],
+                '--allow_unconsumed_nodes',
+               # '--verbose'
             ]
 
             args_line = ' '.join(args)
@@ -74,7 +81,8 @@ class Snpe(InferenceSdk):
             convert_cmd = '; '.join([
                 'cd %s' % self.snpe_sdk_path,
                 'source %s/bin/envsetup.sh -t %s' % (self.snpe_sdk_path, self.tensorflow_path),
-                'python %s/bin/x86_64-linux-clang/snpe-tensorflow-to-dlc %s' % (self.snpe_sdk_path, args_line)
+                'python %s/bin/x86_64-linux-clang/snpe-tensorflow-to-dlc %s' % (self.snpe_sdk_path, args_line),
+                '%s/bin/x86_64-linux-clang/snpe-dlc-info -i %s' %  (self.snpe_sdk_path, os.path.abspath(path + '.pb').replace('.pb', '.dlc'))
             ])
 
             convert_cmd = "bash -c \"{}\"".format(convert_cmd)
@@ -97,6 +105,8 @@ class Snpe(InferenceSdk):
     def _fetch_results(self,
                        connection: Connection, model_path,
                        input_size_list: List[List[int]], flags) -> InferenceResult:
+
+        model_path = os.path.splitext(model_path)[0]
         model_basename = os.path.basename(model_path)
         
         bench_cmd = '; '.join([
@@ -110,6 +120,7 @@ class Snpe(InferenceSdk):
                 'sed -i \'s#\[BENCHMARK_RUNTIMES\]#%s#g\' benchmarks/benchmark.json' % ', '.join(list(map(lambda x: '\\"' + x + '\\"', flags['runtimes']))),
                 'sed -i \'s#\[INPUT_DLC_FILE\]#%s#g\' benchmarks/benchmark.json' % os.path.abspath(model_path + '.pb').replace('.pb', '.dlc'),
                 'python benchmarks/snpe_bench.py -c benchmarks/benchmark.json -l detailed -p %s' % flags['performance_mode'],
+                'rm %s' % os.path.abspath(model_path + '.pb').replace('.pb', '_stats.csv'),
                 'cp benchmark_res/results/latest_results/benchmark_stats_BenchmarkPro.csv %s' % os.path.abspath(model_path + '.pb').replace('.pb', '_stats.csv'),
                 'adb shell rm  /data/local/tmp/snpebm/BenchmarkPro/*.dlc',
                 'adb shell rm  /data/local/tmp/snpebm/BenchmarkPro/sampledImg/*.raw'
@@ -143,4 +154,4 @@ class Snpe(InferenceSdk):
                 
         self.debug_print('Layer Stat, Avg_ms: %.02fms, Std_ms: %.02fms' % (avg_stat, std_stat))
 
-        return InferenceResult(avg_ms=std_stat, std_ms=std_stat, profiling_details=None, layerwise_info=layerwise_info)
+        return InferenceResult(avg_ms=avg_stat, std_ms=std_stat, profiling_details=None, layerwise_info=layerwise_info)
