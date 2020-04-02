@@ -256,6 +256,29 @@ def tflite_tpu_main():
         _, input_imsize, cin, cout, num_groups, stride, ksize = sample
         return input_imsize < 224
 
+    def dense_blocks_sampler_filter(sample):
+        _, input_imsize, cin, growth_rate, num_layers, ksize = sample
+        dic = {
+            112: [(7, 32), (3, 96)],
+            224: [(3, 32)]
+        }
+        if input_imsize not in dic:
+            return True
+        else:
+            for limit_ksize, limit_cin in dic[input_imsize]:
+                if ksize >= limit_ksize:
+                    return cin < limit_cin
+            return True
+
+    def mix_conv_sampler_filter(sample):
+        _, input_imsize, cin, cout, num_groups, stride = sample
+        if input_imsize >= 224:
+            return False
+        if input_imsize == 112:
+            if num_groups == 4:
+                return cin < 96
+        return True
+
     tester_configs = [
         (TestConv, OpExperimentConvSampler, "conv", always_true),
         (TestDwconv, OpExperimentDwconvSampler, "dwconv", always_true),
@@ -273,9 +296,10 @@ def tflite_tpu_main():
         # (TestShufflenetV1Unit, ShufflenetV1UnitSampler, "shufflenet_v1_unit",always_true),
         # (TestShufflenetV2Unit, ShufflenetV2UnitSampler, "shufflenet_v2_unit",always_true),
         (TestResnetV1Block, ResnetV1BlockSampler, "resnet_v1_block", always_true),
-        (TestDenseBlock, DenseBlockSampler, "dense_block", always_true),
+        (TestDenseBlock, DenseBlockSampler,
+         "dense_block", dense_blocks_sampler_filter),
 
-        (TestMixConv, MixConvSampler, "mix_conv", always_true)
+        (TestMixConv, MixConvSampler, "mix_conv", mix_conv_sampler_filter)
     ]
 
     # inference_sdks
