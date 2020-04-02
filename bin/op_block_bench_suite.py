@@ -233,16 +233,34 @@ def tflite_tpu_main():
     def mbnet_v2_block_sampler_filter(sample):
         _, input_imsize, cin, cout, with_se, stride, ksize = sample
         if with_se:
-            if input_imsize >= 56:
-                return cin < 64
+            dic = {
+                7: [(7, 320)],
+                14: [(7, 240), (5, 320)],
+                56: [(3, 64)],
+                112: [(3, 32)],
+                224: [(3, 32)]
+            }
+        else:
+            dic = {
+                14: [(7, 320)]
+            }
+        if input_imsize not in dic:
             return True
-        return True
+        else:
+            for limit_ksize, limit_cin in dic[input_imsize]:
+                if ksize >= limit_ksize:
+                    return cin < limit_cin
+            return True
+
+    def gconv_sampler_filter(sample):
+        _, input_imsize, cin, cout, num_groups, stride, ksize = sample
+        return input_imsize < 224
 
     tester_configs = [
         (TestConv, OpExperimentConvSampler, "conv", always_true),
         (TestDwconv, OpExperimentDwconvSampler, "dwconv", always_true),
         (TestDilatedConv, DilatedConvSampler, "dilated_conv", always_true),
-        (TestGconv, GconvSampler, "gconv", always_true),
+        (TestGconv, GconvSampler, "gconv", gconv_sampler_filter),
         (TestAdd, AddSampler, "add", always_true),
         (TestConcat, ConcatSampler, "concat", always_true),
         (TestGlobalPooling, GlobalPoolingSampler, "global_pooling", always_true),

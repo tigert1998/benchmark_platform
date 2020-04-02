@@ -137,6 +137,7 @@ class Tester(ClassWithSettings):
             if self.settings.get('resume_from') is not None and not resumed:
                 resumed = (sample == self.settings['resume_from'])
                 continue
+            print("Testing sample: {}".format(sample))
 
             sample_dic = self.sampler.get_sample_dict(sample)
             result = self._test_sample(sample)
