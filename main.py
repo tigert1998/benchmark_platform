@@ -110,9 +110,10 @@ def accuracy_test_rknn():
     tester = AccuracyTester({
         "dirname": "test_rknn",
         "zip_size": 50000,
-        "dataset_size": 50000,
-        "model_details": get_model_details(["resnet_v1"], "rknn", [
-            "", "dynamic_fixed_point_8", "dynamic_fixed_point_16", "asymmetric_quantized_u8"
+        "dataset_size": 100,
+        "model_details": get_model_details(["proxyless"], "rknn", [
+            # "", "dynamic_fixed_point_16",
+            "dynamic_fixed_point_8", "asymmetric_quantized_u8"
         ]),
         "data_preparer": DataPreparerDef({
             "labels_path": "C:/Users/v-xiat/Downloads/playground/imagenet/val.txt",
@@ -196,25 +197,32 @@ def layer_latency_test_tflite():
     from testers.inference_sdks.tflite_modified import TfliteModified
     from testers.inference_sdks.tflite import Tflite
 
-    def sampler_filter(sample):
-        _, _, imsize, cin, _, _, _, stride, ksize = sample
-        return imsize == 7 and stride == 1 and 200 <= cin and cin <= 250
+    def conv_sampler_filter(sample):
+        _, _, input_imsize, cin, cout, _, _, stride, ksize = sample
+        return input_imsize == 28 and cin == 320 and ksize == 3 and\
+            stride == 1 and 200 <= cout and cout <= 400
+
+    def dwconv_sampler_filter(sample):
+        _, _, input_imsize, cin, _, _, _, stride, ksize = sample
+        return input_imsize == 7 and ksize == 3 and stride == 1 and\
+            cin in range(200, 401)
 
     tester = TestDwconv({
         "connection": Adb("5e6fecf", True),
-        "inference_sdk": TfliteModified({
-            "benchmark_model_path": "/data/local/tmp/tf-r2.1-60afa4e/benchmark_model_modified",
+        "inference_sdk": Tflite({
+            "benchmark_model_path": "/data/local/tmp/tf-r2.1-60afa4e/benchmark_model",
         }),
         "sampler": ChannelExperimentDwconvSampler({
-            "filter": sampler_filter,
+            "filter": dwconv_sampler_filter,
             "channel_step": 1
         }),
     })
     tester.run({
-        "use_gpu": True,
-        "work_group_size": "",
-        "tuning_type": "EXHAUSTIVE",
-        "kernel_path": "/data/local/tmp/kernel.cl"
+        "use_gpu": False,
+        # "use_gpu": True,
+        # "work_group_size": "",
+        # "tuning_type": "EXHAUSTIVE",
+        # "kernel_path": "/data/local/tmp/kernel.cl"
     })
 
 
@@ -236,17 +244,25 @@ def layer_latency_test_tpu():
 def layer_latency_test_rknn():
     from testers.inference_sdks.rknn import Rknn
 
+    def conv_sampler_filter(sample):
+        _, _, input_imsize, cin, cout, _, _, stride, ksize = sample
+        return input_imsize == 28 and cin == 320 and ksize == 3 and\
+            stride == 1 and (cout in range(221, 241))
+
     tester = TestConv({
         "connection": Adb("TD033101190100171", False),
         "inference_sdk": Rknn({
             "rknn_target": None,
             "quantization": "asymmetric_quantized-u8"
         }),
-        "sampler": ChannelExperimentConvSampler({}),
-        "resume_from": ["", "Conv", 7, 576, 640, "", "", 1, 3]
+        "sampler": ChannelExperimentConvSampler({
+            "channel_step": 1,
+            "filter": conv_sampler_filter
+        }),
+        "resume_from": None
     })
     tester.run({})
 
 
 if __name__ == '__main__':
-    overhead_test()
+    accuracy_test_rknn()

@@ -159,15 +159,15 @@ meta_model_details = [
         "proxyless/proxyless_mobile",
         proxyless_preprocess,
         "input_images", "classifier/linear/add",
-        ["pb", "tflite", "saved_model"],
-        ["cpu", "mobile_gpu", "edgetpu"]
+        ["pb", "tflite", "saved_model", "rknn"],
+        ["cpu", "mobile_gpu", "edgetpu", "rk"]
     ),
     MetaModelDetail(
         "proxyless/proxyless_mobile_14",
         proxyless_preprocess,
         "input_images", "classifier/linear/add",
-        ["pb", "tflite", "saved_model"],
-        ["cpu", "mobile_gpu", "edgetpu"]
+        ["pb", "tflite", "saved_model", "rknn"],
+        ["cpu", "mobile_gpu", "edgetpu", "rk"]
     ),
     MetaModelDetail(
         "resnet_v1/resnet_v1_50",
