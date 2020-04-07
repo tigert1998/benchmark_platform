@@ -79,6 +79,7 @@ class Snpe(InferenceSdk):
             args_line = ' '.join(args)
 
             convert_cmd = '; '.join([
+                'rm %s' % os.path.abspath(path + '.pb').replace('.pb', '.dlc'),
                 'cd %s' % self.snpe_sdk_path,
                 'source %s/bin/envsetup.sh -t %s' % (self.snpe_sdk_path, self.tensorflow_path),
                 'python %s/bin/x86_64-linux-clang/snpe-tensorflow-to-dlc %s' % (self.snpe_sdk_path, args_line),
