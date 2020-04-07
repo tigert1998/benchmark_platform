@@ -57,3 +57,17 @@ class ShuffleSampler(Sampler):
                     if cin % num_groups != 0:
                         continue
                     yield ["Shuffle", imsize, cin, num_groups]
+
+
+class ActivationSampler(Sampler):
+    @staticmethod
+    def get_sample_titles():
+        return [
+            "op", "input_imsize", "current_cin"
+        ]
+
+    def _get_samples_without_filter(self):
+        for imsize in available_imsizes():
+            for cin in sparse_channels_from_imsize(imsize):
+                for op in ["relu", "relu6", "swish", "sigmoid"]:
+                    yield [op, imsize, cin]

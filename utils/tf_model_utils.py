@@ -1,4 +1,5 @@
 import tensorflow as tf
+import numpy as np
 
 import warnings
 import os
@@ -6,15 +7,48 @@ import shutil
 import itertools
 from functools import reduce
 from typing import List, Union, Tuple
+import logging
 
 
-def load_graph(frozen_graph_filepath) -> tf.Graph:
+def load_graph(frozen_graph_filepath: str) -> tf.Graph:
     with tf.compat.v1.gfile.GFile(frozen_graph_filepath, "rb") as f:
         graph_def = tf.compat.v1.GraphDef()
         graph_def.ParseFromString(f.read())
     with tf.Graph().as_default() as graph:
         tf.import_graph_def(graph_def, name="")
     return graph
+
+
+def load_graph_with_normalization(
+    frozen_graph_filepath: str,
+    input_op_name: str, output_op_name: str,
+    mean: List[float], std: List[float]
+) -> tf.Graph:
+    assert len(mean) == 3 and len(std) == 3
+
+    graph = load_graph(frozen_graph_filepath)
+    origin_input_shape = graph.get_operation_by_name(
+        input_op_name
+    ).outputs[0].get_shape().as_list()
+    imsize = origin_input_shape[1]
+    assert imsize == origin_input_shape[2] and origin_input_shape[3] == 3
+
+    with tf.Graph().as_default() as new_graph:
+        input_tensor = tf.placeholder(
+            shape=[1, imsize, imsize, 3],
+            dtype=tf.float32,
+            name=input_op_name
+        )
+        normalized = tf.math.add(
+            input_tensor, -np.array(mean).astype(np.float32))
+        normalized = tf.math.multiply(
+            normalized, 1 / np.array(std).astype(np.float32))
+
+        tf.import_graph_def(graph.as_graph_def(), name="", input_map={
+            input_op_name: normalized
+        })
+
+    return prune_graph(new_graph, [input_op_name], [output_op_name])
 
 
 def to_saved_model(
@@ -100,19 +134,63 @@ def analyze_inputs_outputs(graph) -> Tuple[List[tf.Operation], List[tf.Operation
 def calc_graph_mac(graph: tf.Graph):
     ans = 0
     not_involved_op_types = [
+        # I think unnecessary
         "Identity",
         "Shape",
-        "Squeeze"
-    ]
-    involved_op_types = dict()
-    for op in graph.get_operations():
-        if len(op.inputs) == 0 or len(op.outputs) == 0 or (op.type in not_involved_op_types):
-            continue
+        "Squeeze",
+        "Gather",
+        "GatherV2",
 
-        if involved_op_types.get(op.type) is None:
-            involved_op_types[op.type] = 1
-        else:
-            involved_op_types[op.type] += 1
+        # activations
+        "BiasAdd",
+        "Relu",
+        "Relu6",
+        "Sigmoid",
+        "FusedBatchNorm",
+        "FusedBatchNormV2",
+        "FusedBatchNormV3",
+    ]
+    involved_op_types = {
+        # compute
+        "Conv2D",
+        "DepthwiseConv2dNative",
+        "AvgPool",
+        "MatMul",
+        "MaxPool",
+        "Softmax",
+
+        "Split",
+        "Concat",
+        "ConcatV2",
+        "Reshape",
+        "Transpose",
+        "Pad",
+        "Slice",
+        "StridedSlice",
+    }
+    oneside_elewise_op_types = {
+        "Add",
+        "AddV2",
+        "Mul"
+    }
+    for op in graph.get_operations():
+        if len(op.inputs) == 0 or len(op.outputs) == 0:
+            continue
+        if op.type in not_involved_op_types:
+            continue
+        if op.type in oneside_elewise_op_types:
+            assert len(op.inputs) == 2
+            cnt = sum(map(
+                lambda tensor: int(tensor.op.type == "Const"),
+                op.inputs
+            ))
+            print("Found 1x {} that takes {} constants as inputs".format(op.type, cnt))
+            if cnt >= 1:
+                continue
+
+        if op.type not in involved_op_types.union(oneside_elewise_op_types):
+            logging.fatal("{} not in involved op types".format(op.type))
+            exit(0)
 
         for tensor in itertools.chain(op.inputs, op.outputs):
             if tensor.get_shape()._dims is None:
@@ -124,7 +202,6 @@ def calc_graph_mac(graph: tf.Graph):
                 shape[0] = 1
             ans += reduce(lambda x, y: x * y, shape, 1)
 
-    print("MAC is collected in these ops: {}".format(involved_op_types))
     return ans
 
 
@@ -167,8 +244,7 @@ def prune_graph(
     graph: tf.Graph,
     input_op_names: List[str],
     output_op_names: List[str],
-    output_model_path: str = "model.pb"
-):
+) -> tf.Graph:
     from tensorflow.tools.graph_transforms import TransformGraph
 
     transforms = [
@@ -178,14 +254,10 @@ def prune_graph(
         'fold_batch_norms'
     ]
 
-    with tf.Session(graph=graph) as sess:
-        output_graph_def = tf.graph_util.convert_variables_to_constants(
-            sess,
-            tf.get_default_graph().as_graph_def(),
-            output_op_names
-        )
-        optimized_graph_def = TransformGraph(
-            output_graph_def, input_op_names, output_op_names, transforms
-        )
-        with tf.gfile.GFile(output_model_path, "wb") as f:
-            f.write(optimized_graph_def.SerializeToString())
+    optimized_graph_def = TransformGraph(
+        graph.as_graph_def(), input_op_names, output_op_names, transforms
+    )
+
+    with tf.Graph().as_default() as new_graph:
+        tf.import_graph_def(optimized_graph_def, name="")
+        return new_graph

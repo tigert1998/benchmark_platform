@@ -114,6 +114,6 @@ class OpExperimentDwconvSampler(Sampler):
                 for stride, ksize in itertools.product(
                     [1, 2], [3, 5, 7]
                 ):
-                    if ksize > imsize:
+                    if imsize < ksize or imsize < stride:
                         continue
                     yield ["", "Dwconv", imsize, cin, cin, "", "", stride, ksize]

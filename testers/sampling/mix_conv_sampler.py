@@ -21,4 +21,6 @@ class MixConvSampler(Sampler):
                     if cin % num_groups != 0:
                         continue
                     for stride in [1, 2]:
+                        if imsize < stride:
+                            continue
                         yield ["MixConv", imsize, cin, cin, num_groups, stride]

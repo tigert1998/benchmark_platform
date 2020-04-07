@@ -17,7 +17,7 @@ class DilatedConvSampler(Sampler):
             for cin in sparse_channels_from_imsize(imsize):
                 for dilation, stride, ksize in itertools.product([2, 4], [1, 2], [3, 5, 7]):
                     receptive_field = (ksize - 1) * dilation + 1
-                    if receptive_field > imsize:
+                    if imsize < receptive_field or imsize < stride:
                         continue
                     # strides > 1 not supported in conjunction with dilation_rate > 1
                     if stride > 1 and dilation > 1:

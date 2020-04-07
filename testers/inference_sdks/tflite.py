@@ -1,4 +1,5 @@
 import tensorflow as tf
+import numpy as np
 
 import os
 import subprocess
@@ -111,5 +112,36 @@ class Tflite(InferenceSdk):
                     if len(cells) == 0:
                         continue
                     op_profiling.append(cells)
+
             op_profiling = table_try_float(op_profiling)
-            return InferenceResult(avg_ms=avg_ms, std_ms=std_ms, profiling_details=op_profiling, layerwise_info=None)
+            for i in range(len(op_profiling[0])):
+                s = op_profiling[0][i]
+                assert s.startswith("[") and s.endswith("]")
+                op_profiling[0][i] = s[1: -1].lower()
+
+            name_idx = op_profiling[0].index("name")
+            type_idx = op_profiling[0].index("node type")
+            avg_ms_idx = op_profiling[0].index("avg ms")
+
+            layerwise_info = []
+            name_set = set()
+            for i in range(1, len(op_profiling)):
+                name = "{}_{}".format(
+                    op_profiling[i][name_idx],
+                    op_profiling[i][type_idx]
+                )
+                assert name not in name_set
+                name_set.add(name)
+                avg_ms = float(op_profiling[i][avg_ms_idx])
+                layerwise_info.append({
+                    "name": name,
+                    "time": {
+                        "avg_ms": avg_ms, "std_ms": np.nan
+                    }
+                })
+
+            return InferenceResult(
+                avg_ms=avg_ms, std_ms=std_ms,
+                profiling_details=None,
+                layerwise_info=layerwise_info
+            )

@@ -4,7 +4,7 @@ from testers.sampling.dwconv_sampler import OpExperimentDwconvSampler
 from testers.sampling.dilated_conv_sampler import DilatedConvSampler
 from testers.sampling.gconv_sampler import GconvSampler
 from testers.sampling.elementwise_ops_sampler import \
-    AddSampler, ConcatSampler, GlobalPoolingSampler, ShuffleSampler
+    AddSampler, ConcatSampler, GlobalPoolingSampler, ShuffleSampler, ActivationSampler
 from testers.sampling.fc_sampler import OpExperimentFcSampler
 
 # blocks sampler
@@ -24,7 +24,7 @@ from testers.tester_impls.test_dwconv import TestDwconv
 from testers.tester_impls.test_dilated_conv import TestDilatedConv
 from testers.tester_impls.test_gconv import TestGconv
 from testers.tester_impls.test_elementwise_ops import \
-    TestAdd, TestConcat, TestGlobalPooling, TestShuffle
+    TestAdd, TestConcat, TestGlobalPooling, TestShuffle, TestActivation
 from testers.tester_impls.test_fc import TestFc
 
 # block testers
@@ -73,7 +73,8 @@ def tflite_gpu_main():
         (TestResnetV1Block, ResnetV1BlockSampler(), "resnet_v1_block", {}),
         (TestDenseBlock, DenseBlockSampler(), "dense_block", {}),
 
-        # (TestMixConv, MixConvSampler(), "mix_conv", {})
+        # (TestMixConv, MixConvSampler(), "mix_conv", {}),
+        (TestActivation, ActivationSampler(), "activation", {}),
     ]
 
     # inference_sdks
@@ -126,7 +127,8 @@ def tflite_cpu_main():
         (TestResnetV1Block, ResnetV1BlockSampler, "resnet_v1_block"),
         (TestDenseBlock, DenseBlockSampler, "dense_block"),
 
-        (TestMixConv, MixConvSampler, "mix_conv")
+        (TestMixConv, MixConvSampler, "mix_conv"),
+        (TestActivation, ActivationSampler, "activation"),
     ]
 
     # inference_sdks
@@ -175,6 +177,10 @@ def rknn_main():
         _, imsize, cin, stride, ksize = sample
         return stride == 2
 
+    def activation_sampler_filter(quant_name: str, sample):
+        op, imsize, cin = sample
+        return op not in ["swish"]
+
     tester_configs = [
         (TestConv, OpExperimentConvSampler, "conv", always_true),
         (TestDwconv, OpExperimentDwconvSampler, "dwconv", always_true),
@@ -195,7 +201,9 @@ def rknn_main():
         (TestResnetV1Block, ResnetV1BlockSampler, "resnet_v1_block", always_true),
         (TestDenseBlock, DenseBlockSampler, "dense_block", always_true),
 
-        # (TestMixConv, MixConvSampler, "mix_conv", always_true)
+        # (TestMixConv, MixConvSampler, "mix_conv", always_true),
+        (TestActivation, ActivationSampler,
+         "activation", activation_sampler_filter),
     ]
 
     # inference_sdks
@@ -233,16 +241,57 @@ def tflite_tpu_main():
     def mbnet_v2_block_sampler_filter(sample):
         _, input_imsize, cin, cout, with_se, stride, ksize = sample
         if with_se:
-            if input_imsize >= 56:
-                return cin < 64
+            dic = {
+                7: [(7, 320)],
+                14: [(7, 240), (5, 320)],
+                56: [(3, 64)],
+                112: [(3, 32)],
+                224: [(3, 32)]
+            }
+        else:
+            dic = {
+                14: [(7, 320)]
+            }
+        if input_imsize not in dic:
             return True
+        else:
+            for limit_ksize, limit_cin in dic[input_imsize]:
+                if ksize >= limit_ksize:
+                    return cin < limit_cin
+            return True
+
+    def gconv_sampler_filter(sample):
+        _, input_imsize, cin, cout, num_groups, stride, ksize = sample
+        return input_imsize < 224
+
+    def dense_blocks_sampler_filter(sample):
+        _, input_imsize, cin, growth_rate, num_layers, ksize = sample
+        dic = {
+            112: [(7, 32), (3, 96)],
+            224: [(3, 32)]
+        }
+        if input_imsize not in dic:
+            return True
+        else:
+            for limit_ksize, limit_cin in dic[input_imsize]:
+                if ksize >= limit_ksize:
+                    return cin < limit_cin
+            return True
+
+    def mix_conv_sampler_filter(sample):
+        _, input_imsize, cin, cout, num_groups, stride = sample
+        if input_imsize >= 224:
+            return False
+        if input_imsize == 112:
+            if num_groups == 4:
+                return cin < 96
         return True
 
     tester_configs = [
         (TestConv, OpExperimentConvSampler, "conv", always_true),
         (TestDwconv, OpExperimentDwconvSampler, "dwconv", always_true),
         (TestDilatedConv, DilatedConvSampler, "dilated_conv", always_true),
-        (TestGconv, GconvSampler, "gconv", always_true),
+        (TestGconv, GconvSampler, "gconv", gconv_sampler_filter),
         (TestAdd, AddSampler, "add", always_true),
         (TestConcat, ConcatSampler, "concat", always_true),
         (TestGlobalPooling, GlobalPoolingSampler, "global_pooling", always_true),
@@ -255,9 +304,11 @@ def tflite_tpu_main():
         # (TestShufflenetV1Unit, ShufflenetV1UnitSampler, "shufflenet_v1_unit",always_true),
         # (TestShufflenetV2Unit, ShufflenetV2UnitSampler, "shufflenet_v2_unit",always_true),
         (TestResnetV1Block, ResnetV1BlockSampler, "resnet_v1_block", always_true),
-        (TestDenseBlock, DenseBlockSampler, "dense_block", always_true),
+        (TestDenseBlock, DenseBlockSampler,
+         "dense_block", dense_blocks_sampler_filter),
 
-        (TestMixConv, MixConvSampler, "mix_conv", always_true)
+        (TestMixConv, MixConvSampler, "mix_conv", mix_conv_sampler_filter),
+        (TestActivation, ActivationSampler, "activation", always_true),
     ]
 
     # inference_sdks
@@ -303,7 +354,8 @@ def flops_main():
         (TestResnetV1Block, ResnetV1BlockSampler, "resnet_v1_block"),
         (TestDenseBlock, DenseBlockSampler, "dense_block"),
 
-        (TestMixConv, MixConvSampler, "mix_conv")
+        (TestMixConv, MixConvSampler, "mix_conv"),
+        (TestActivation, ActivationSampler, "activation"),
     ]
 
     # inference_sdks
@@ -324,4 +376,4 @@ def flops_main():
 
 
 if __name__ == "__main__":
-    tflite_tpu_main()
+    rknn_main()

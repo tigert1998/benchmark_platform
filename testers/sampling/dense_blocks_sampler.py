@@ -15,6 +15,6 @@ class DenseBlockSampler(Sampler):
         for imsize in available_imsizes():
             for cin in sparse_channels_from_imsize(imsize):
                 for ksize in [3, 5, 7]:
-                    if ksize > imsize:
+                    if imsize < ksize:
                         continue
                     yield ["DenseBlock", imsize, cin, 32, 1, ksize]
