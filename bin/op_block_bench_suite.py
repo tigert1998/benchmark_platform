@@ -4,7 +4,7 @@ from testers.sampling.dwconv_sampler import OpExperimentDwconvSampler
 from testers.sampling.dilated_conv_sampler import DilatedConvSampler
 from testers.sampling.gconv_sampler import GconvSampler
 from testers.sampling.elementwise_ops_sampler import \
-    AddSampler, ConcatSampler, GlobalPoolingSampler, ShuffleSampler
+    AddSampler, ConcatSampler, GlobalPoolingSampler, ShuffleSampler, ActivationSampler
 from testers.sampling.fc_sampler import OpExperimentFcSampler
 
 # blocks sampler
@@ -24,7 +24,7 @@ from testers.tester_impls.test_dwconv import TestDwconv
 from testers.tester_impls.test_dilated_conv import TestDilatedConv
 from testers.tester_impls.test_gconv import TestGconv
 from testers.tester_impls.test_elementwise_ops import \
-    TestAdd, TestConcat, TestGlobalPooling, TestShuffle
+    TestAdd, TestConcat, TestGlobalPooling, TestShuffle, TestActivation
 from testers.tester_impls.test_fc import TestFc
 
 # block testers
@@ -73,7 +73,8 @@ def tflite_gpu_main():
         (TestResnetV1Block, ResnetV1BlockSampler(), "resnet_v1_block", {}),
         (TestDenseBlock, DenseBlockSampler(), "dense_block", {}),
 
-        # (TestMixConv, MixConvSampler(), "mix_conv", {})
+        # (TestMixConv, MixConvSampler(), "mix_conv", {}),
+        (TestActivation, ActivationSampler(), "activation", {}),
     ]
 
     # inference_sdks
@@ -126,7 +127,8 @@ def tflite_cpu_main():
         (TestResnetV1Block, ResnetV1BlockSampler, "resnet_v1_block"),
         (TestDenseBlock, DenseBlockSampler, "dense_block"),
 
-        (TestMixConv, MixConvSampler, "mix_conv")
+        (TestMixConv, MixConvSampler, "mix_conv"),
+        (TestActivation, ActivationSampler, "activation"),
     ]
 
     # inference_sdks
@@ -195,7 +197,8 @@ def rknn_main():
         (TestResnetV1Block, ResnetV1BlockSampler, "resnet_v1_block", always_true),
         (TestDenseBlock, DenseBlockSampler, "dense_block", always_true),
 
-        # (TestMixConv, MixConvSampler, "mix_conv", always_true)
+        # (TestMixConv, MixConvSampler, "mix_conv", always_true),
+        (TestActivation, ActivationSampler, "activation", always_true),
     ]
 
     # inference_sdks
@@ -299,7 +302,8 @@ def tflite_tpu_main():
         (TestDenseBlock, DenseBlockSampler,
          "dense_block", dense_blocks_sampler_filter),
 
-        (TestMixConv, MixConvSampler, "mix_conv", mix_conv_sampler_filter)
+        (TestMixConv, MixConvSampler, "mix_conv", mix_conv_sampler_filter),
+        (TestActivation, ActivationSampler, "activation", always_true),
     ]
 
     # inference_sdks
@@ -345,7 +349,8 @@ def flops_main():
         (TestResnetV1Block, ResnetV1BlockSampler, "resnet_v1_block"),
         (TestDenseBlock, DenseBlockSampler, "dense_block"),
 
-        (TestMixConv, MixConvSampler, "mix_conv")
+        (TestMixConv, MixConvSampler, "mix_conv"),
+        (TestActivation, ActivationSampler, "activation"),
     ]
 
     # inference_sdks
