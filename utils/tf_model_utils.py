@@ -7,6 +7,7 @@ import shutil
 import itertools
 from functools import reduce
 from typing import List, Union, Tuple
+import logging
 
 
 def load_graph(frozen_graph_filepath: str) -> tf.Graph:
@@ -133,19 +134,63 @@ def analyze_inputs_outputs(graph) -> Tuple[List[tf.Operation], List[tf.Operation
 def calc_graph_mac(graph: tf.Graph):
     ans = 0
     not_involved_op_types = [
+        # I think unnecessary
         "Identity",
         "Shape",
-        "Squeeze"
-    ]
-    involved_op_types = dict()
-    for op in graph.get_operations():
-        if len(op.inputs) == 0 or len(op.outputs) == 0 or (op.type in not_involved_op_types):
-            continue
+        "Squeeze",
+        "Gather",
+        "GatherV2",
 
-        if involved_op_types.get(op.type) is None:
-            involved_op_types[op.type] = 1
-        else:
-            involved_op_types[op.type] += 1
+        # activations
+        "BiasAdd",
+        "Relu",
+        "Relu6",
+        "Sigmoid",
+        "FusedBatchNorm",
+        "FusedBatchNormV2",
+        "FusedBatchNormV3",
+    ]
+    involved_op_types = {
+        # compute
+        "Conv2D",
+        "DepthwiseConv2dNative",
+        "AvgPool",
+        "MatMul",
+        "MaxPool",
+        "Softmax",
+
+        "Split",
+        "Concat",
+        "ConcatV2",
+        "Reshape",
+        "Transpose",
+        "Pad",
+        "Slice",
+        "StridedSlice",
+    }
+    oneside_elewise_op_types = {
+        "Add",
+        "AddV2",
+        "Mul"
+    }
+    for op in graph.get_operations():
+        if len(op.inputs) == 0 or len(op.outputs) == 0:
+            continue
+        if op.type in not_involved_op_types:
+            continue
+        if op.type in oneside_elewise_op_types:
+            assert len(op.inputs) == 2
+            cnt = sum(map(
+                lambda tensor: int(tensor.op.type == "Const"),
+                op.inputs
+            ))
+            print("Found 1x {} that takes {} constants as inputs".format(op.type, cnt))
+            if cnt >= 1:
+                continue
+
+        if op.type not in involved_op_types.union(oneside_elewise_op_types):
+            logging.fatal("{} not in involved op types".format(op.type))
+            exit(0)
 
         for tensor in itertools.chain(op.inputs, op.outputs):
             if tensor.get_shape()._dims is None:
@@ -157,7 +202,6 @@ def calc_graph_mac(graph: tf.Graph):
                 shape[0] = 1
             ans += reduce(lambda x, y: x * y, shape, 1)
 
-    print("MAC is collected in these ops: {}".format(involved_op_types))
     return ans
 
 
