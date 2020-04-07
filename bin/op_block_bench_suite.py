@@ -177,6 +177,10 @@ def rknn_main():
         _, imsize, cin, stride, ksize = sample
         return stride == 2
 
+    def activation_sampler_filter(quant_name: str, sample):
+        op, imsize, cin = sample
+        return op not in ["swish"]
+
     tester_configs = [
         (TestConv, OpExperimentConvSampler, "conv", always_true),
         (TestDwconv, OpExperimentDwconvSampler, "dwconv", always_true),
@@ -198,7 +202,8 @@ def rknn_main():
         (TestDenseBlock, DenseBlockSampler, "dense_block", always_true),
 
         # (TestMixConv, MixConvSampler, "mix_conv", always_true),
-        (TestActivation, ActivationSampler, "activation", always_true),
+        (TestActivation, ActivationSampler,
+         "activation", activation_sampler_filter),
     ]
 
     # inference_sdks
@@ -371,4 +376,4 @@ def flops_main():
 
 
 if __name__ == "__main__":
-    tflite_tpu_main()
+    rknn_main()

@@ -75,7 +75,7 @@ class TestActivation(TestSingleLayer):
         elif op == "relu6":
             net = tf.nn.relu6(net)
         elif op == "swish":
-            net = tf.math.multiply(net, tf.math.sigmoid(net))
+            net = tf.nn.swish(net)
         elif op == "sigmoid":
             net = tf.math.sigmoid(net)
 

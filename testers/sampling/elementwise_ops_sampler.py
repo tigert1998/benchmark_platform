@@ -67,7 +67,7 @@ class ActivationSampler(Sampler):
         ]
 
     def _get_samples_without_filter(self):
-        for op in ["relu", "relu6", "swish", "sigmoid"]:
-            for imsize in available_imsizes():
-                for cin in sparse_channels_from_imsize(imsize):
+        for imsize in available_imsizes():
+            for cin in sparse_channels_from_imsize(imsize):
+                for op in ["relu", "relu6", "swish", "sigmoid"]:
                     yield [op, imsize, cin]
