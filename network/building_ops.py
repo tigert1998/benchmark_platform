@@ -72,7 +72,7 @@ def squeeze_and_excitation(features, mid_channels: int):
     """SE layer
     https://github.com/tensorflow/models/blob/89dd9a4e2548e8a5214bd4e564428d01c206a7db/research/slim/nets/mobilenet/conv_blocks.py#L408
     """
-    def gating_fn(features): return tf.nn.relu6(features + 3) * 0.16667
+    def gating_fn(features): return tf.nn.relu6( tf.math.add(features, 3)) * 0.16667
 
     with tf.variable_scope("squeeze_and_excitation"):
         net = global_pooling(features)
