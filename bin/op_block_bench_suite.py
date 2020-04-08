@@ -87,7 +87,7 @@ def tflite_gpu_main():
 
     connection = Adb("5e6fecf", True)
 
-    for tester_class, sampler, name, additional_flags in tester_configs:
+    for tester_class, sampler, name in tester_configs:
         for inference_sdk in inference_sdks:
             concrete_tester = tester_class({
                 "connection": connection,
@@ -102,7 +102,6 @@ def tflite_gpu_main():
                 "work_group_size": "",
                 "tuning_type": "EXHAUSTIVE",
                 "kernel_path": "/data/local/tmp/kernel.cl",
-                **additional_flags
             })
 
 
@@ -376,4 +375,4 @@ def flops_main():
 
 
 if __name__ == "__main__":
-    rknn_main()
+    tflite_gpu_main()

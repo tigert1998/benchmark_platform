@@ -70,5 +70,5 @@ class TfliteModified(Tflite):
         return InferenceResult(
             avg_ms=avg_ms, std_ms=std_ms,
             profiling_details=profiling_details,
-            layerwise_info=None
+            layerwise_info=layerwise_info
         )
