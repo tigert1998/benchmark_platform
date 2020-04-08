@@ -26,16 +26,16 @@ class TfliteModified(Tflite):
             "gpu_freq":  rfind_assign_int(result_str, "gpu_freq")
         }
 
-        i = 0
+        num_kernels = 0
         profiling_details["local_work_size"] = []
         while True:
             try:
-                mark = "local_work_size[{}]".format(i)
+                mark = "local_work_size[{}]".format(num_kernels)
                 ans = rfind_assign(result_str, mark).strip()
                 profiling_details["local_work_size"].append(ans)
             except:
                 break
-            i += 1
+            num_kernels += 1
 
         for stage in ["write", "comp", "read"]:
             avg_ms = rfind_assign_float(result_str,  stage + '_avg_ms')
@@ -54,4 +54,21 @@ class TfliteModified(Tflite):
             std_ms = 0
             avg_ms = rfind_assign_float(result_str, 'curr') / 1e3
 
-        return InferenceResult(avg_ms=avg_ms, std_ms=std_ms, profiling_details=profiling_details, layerwise_info=None)
+        layerwise_info = []
+        if flags.get("enable_op_profiling", False):
+            for i in range(num_kernels):
+                mark = "kernel[{}]".format(i)
+                layerwise_info.append({
+                    "name": mark,
+                    "time": dict()
+                })
+                for metric in ["avg_ms", "std_ms"]:
+                    tmp = rfind_assign(
+                        result_str, "{}_{}".format(mark, metric)).strip()
+                    layerwise_info[-1]["time"][metric] = tmp
+
+        return InferenceResult(
+            avg_ms=avg_ms, std_ms=std_ms,
+            profiling_details=profiling_details,
+            layerwise_info=None
+        )

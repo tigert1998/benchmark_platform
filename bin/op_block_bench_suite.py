@@ -54,27 +54,27 @@ def tflite_gpu_main():
     from testers.inference_sdks.tflite_modified import TfliteModified
 
     tester_configs = [
-        (TestConv, OpExperimentConvSampler(), "conv", {}),
-        (TestDwconv, OpExperimentDwconvSampler(), "dwconv", {}),
-        (TestDilatedConv, DilatedConvSampler(), "dilated_conv", {}),
-        # (TestGconv, GconvSampler(), "gconv", {}),
-        (TestAdd, AddSampler(), "add", {"num_write_kernels": 2}),
-        (TestConcat, ConcatSampler(), "concat", {"num_write_kernels": 2}),
-        (TestGlobalPooling, GlobalPoolingSampler(), "global_pooling", {}),
-        (TestFc, OpExperimentFcSampler(), "fc", {}),
-        (TestShuffle, ShuffleSampler(), "shuffle", {}),
+        (TestConv, OpExperimentConvSampler(), "conv"),
+        (TestDwconv, OpExperimentDwconvSampler(), "dwconv"),
+        (TestDilatedConv, DilatedConvSampler(), "dilated_conv"),
+        # (TestGconv, GconvSampler(), "gconv"),
+        (TestAdd, AddSampler(), "add"),
+        (TestConcat, ConcatSampler(), "concat"),
+        (TestGlobalPooling, GlobalPoolingSampler(), "global_pooling"),
+        (TestFc, OpExperimentFcSampler(), "fc"),
+        (TestShuffle, ShuffleSampler(), "shuffle"),
 
-        (TestMbnetV1Block, MbnetV1BlockSampler(), "mbnet_v1_block", {}),
-        (TestMbnetV2Block, MbnetV2BlockSampler(), "mbnet_v2_block", {}),
-        # (TestShufflenetV1Unit, ShufflenetV1UnitSampler(), "shufflenet_v1_unit", {}),
+        (TestMbnetV1Block, MbnetV1BlockSampler(), "mbnet_v1_block"),
+        (TestMbnetV2Block, MbnetV2BlockSampler(), "mbnet_v2_block"),
+        # (TestShufflenetV1Unit, ShufflenetV1UnitSampler(), "shufflenet_v1_unit"),
         (TestShufflenetV2Unit, ShufflenetV2UnitSampler({
             "filter": lambda sample: sample[-2] == 2
-        }), "shufflenet_v2_unit", {}),
-        (TestResnetV1Block, ResnetV1BlockSampler(), "resnet_v1_block", {}),
-        (TestDenseBlock, DenseBlockSampler(), "dense_block", {}),
+        }), "shufflenet_v2_unit"),
+        (TestResnetV1Block, ResnetV1BlockSampler(), "resnet_v1_block"),
+        (TestDenseBlock, DenseBlockSampler(), "dense_block"),
 
-        # (TestMixConv, MixConvSampler(), "mix_conv", {}),
-        (TestActivation, ActivationSampler(), "activation", {}),
+        # (TestMixConv, MixConvSampler(), "mix_conv"),
+        (TestActivation, ActivationSampler(), "activation"),
     ]
 
     # inference_sdks
