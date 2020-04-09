@@ -64,7 +64,7 @@ class TestShuffle(TestSingleLayer):
 class TestActivation(TestSingleLayer):
     def _generate_tf_model(self, sample):
         op, input_imsize, cin = sample
-        assert op in ["relu", "relu6", "swish", "sigmoid"]
+        assert op in ["relu", "relu6", "swish", "hswish", "sigmoid"]
 
         inputs, nets = self._pad_before_input(
             [[1, input_imsize, input_imsize, cin]])
@@ -76,6 +76,8 @@ class TestActivation(TestSingleLayer):
             net = tf.nn.relu6(net)
         elif op == "swish":
             net = tf.nn.swish(net)
+        elif op == "hswish":
+            net = tf.nn.relu6(tf.math.add(net, 3)) * (1. / 6.) * net
         elif op == "sigmoid":
             net = tf.math.sigmoid(net)
 
