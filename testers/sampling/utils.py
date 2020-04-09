@@ -73,9 +73,15 @@ def op_name_to_model_name(op_name: str):
 # the followings helpers are for the new tests
 
 def sparse_channels_from_imsize(imsize: int):
-    if imsize in [224, 112, 56, 28]:
+    if imsize in [224, 112, 56]:
         return [32, 64, 96]
-    elif imsize in [14, 7, 3, 1]:
+    elif imsize in [28]:
+        return [32, 64, 96, 128]
+    elif imsize in [14]:
+        return [160, 240, 256, 320]
+    elif imsize in [7]:
+        return [160, 240, 320, 512]
+    elif imsize in [3, 1]:
         return [160, 240, 320]
     else:
         assert False
