@@ -241,7 +241,7 @@ def tflite_tpu_main():
         _, input_imsize, cin, cout, with_se, stride, ksize = sample
         if with_se:
             dic = {
-                7: [(7, 320)],
+                7: [(7, 320), (3, 512)],
                 14: [(7, 240), (5, 320)],
                 56: [(3, 64)],
                 112: [(3, 32)],
@@ -266,6 +266,7 @@ def tflite_tpu_main():
     def dense_blocks_sampler_filter(sample):
         _, input_imsize, cin, growth_rate, num_layers, ksize = sample
         dic = {
+            28: [(3, 128)],
             112: [(7, 32), (3, 96)],
             224: [(3, 32)]
         }
@@ -375,4 +376,4 @@ def flops_main():
 
 
 if __name__ == "__main__":
-    tflite_gpu_main()
+    tflite_tpu_main()
