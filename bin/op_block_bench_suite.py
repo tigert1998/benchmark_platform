@@ -50,31 +50,37 @@ def quant_name_from_sdk(inference_sdk):
         return quantization
 
 
+def always_true(*args, **kwargs):
+    return True
+
+
 def tflite_gpu_main():
     from testers.inference_sdks.tflite_modified import TfliteModified
 
+    def shufflenet_v2_unit_sampler_filter(sample):
+        return sample[-2] == 2
+
     tester_configs = [
-        (TestConv, OpExperimentConvSampler(), "conv"),
-        (TestDwconv, OpExperimentDwconvSampler(), "dwconv"),
-        (TestDilatedConv, DilatedConvSampler(), "dilated_conv"),
-        # (TestGconv, GconvSampler(), "gconv"),
-        (TestAdd, AddSampler(), "add"),
-        (TestConcat, ConcatSampler(), "concat"),
-        (TestGlobalPooling, GlobalPoolingSampler(), "global_pooling"),
-        (TestFc, OpExperimentFcSampler(), "fc"),
-        (TestShuffle, ShuffleSampler(), "shuffle"),
+        (TestConv, OpExperimentConvSampler, "conv", always_true),
+        (TestDwconv, OpExperimentDwconvSampler, "dwconv", always_true),
+        (TestDilatedConv, DilatedConvSampler, "dilated_conv", always_true),
+        # (TestGconv, GconvSampler, "gconv",always_true),
+        (TestAdd, AddSampler, "add", always_true),
+        (TestConcat, ConcatSampler, "concat", always_true),
+        (TestGlobalPooling, GlobalPoolingSampler, "global_pooling", always_true),
+        (TestFc, OpExperimentFcSampler, "fc", always_true),
+        (TestShuffle, ShuffleSampler, "shuffle", always_true),
 
-        (TestMbnetV1Block, MbnetV1BlockSampler(), "mbnet_v1_block"),
-        (TestMbnetV2Block, MbnetV2BlockSampler(), "mbnet_v2_block"),
-        # (TestShufflenetV1Unit, ShufflenetV1UnitSampler(), "shufflenet_v1_unit"),
-        (TestShufflenetV2Unit, ShufflenetV2UnitSampler({
-            "filter": lambda sample: sample[-2] == 2
-        }), "shufflenet_v2_unit"),
-        (TestResnetV1Block, ResnetV1BlockSampler(), "resnet_v1_block"),
-        (TestDenseBlock, DenseBlockSampler(), "dense_block"),
+        (TestMbnetV1Block, MbnetV1BlockSampler, "mbnet_v1_block", always_true),
+        (TestMbnetV2Block, MbnetV2BlockSampler, "mbnet_v2_block", always_true),
+        # (TestShufflenetV1Unit, ShufflenetV1UnitSampler, "shufflenet_v1_unit", always_true),
+        (TestShufflenetV2Unit, ShufflenetV2UnitSampler,
+         "shufflenet_v2_unit", shufflenet_v2_unit_sampler_filter),
+        (TestResnetV1Block, ResnetV1BlockSampler, "resnet_v1_block", always_true),
+        (TestDenseBlock, DenseBlockSampler, "dense_block", always_true),
 
-        # (TestMixConv, MixConvSampler(), "mix_conv"),
-        (TestActivation, ActivationSampler(), "activation"),
+        # (TestMixConv, MixConvSampler, "mix_conv",always_true),
+        (TestActivation, ActivationSampler, "activation", always_true),
     ]
 
     # inference_sdks
@@ -87,12 +93,12 @@ def tflite_gpu_main():
 
     connection = Adb("5e6fecf", True)
 
-    for tester_class, sampler, name in tester_configs:
+    for tester_class, sampler_class, name, sampler_filter in tester_configs:
         for inference_sdk in inference_sdks:
             concrete_tester = tester_class({
                 "connection": connection,
                 "inference_sdk": inference_sdk,
-                "sampler": sampler,
+                "sampler": sampler_class({"filter": sampler_filter}),
                 "dirname": "gpu/{}".format(name),
                 "subdir": quant_name_from_sdk(inference_sdk),
                 "resume_from": None
@@ -157,9 +163,6 @@ def tflite_cpu_main():
 
 def rknn_main():
     from testers.inference_sdks.rknn import Rknn
-
-    def always_true(quant_name: str, sample):
-        return True
 
     def mbnet_v2_block_sampler_filter(quant_name: str, sample):
         _, input_imsize, cin, cout, with_se, stride, ksize = sample
@@ -233,9 +236,6 @@ def rknn_main():
 
 def tflite_tpu_main():
     from testers.inference_sdks.tpu import Tpu
-
-    def always_true(sample):
-        return True
 
     def mbnet_v2_block_sampler_filter(sample):
         _, input_imsize, cin, cout, with_se, stride, ksize = sample
@@ -376,4 +376,4 @@ def flops_main():
 
 
 if __name__ == "__main__":
-    tflite_tpu_main()
+    tflite_gpu_main()
