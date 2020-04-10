@@ -4,7 +4,7 @@ from testers.sampling.dwconv_sampler import OpExperimentDwconvSampler
 from testers.sampling.dilated_conv_sampler import DilatedConvSampler
 from testers.sampling.gconv_sampler import GconvSampler
 from testers.sampling.elementwise_ops_sampler import \
-    AddSampler, ConcatSampler, GlobalPoolingSampler, ShuffleSampler, ActivationSampler
+    AddSampler, ConcatSampler, GlobalPoolingSampler, ShuffleSampler
 from testers.sampling.fc_sampler import OpExperimentFcSampler
 
 # blocks sampler
@@ -24,7 +24,7 @@ from testers.tester_impls.test_dwconv import TestDwconv
 from testers.tester_impls.test_dilated_conv import TestDilatedConv
 from testers.tester_impls.test_gconv import TestGconv
 from testers.tester_impls.test_elementwise_ops import \
-    TestAdd, TestConcat, TestGlobalPooling, TestShuffle, TestActivation
+    TestAdd, TestConcat, TestGlobalPooling, TestShuffle
 from testers.tester_impls.test_fc import TestFc
 
 # block testers
@@ -80,7 +80,6 @@ def tflite_gpu_main():
         (TestDenseBlock, DenseBlockSampler, "dense_block", always_true),
 
         # (TestMixConv, MixConvSampler, "mix_conv",always_true),
-        (TestActivation, ActivationSampler, "activation", always_true),
     ]
 
     # inference_sdks
@@ -133,7 +132,6 @@ def tflite_cpu_main():
         (TestDenseBlock, DenseBlockSampler, "dense_block"),
 
         (TestMixConv, MixConvSampler, "mix_conv"),
-        (TestActivation, ActivationSampler, "activation"),
     ]
 
     # inference_sdks
@@ -179,10 +177,6 @@ def rknn_main():
         _, imsize, cin, stride, ksize = sample
         return stride == 2
 
-    def activation_sampler_filter(quant_name: str, sample):
-        op, imsize, cin = sample
-        return op not in ["swish"]
-
     tester_configs = [
         (TestConv, OpExperimentConvSampler, "conv", always_true),
         (TestDwconv, OpExperimentDwconvSampler, "dwconv", always_true),
@@ -204,8 +198,6 @@ def rknn_main():
         (TestDenseBlock, DenseBlockSampler, "dense_block", always_true),
 
         # (TestMixConv, MixConvSampler, "mix_conv", always_true),
-        (TestActivation, ActivationSampler,
-         "activation", activation_sampler_filter),
     ]
 
     # inference_sdks
@@ -287,9 +279,9 @@ def tflite_tpu_main():
                 return cin < 96
         return True
 
-    def activation_sampler_filter(sample):
-        op, input_imsize, cin = sample
-        return not (op in ["hardswish"])
+    # def activation_sampler_filter(sample):
+    #     op, input_imsize, cin = sample
+    #     return not (op in ["hardswish"])
 
     tester_configs = [
         (TestConv, OpExperimentConvSampler, "conv", always_true),
@@ -312,7 +304,6 @@ def tflite_tpu_main():
          "dense_block", dense_blocks_sampler_filter),
 
         (TestMixConv, MixConvSampler, "mix_conv", mix_conv_sampler_filter),
-        (TestActivation, ActivationSampler, "activation", activation_sampler_filter),
     ]
 
     # inference_sdks
@@ -359,7 +350,6 @@ def flops_main():
         (TestDenseBlock, DenseBlockSampler, "dense_block"),
 
         (TestMixConv, MixConvSampler, "mix_conv"),
-        (TestActivation, ActivationSampler, "activation"),
     ]
 
     # inference_sdks
