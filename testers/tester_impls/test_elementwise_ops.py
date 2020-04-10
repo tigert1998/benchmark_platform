@@ -2,7 +2,7 @@ from .test_single_layer import TestSingleLayer
 
 import tensorflow as tf
 
-from network.building_ops import channel_shuffle, global_pooling
+from network.building_ops import channel_shuffle, global_pooling, depthwise_conv
 
 
 class TestAdd(TestSingleLayer):
@@ -63,13 +63,15 @@ class TestShuffle(TestSingleLayer):
 
 class TestActivation(TestSingleLayer):
     def _generate_tf_model(self, sample):
-        op, input_imsize, cin = sample
+        op, input_imsize, cin, with_dwconv = sample
         assert op in ["relu", "relu6", "swish", "hswish", "sigmoid"]
 
         inputs, nets = self._pad_before_input(
             [[1, input_imsize, input_imsize, cin]])
         net = nets[0]
 
+        if with_dwconv:
+            net = depthwise_conv(net, 1, 3)
         if op == "relu":
             net = tf.nn.relu(net)
         elif op == "relu6":
