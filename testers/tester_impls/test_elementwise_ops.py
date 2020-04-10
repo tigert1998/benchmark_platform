@@ -68,6 +68,7 @@ class TestActivation(Tester):
     def default_settings():
         return {
             **Tester.default_settings(),
+            "enable_single_test": False,
             "min": 2,
             "max": 10
         }
@@ -99,7 +100,7 @@ class TestActivation(Tester):
         self,
         op: Optional[str], input_imsize: int, cin: int,
         dwconv: bool, n: int
-    ) -> (float, float):
+    ) -> InferenceResult:
         tf.reset_default_graph()
         input_tensor = tf.placeholder(
             name="input_im_0",
@@ -121,12 +122,14 @@ class TestActivation(Tester):
             model_path,
             [input_tensor], [output_tensor]
         )
-        res = self.inference_sdk.fetch_results(
+        return self.inference_sdk.fetch_results(
             self.connection, model_path, input_size_list, self.benchmark_model_flags
         )
-        return (res.avg_ms, res.std_ms)
 
     def _process_inference_result(self, result: InferenceResult):
+        if self.settings["enable_single_test"]:
+            return super()._process_inference_result(result)
+
         a, b = self.settings["min"], self.settings["max"]
         dic = result.profiling_details
         ret = {}
@@ -152,19 +155,21 @@ class TestActivation(Tester):
     def _test_sample(self, sample):
         op, input_imsize, cin = sample
 
+        if self.settings["enable_single_test"]:
+            return self._fetch_overall_latency(op, input_imsize, cin, True, 1)
+
         result_dic = dict()
 
         for n in [self.settings["min"], self.settings["max"]]:
             result_dic[n] = {}
-            result_dic[n]["activation"] = self._fetch_overall_latency(
-                op, input_imsize, cin, False, n
-            )
-            result_dic[n]["dwconv"] = self._fetch_overall_latency(
-                None, input_imsize, cin, True, n
-            )
-            result_dic[n]["dwconv+activation"] = self._fetch_overall_latency(
-                op, input_imsize, cin, True, n
-            )
+            res = self._fetch_overall_latency(op, input_imsize, cin, False, n)
+            result_dic[n]["activation"] = (res.avg_ms, res.std_ms)
+
+            res = self._fetch_overall_latency(None, input_imsize, cin, True, n)
+            result_dic[n]["dwconv"] = (res.avg_ms, res.std_ms)
+
+            res = self._fetch_overall_latency(op, input_imsize, cin, True, n)
+            result_dic[n]["dwconv+activation"] = (res.avg_ms, res.std_ms)
 
         return InferenceResult(
             avg_ms=None, std_ms=None,
