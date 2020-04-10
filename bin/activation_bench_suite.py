@@ -1,6 +1,17 @@
 from testers.tester_impls.test_elementwise_ops import TestActivation
 from testers.sampling.elementwise_ops_sampler import ActivationSampler
 
+from utils.connection import Adb
+from utils.connection import Connection
+
+
+def quant_name_from_sdk(inference_sdk):
+    quantization = inference_sdk.settings["quantization"]
+    if quantization == "":
+        return "none"
+    else:
+        return quantization
+
 
 def tflite_gpu_main():
     from testers.inference_sdks.tflite_modified import TfliteModified
@@ -22,7 +33,7 @@ def tflite_gpu_main():
             "connection": connection,
             "inference_sdk": inference_sdk,
             "sampler": ActivationSampler(),
-            "dirname": "gpu/{}".format(name),
+            "dirname": "gpu/activation",
             "subdir": quant_name_from_sdk(inference_sdk),
             "resume_from": None
         })
@@ -54,7 +65,7 @@ def tflite_cpu_main():
             "connection": connection,
             "inference_sdk": inference_sdk,
             "sampler": ActivationSampler(),
-            "dirname": "cpu/{}".format(name),
+            "dirname": "cpu/activation",
             "subdir": quant_name_from_sdk(inference_sdk),
             "resume_from": None
         })
@@ -83,12 +94,14 @@ def rknn_main():
     for inference_sdk in inference_sdks:
         quant_name = quant_name_from_sdk(inference_sdk)
         concrete_tester = TestActivation({
+            "enable_single_test": True,
+
             "connection": connection,
             "inference_sdk": inference_sdk,
             "sampler": ActivationSampler({
-                "filter": lambda sample: activation_sampler_filter(quant_name)
+                "filter": lambda sample: activation_sampler_filter(quant_name, sample)
             }),
-            "dirname": "rknn/{}".format(name),
+            "dirname": "rknn/activation",
             "subdir": quant_name,
             "resume_from": None
         })
@@ -98,4 +111,4 @@ def rknn_main():
 
 
 if __name__ == "__main__":
-    tflite_cpu_main()
+    rknn_main()
