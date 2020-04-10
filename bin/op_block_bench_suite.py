@@ -287,6 +287,10 @@ def tflite_tpu_main():
                 return cin < 96
         return True
 
+    def activation_sampler_filter(sample):
+        op, input_imsize, cin = sample
+        return not (op in ["hardswish"])
+
     tester_configs = [
         (TestConv, OpExperimentConvSampler, "conv", always_true),
         (TestDwconv, OpExperimentDwconvSampler, "dwconv", always_true),
@@ -308,7 +312,7 @@ def tflite_tpu_main():
          "dense_block", dense_blocks_sampler_filter),
 
         (TestMixConv, MixConvSampler, "mix_conv", mix_conv_sampler_filter),
-        (TestActivation, ActivationSampler, "activation", always_true),
+        (TestActivation, ActivationSampler, "activation", activation_sampler_filter),
     ]
 
     # inference_sdks
@@ -376,4 +380,4 @@ def flops_main():
 
 
 if __name__ == "__main__":
-    tflite_gpu_main()
+    tflite_tpu_main()

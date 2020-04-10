@@ -63,12 +63,10 @@ class ActivationSampler(Sampler):
     @staticmethod
     def get_sample_titles():
         return [
-            "op", "input_imsize", "current_cin", "with_dwconv"
+            "op", "input_imsize", "current_cin"
         ]
 
     def _get_samples_without_filter(self):
-        for imsize in available_imsizes():
-            for cin in sparse_channels_from_imsize(imsize):
-                for op in ["relu", "relu6", "swish", "hswish", "sigmoid"]:
-                    for with_dwconv in [False, True]:
-                        yield [op, imsize, cin, with_dwconv]
+        for imsize, cin in [(7, 240), (28, 96), (112, 64)]:
+            for op in ["relu", "relu6", "swish", "hardswish", "sigmoid"]:
+                yield [op, imsize, cin]
