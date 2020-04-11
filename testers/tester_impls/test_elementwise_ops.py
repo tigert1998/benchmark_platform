@@ -29,7 +29,7 @@ class TestConcat(TestSingleLayer):
             [1, input_imsize, input_imsize, second_cin]
         ])
 
-        net = tf.concat(nets, axis=-1)
+        net = tf.concat(nets, axis=3)
 
         outputs = self._pad_after_output([net])
         return inputs, outputs

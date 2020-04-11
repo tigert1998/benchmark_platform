@@ -27,9 +27,9 @@ def grouped_conv(features, num_groups: int, stride: int, kernel_size: int, num_o
                 strides=[stride, stride],
                 padding="same",
                 name="{}/conv".format(i)
-            )(x) for i, x in zip(range(num_groups), tf.split(features, num_groups, axis=-1))
+            )(x) for i, x in zip(range(num_groups), tf.split(features, num_groups, axis=3))
         ]
-        net = tf.concat(groups, axis=-1, name="concat")
+        net = tf.concat(groups, axis=3, name="concat")
 
     return net
 
@@ -102,9 +102,9 @@ def mix_conv(features, num_groups: int, stride: int):
 
     with tf.variable_scope("mix_conv"):
         groups = []
-        for x, i in zip(tf.split(features, num_groups, axis=-1), range(num_groups)):
+        for x, i in zip(tf.split(features, num_groups, axis=3), range(num_groups)):
             with tf.variable_scope("{}".format(i)):
                 kernel_size = i * 2 + 3
                 groups.append(depthwise_conv(x, stride, kernel_size))
 
-        return tf.concat(groups, axis=-1)
+        return tf.concat(groups, axis=3)
