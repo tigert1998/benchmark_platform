@@ -152,7 +152,7 @@ class K210(InferenceSdk):
         
         layerwise_info = []
         avg_stat = 0.0
-    
+        is_start = 0
         with serial.Serial(self.k210_usb_port, 115200, timeout=10) as ser:
             while 1:
                 try:
@@ -160,8 +160,9 @@ class K210(InferenceSdk):
                     if line == '':
                         raise FileNotFoundError
                     if '######BENCHMARK_START######' in line:
+                        is_start = 1
                         pass
-                    if '######BENCHMARK_END######' in line:
+                    if '######BENCHMARK_END######' in line and is_start == 1:
                         break
                     if 'SYSCALL: Out of memory' in line:
                         avg_stat = -1
