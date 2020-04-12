@@ -23,7 +23,9 @@ class Myriad(InferenceSdk):
         return {
             **InferenceSdk.default_settings(),
             # 'openvino_sdk_path': '/home/hanxiao/benchmarks/computer_vision_sdk_2018.5.445',
-            'openvino_sdk_path': '/home/hanxiao/benchmark_platform/openvino_2019.2.242',           
+            'openvino_sdk_path': '/home/hanxiao/benchmark_platform/openvino_2019.2.242',  
+            'pb_patcher_path': '/home/hanxiao/benchmark_platform',
+            'is_using_patcher': True,         
             'debug_print': False,
             'api_mode': 'sync',
             'image': '/home/hanxiao/benchmarks/fubuki.jpg',
@@ -42,6 +44,8 @@ class Myriad(InferenceSdk):
     def __init__(self, settings={}):
         super().__init__(settings)
         self.openvino_sdk_path = self.settings["openvino_sdk_path"]
+        self.pb_patcher_path = self.settings["pb_patcher_path"]
+        self.is_using_patcher = self.settings["is_using_patcher"]
         self.debug_print = print if self.settings["debug_print"] == True else lambda x: x
         self.api_mode = self.settings["api_mode"]
         self.image = self.settings["image"]
@@ -78,7 +82,11 @@ class Myriad(InferenceSdk):
             args_line = ' '.join(args)
 
             convert_cmd = '; '.join([
-               'python3 %s/deployment_tools/model_optimizer/mo_tf.py %s' %
+                ('rm -r ../pbtxt') if self.is_using_patcher == True else '',
+                ('python3 %s/frozen_pb_patcher.py %s' % (self.pb_patcher_path, (path + '.pb'))) if self.is_using_patcher == True else '',
+                ('python3 %s/frozen_pb_patcher.py %s' % (self.pb_patcher_path, (path + '.pb'))) if self.is_using_patcher == True else '',
+                ('mv %s %s' % ((path + '_patched.pb'), (path + '.pb'))) if self.is_using_patcher == True else '',
+                'python3 %s/deployment_tools/model_optimizer/mo_tf.py %s' %
                             (self.openvino_sdk_path, args_line)
             ])
 
