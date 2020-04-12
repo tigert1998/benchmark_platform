@@ -79,7 +79,7 @@ def tflite_gpu_main():
         (TestResnetV1Block, ResnetV1BlockSampler, "resnet_v1_block", always_true),
         (TestDenseBlock, DenseBlockSampler, "dense_block", always_true),
 
-        # (TestMixConv, MixConvSampler, "mix_conv",always_true),
+        # (TestMixConv, MixConvSampler, "mix_conv", always_true),
     ]
 
     # inference_sdks
@@ -162,6 +162,10 @@ def tflite_cpu_main():
 def rknn_main():
     from testers.inference_sdks.rknn import Rknn
 
+    def gconv_sampler_filter(quant_name: str, sample):
+        _, input_imsize, cin, cout, num_groups, stride, ksize = sample
+        return num_groups not in [3, 8]
+
     def mbnet_v2_block_sampler_filter(quant_name: str, sample):
         _, input_imsize, cin, cout, with_se, stride, ksize = sample
         if with_se:
@@ -173,17 +177,21 @@ def rknn_main():
         else:
             return True
 
-    def shufflenet_v2_unit_sampler_filter(quant_name: str, sample):
-        _, imsize, cin, stride, ksize = sample
-        return stride == 2
+    def shufflenet_v1_unit_sampler_filter(quant_name: str, sample):
+        _, input_imsize, cin, cout, num_groups, mid_channels, stride, ksize = sample
+        return num_groups not in [3, 8]
+
+    def mix_conv_sampler_filter(quant_name: str, sample):
+        _, input_imsize, cin, cout, num_groups, stride = sample
+        return num_groups not in [3, 5]
 
     tester_configs = [
         (TestConv, OpExperimentConvSampler, "conv", always_true),
         (TestDwconv, OpExperimentDwconvSampler, "dwconv", always_true),
         (TestDilatedConv, DilatedConvSampler, "dilated_conv", always_true),
-        # (TestGconv, GconvSampler, "gconv", always_true),
+        (TestGconv, GconvSampler, "gconv", gconv_sampler_filter),
         (TestAdd, AddSampler, "add", always_true),
-        # (TestConcat, ConcatSampler, "concat", always_true),
+        (TestConcat, ConcatSampler, "concat", always_true),
         (TestGlobalPooling, GlobalPoolingSampler, "global_pooling", always_true),
         (TestFc, OpExperimentFcSampler, "fc", always_true),
         (TestShuffle, ShuffleSampler, "shuffle", always_true),
@@ -191,13 +199,14 @@ def rknn_main():
         (TestMbnetV1Block, MbnetV1BlockSampler, "mbnet_v1_block", always_true),
         (TestMbnetV2Block, MbnetV2BlockSampler,
          "mbnet_v2_block", mbnet_v2_block_sampler_filter),
-        # (TestShufflenetV1Unit, ShufflenetV1UnitSampler, "shufflenet_v1_unit", always_true),
+        (TestShufflenetV1Unit, ShufflenetV1UnitSampler,
+         "shufflenet_v1_unit", shufflenet_v1_unit_sampler_filter),
         (TestShufflenetV2Unit, ShufflenetV2UnitSampler,
-         "shufflenet_v2_unit", shufflenet_v2_unit_sampler_filter),
+         "shufflenet_v2_unit", always_true),
         (TestResnetV1Block, ResnetV1BlockSampler, "resnet_v1_block", always_true),
         (TestDenseBlock, DenseBlockSampler, "dense_block", always_true),
 
-        # (TestMixConv, MixConvSampler, "mix_conv", always_true),
+        (TestMixConv, MixConvSampler, "mix_conv", mix_conv_sampler_filter),
     ]
 
     # inference_sdks
@@ -370,4 +379,4 @@ def flops_main():
 
 
 if __name__ == "__main__":
-    tflite_tpu_main()
+    rknn_main()
