@@ -88,7 +88,7 @@ class TestActivation(Tester):
         elif op == "relu6":
             net = tf.nn.relu6(net)
         elif op == "swish":
-            net = tf.nn.swish(net)
+            net = net * tf.nn.sigmoid(net)
         elif op == "hardswish":
             net = tf.nn.relu6(tf.math.add(net, 3)) * (1. / 6.) * net
         elif op == "sigmoid":
