@@ -6,3 +6,4 @@ openvino_*
 ncc
 *.log
 op_block_bench_suite_*.py
+frozen_pb_patcher.py
