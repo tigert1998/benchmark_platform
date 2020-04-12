@@ -74,6 +74,36 @@ def tflite_cpu_main():
         })
 
 
+def tflite_tpu_main():
+    from testers.inference_sdks.tpu import Tpu
+
+    def activation_sampler_filter(sample):
+        op, input_imsize, cin = sample
+        return not (op in ["hardswish"])
+
+    # inference_sdks
+    inference_sdks = [
+        Tpu({
+            "edgetpu_compiler_path": "/home/xiaohu/edgetpu/compiler/x86_64/edgetpu_compiler",
+            "libedgetpu_path": "/home/xiaohu/edgetpu/libedgetpu/direct/k8/libedgetpu.so.1"
+        })
+    ]
+
+    connection = Connection()
+
+    for inference_sdk in inference_sdks:
+        concrete_tester = TestActivation({
+            "enable_single_test": True,
+
+            "connection": connection,
+            "inference_sdk": inference_sdk,
+            "sampler": ActivationSampler({"filter": activation_sampler_filter}),
+            "dirname": "tpu/activation",
+            "resume_from": None
+        })
+        concrete_tester.run({})
+
+
 def rknn_main():
     from testers.inference_sdks.rknn import Rknn
 
@@ -111,4 +141,4 @@ def rknn_main():
 
 
 if __name__ == "__main__":
-    rknn_main()
+    tflite_tpu_main()
