@@ -67,6 +67,21 @@ class TfliteModified(Tflite):
                         result_str, "{}_{}".format(mark, metric)).strip()
                     layerwise_info[-1]["time"][metric] = tmp
 
+            with open("op_profiling.csv", "w") as f:
+                import csv
+                writer = csv.DictWriter(
+                    f, fieldnames=[
+                        "kernel", "avg_ms", "std_ms", "local_work_size"],
+                    lineterminator='\n'
+                )
+                writer.writeheader()
+                for i in range(num_kernels):
+                    writer.writerow({
+                        "kernel": i,
+                        **layerwise_info[i]["time"],
+                        "local_work_size": profiling_details["local_work_size"][i]
+                    })
+
         return InferenceResult(
             avg_ms=avg_ms, std_ms=std_ms,
             profiling_details=profiling_details,
