@@ -288,10 +288,6 @@ def tflite_tpu_main():
                 return cin < 96
         return True
 
-    # def activation_sampler_filter(sample):
-    #     op, input_imsize, cin = sample
-    #     return not (op in ["hardswish"])
-
     tester_configs = [
         (TestConv, OpExperimentConvSampler, "conv", always_true),
         (TestDwconv, OpExperimentDwconvSampler, "dwconv", always_true),

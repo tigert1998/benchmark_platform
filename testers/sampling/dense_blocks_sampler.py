@@ -17,4 +17,5 @@ class DenseBlockSampler(Sampler):
                 for ksize in [3, 5, 7]:
                     if imsize < ksize:
                         continue
-                    yield ["DenseBlock", imsize, cin, 32, 1, ksize]
+                    for num_layers in [1, 2]:
+                        yield ["DenseBlock", imsize, cin, 32, num_layers, ksize]
