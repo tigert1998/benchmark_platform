@@ -101,6 +101,9 @@ class K210(InferenceSdk):
                 '--dataset %s' % os.path.abspath(path + '.dir'),
                 '--dataset-format raw',
             ]
+            
+            main_file_content = open('%s/src/main_ref.c' % self.k210_sdk_path, 'r').read().replace('[INCBIN_MODEL_FILENAME]', path + '.kmodel')
+            open('%s/src/benchmarks/main.c' % self.k210_sdk_path, 'w+').write(main_file_content)
 
             args_line = ' '.join(args)
 
@@ -108,19 +111,13 @@ class K210(InferenceSdk):
                     
                     'rm %s' % (os.path.join(self.k210_sdk_path, 
                                 'build', 'CMakeFiles', 'benchmarks.dir', 'src', 'benchmarks', '*')),
-
                     'mv %s %s'% (os.path.join(os.path.abspath(path + '.dir'), 'input_img.c')
                               , os.path.join(self.k210_sdk_path, 'src', 'benchmarks')),
-
                     '%s %s' % (self.k210_nncase_path, args_line),
-
                     'cp %s %s' % (os.path.abspath(path + '.tflite').replace('.tflite', '.kmodel')
                                 , os.path.join(self.k210_sdk_path, 'src', 'benchmarks')),
-
-                    'cd %s' % (os.path.join(self.k210_sdk_path, 'build')),
-                    
-                    'make -j',
-                    
+                    'cd %s' % (os.path.join(self.k210_sdk_path, 'build')),   
+                    'make -j',   
                     'python3 -mkflash -b1500000 -p%s %s' % (self.k210_usb_port, 'benchmarks.bin')
             ])
 
