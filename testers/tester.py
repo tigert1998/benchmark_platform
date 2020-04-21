@@ -74,7 +74,10 @@ class Tester(ClassWithSettings):
 
         # layerwise info
         if result.layerwise_info is not None:
+            name_dic = set()
             for dic in result.layerwise_info:
+                assert dic["name"] not in name_dic
+                name_dic.add(dic["name"])
                 ret[dic["name"] + "_avg_ms"] = dic["time"]["avg_ms"]
                 ret[dic["name"] + "_std_ms"] = dic["time"]["std_ms"]
 
