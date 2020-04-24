@@ -15,7 +15,8 @@ class MetaModelDetail:
         "pb": ["", "patched"],
         "tflite": ["", "float16", "weight", "int", "edgetpu"],
         "saved_model": [""],
-        "rknn": ["", "asymmetric_quantized_u8", "dynamic_fixed_point_8", "dynamic_fixed_point_16"]
+        "rknn": ["", "asymmetric_quantized_u8", "dynamic_fixed_point_8", "dynamic_fixed_point_16"],
+        "onnx": [""]
     }
 
     def __init__(
@@ -55,6 +56,9 @@ class MetaModelDetail:
                 version = "_{}".format(version)
             return "{}/rknn/{}{}.rknn".format(self._onedrive_path, self.model_path, version)
 
+        elif model_format == "onnx":
+            return "{}/onnx/{}.onnx".format(self._onedrive_path, self.model_path)
+
     def _get_preprocess(self, model_format, version):
         if model_format == "rknn":
             return Preprocess({
@@ -82,28 +86,28 @@ meta_model_details = [
         "shufflenet_v1/shufflenet_v1_g3_1.5",
         shufflenet_preprocess,
         "input.1", "535",
-        ["pb", "tflite", "saved_model"],
+        ["pb", "tflite", "saved_model", "onnx"],
         ["cpu"]
     ),
     MetaModelDetail(
         "shufflenet_v1/shufflenet_v1_g8_1.0",
         shufflenet_preprocess,
         "input.1", "535",
-        ["pb", "tflite", "saved_model"],
+        ["pb", "tflite", "saved_model", "onnx"],
         ["cpu"]
     ),
     MetaModelDetail(
         "shufflenet_v2/shufflenet_v2_1.0",
         shufflenet_preprocess,
         "input.1", "626",
-        ["pb", "tflite", "saved_model"],
+        ["pb", "tflite", "saved_model", "onnx"],
         ["cpu"]
     ),
     MetaModelDetail(
         "shufflenet_v2/shufflenet_v2_1.5",
         shufflenet_preprocess,
         "input.1", "626",
-        ["pb", "tflite", "saved_model"],
+        ["pb", "tflite", "saved_model", "onnx"],
         ["cpu"]
     ),
     MetaModelDetail(
@@ -117,7 +121,7 @@ meta_model_details = [
         "mobilenet_v2/mobilenet_v2_1.0_224",
         inception_224_preprocess,
         "input", "MobilenetV2/Predictions/Reshape_1",
-        ["pb", "tflite", "saved_model", "rknn"],
+        ["pb", "tflite", "saved_model", "rknn", "onnx"],
         ["cpu", "mobile_gpu", "rk", "edgetpu"]
     ),
     MetaModelDetail(
@@ -138,7 +142,7 @@ meta_model_details = [
         "inception_v4/inception_v4",
         inception_299_preprocess,
         "input", "InceptionV4/Logits/Predictions",
-        ["pb", "tflite", "saved_model", "rknn"],
+        ["pb", "tflite", "saved_model", "rknn", "onnx"],
         ["cpu", "mobile_gpu", "rk", "edgetpu"]
     ),
     MetaModelDetail(
@@ -173,14 +177,14 @@ meta_model_details = [
         "resnet_v1/resnet_v1_50",
         resnet_v1_preprocess,
         "input", "resnet_v1_50/predictions/Reshape_1",
-        ["pb", "tflite", "saved_model", "rknn"],
+        ["pb", "tflite", "saved_model", "rknn", "onnx"],
         ["cpu", "mobile_gpu", "rk", "edgetpu"]
     ),
     MetaModelDetail(
         "resnet_v2/resnet_v2_50_299",
         inception_299_preprocess,
         "input", "resnet_v2_50/predictions/Reshape_1",
-        ["pb", "tflite", "saved_model", "rknn"],
+        ["pb", "tflite", "saved_model", "rknn", "onnx"],
         ["cpu", "mobile_gpu", "rk", "edgetpu"]
     ),
     MetaModelDetail(

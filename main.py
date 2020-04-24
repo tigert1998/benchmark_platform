@@ -145,6 +145,25 @@ def accuracy_test_pb():
     tester.run()
 
 
+def accuracy_test_onnx():
+    from accuracy_tester.accuracy_tester import AccuracyTester
+    from accuracy_tester.accuracy_evaluators.onnx import Onnx
+
+    tester = AccuracyTester({
+        "zip_size": 50000,
+        "dataset_size": 100,
+        "model_details": get_model_details(["shufflenet_v1"], "onnx", [""]),
+        "data_preparer": DataPreparerDef({
+            "labels_path": "C:/Users/tigertang/Projects/dataset/val_labels.txt",
+            "validation_set_path": "C:/Users/tigertang/Projects/dataset/validation",
+            "skip_dataset_preparation": True,
+            "skip_models_preparation": True,
+        }),
+        "accuracy_evaluator": Onnx({})
+    })
+    tester.run()
+
+
 def accuracy_test_tpu():
     from accuracy_tester.accuracy_tester import AccuracyTester
     from accuracy_tester.accuracy_evaluators.tpu import Tpu
@@ -265,4 +284,4 @@ def layer_latency_test_rknn():
 
 
 if __name__ == '__main__':
-    accuracy_test_rknn()
+    accuracy_test_onnx()
