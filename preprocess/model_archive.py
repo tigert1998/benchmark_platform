@@ -114,7 +114,7 @@ meta_model_details = [
         "mobilenet_v1/mobilenet_v1_1.0_224",
         inception_224_preprocess,
         "input", "MobilenetV1/Predictions/Reshape_1",
-        ["pb", "tflite", "saved_model", "rknn"],
+        ["pb", "tflite", "saved_model", "rknn", "onnx"],
         ["cpu", "mobile_gpu", "rk", "edgetpu"]
     ),
     MetaModelDetail(
@@ -128,14 +128,14 @@ meta_model_details = [
         "mobilenet_v3/mobilenet_v3_large_224_1.0",
         inception_224_preprocess,
         "input", "MobilenetV3/Predictions/Softmax",
-        ["pb", "tflite", "saved_model", "rknn"],
+        ["pb", "tflite", "saved_model", "rknn", "onnx"],
         ["cpu", "mobile_gpu", "rk"]
     ),
     MetaModelDetail(
         "inception_v1/inception_v1",
         inception_224_preprocess,
         "input", "InceptionV1/Logits/Predictions/Reshape_1",
-        ["pb", "tflite", "saved_model", "rknn"],
+        ["pb", "tflite", "saved_model", "rknn", "onnx"],
         ["cpu", "mobile_gpu", "rk", "edgetpu"]
     ),
     MetaModelDetail(
@@ -149,28 +149,28 @@ meta_model_details = [
         "mnasnet/mnasnet_a1",
         mnasnet_preprocess,
         "Placeholder", "logits",
-        ["pb", "tflite", "saved_model"],
+        ["pb", "tflite", "saved_model", "onnx"],
         ["cpu", "mobile_gpu", "edgetpu"]
     ),
     MetaModelDetail(
         "nasnet/nasnet_a_mobile",
         inception_224_preprocess,
         "input", "final_layer/predictions",
-        ["pb", "tflite", "saved_model"],
+        ["pb", "tflite", "saved_model", "onnx"],
         ["cpu", "mobile_gpu", "edgetpu"]
     ),
     MetaModelDetail(
         "proxyless/proxyless_mobile",
         proxyless_preprocess,
         "input_images", "classifier/linear/add",
-        ["pb", "tflite", "saved_model", "rknn"],
+        ["pb", "tflite", "saved_model", "rknn", "onnx"],
         ["cpu", "mobile_gpu", "edgetpu", "rk"]
     ),
     MetaModelDetail(
         "proxyless/proxyless_mobile_14",
         proxyless_preprocess,
         "input_images", "classifier/linear/add",
-        ["pb", "tflite", "saved_model", "rknn"],
+        ["pb", "tflite", "saved_model", "rknn", "onnx"],
         ["cpu", "mobile_gpu", "edgetpu", "rk"]
     ),
     MetaModelDetail(
@@ -191,14 +191,14 @@ meta_model_details = [
         "efficientnet/efficientnet_b0",
         efficientnet_b0_preprocess,
         "images", "Softmax",
-        ["pb", "tflite", "saved_model"],
+        ["pb", "tflite", "saved_model", "onnx"],
         ["cpu", "mobile_gpu"]
     ),
     MetaModelDetail(
         "efficientnet/efficientnet_b1",
         efficientnet_b1_preprocess,
         "images", "Softmax",
-        ["pb", "tflite", "saved_model"],
+        ["pb", "tflite", "saved_model", "onnx"],
         ["cpu", "mobile_gpu"]
     )
 ]

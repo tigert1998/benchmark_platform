@@ -152,7 +152,7 @@ def accuracy_test_onnx():
     tester = AccuracyTester({
         "zip_size": 50000,
         "dataset_size": 100,
-        "model_details": get_model_details(["shufflenet_v1"], "onnx", [""]),
+        "model_details": get_model_details(None, "onnx", [""]),
         "data_preparer": DataPreparerDef({
             "labels_path": "C:/Users/tigertang/Projects/dataset/val_labels.txt",
             "validation_set_path": "C:/Users/tigertang/Projects/dataset/validation",
