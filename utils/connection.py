@@ -46,9 +46,11 @@ class Ssh(Connection):
                                                     local_path))
 
     def shell(self, shell: str):
-        p = subprocess.Popen("ssh {} bash".format(self.address),
-                             stdin=subprocess.PIPE,
-                             stdout=subprocess.PIPE)
+        p = subprocess.Popen(
+            ["ssh", self.address, "bash"],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE
+        )
         return p.communicate(bytes(shell, 'utf-8'))[0].decode('utf-8')
 
     def snapshot(self):
@@ -75,10 +77,11 @@ class Adb(Connection):
             self.adb_device_id, remote_path, local_path))
 
     def shell(self, shell: str):
-        p = subprocess.Popen("adb -s {} shell {}".format(
-            self.adb_device_id, "su" if self.su else ""),
+        p = subprocess.Popen(
+            ["adb", "-s", self.adb_device_id, "shell", "su" if self.su else ""],
             stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE)
+            stdout=subprocess.PIPE
+        )
         return p.communicate(bytes(shell, 'utf-8'))[0].decode('utf-8')
 
     def query_battery(self):
