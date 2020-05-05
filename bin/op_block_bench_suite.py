@@ -185,6 +185,53 @@ def rknn_main():
         _, input_imsize, cin, cout, num_groups, stride = sample
         return num_groups not in [3, 5]
 
+    def gen_pad_func(name: str):
+        import tensorflow as tf
+
+        def pad_before_input(shapes):
+            assert len(shapes) == 1
+            shape = shapes[0]
+            assert len(shape) == 4 and shape[1] == shape[2] and shape[0] == 1
+            input_tensor = tf.placeholder(
+                name="input_im_0",
+                dtype=tf.float32,
+                shape=shape
+            )
+            net = tf.keras.layers.Conv2D(
+                filters=shape[-1],
+                kernel_size=[3, 3],
+                strides=[1, 1],
+                padding='same'
+            )(input_tensor)
+
+            return [input_tensor], [net]
+
+        def pad_after_output(output_tensors):
+            assert len(output_tensors) == 1
+            net = output_tensors[0]
+            cout = net.get_shape().as_list()[-1]
+            net = tf.keras.layers.Conv2D(
+                filters=cout,
+                kernel_size=[3, 3],
+                strides=[1, 1],
+                padding='same'
+            )(net)
+            return [net]
+
+        if name in ["add", "concat", "global_pooling", "fc"]:
+            return None, None
+        elif name in [
+            "conv", "dwconv", "dilated_conv", "gconv",
+            "shuffle",
+            "mbnet_v1_block", "mbnet_v2_block",
+            "shufflenet_v1_unit", "shufflenet_v2_unit",
+            "resnet_v1_block", "dense_block",
+            "mix_conv"
+        ]:
+            return pad_before_input, pad_after_output
+        else:
+            assert False
+
     tester_configs = [
         (TestConv, OpExperimentConvSampler, "conv", always_true),
         (TestDwconv, OpExperimentDwconvSampler, "dwconv", always_true),
@@ -230,6 +277,13 @@ def rknn_main():
                 "subdir": quant_name,
                 "resume_from": None
             })
+
+            pad_before_input, pad_after_output = gen_pad_func(name)
+            if pad_before_input is not None:
+                concrete_tester._pad_before_input = pad_before_input
+            if pad_after_output is not None:
+                concrete_tester._pad_after_output = pad_after_output
+
             concrete_tester.run({
                 "disable_timeout": True
             })

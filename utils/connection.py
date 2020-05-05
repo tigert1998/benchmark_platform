@@ -21,7 +21,8 @@ class Connection(ClassWithSettings):
         p = subprocess.Popen(
             shell_exe,
             stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE)
+            stdout=subprocess.PIPE
+        )
         return p.communicate(bytes(shell, 'utf-8'))[0].decode('utf-8')
 
     def brief(self):
@@ -80,7 +81,8 @@ class Adb(Connection):
         p = subprocess.Popen(
             ["adb", "-s", self.adb_device_id, "shell", "su" if self.su else ""],
             stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT
         )
         return p.communicate(bytes(shell, 'utf-8'))[0].decode('utf-8')
 
