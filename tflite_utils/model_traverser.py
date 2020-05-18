@@ -29,7 +29,7 @@ OpDetail = namedtuple("OpDetail", [
 ])
 
 
-class TfliteModelManager:
+class ModelTraverser:
     def __init__(self, tflite_model_path: str):
         assert tflite_model_path.endswith(".tflite")
         buf = open(tflite_model_path, 'rb').read()
