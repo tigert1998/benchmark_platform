@@ -1,7 +1,8 @@
 import os
 import sys
 import logging
-from typing import List, Tuple
+import itertools
+from typing import List, Tuple, Optional
 from collections import namedtuple
 
 from .tflite.Model import Model
@@ -40,11 +41,27 @@ class ModelTraverser:
         op = subgraph.Operators(op_idx)
         return subgraph, op
 
+    def _fetch_tensor_with_name(self, name: str, subgraph_idx: int, op_idx: Optional[int] = None):
+        subgraph = self.model.Subgraphs(subgraph_idx)
+        if op_idx is not None:
+            op = subgraph.Operators(op_idx)
+            tensors = list(itertools.chain(
+                op.InputsAsNumpy(), op.OutputsAsNumpy()))
+        else:
+            tensors = range(len(subgraph.TensorsLength()))
+
+        tensors = list(filter(
+            lambda tensor: tensor.Name().decode() == name,
+            map(lambda idx: subgraph.Tensors(idx), tensors)
+        ))
+        assert len(tensors) == 1
+        return tensors[0]
+
     def _construct_op_detail(self, subgraph_idx: int, op_idx: int) -> OpDetail:
         subgraph, op = self._fetch_subgraph_and_op(subgraph_idx, op_idx)
-        inputs = [subgraph.Tensors(i).Name().decode('utf-8')
+        inputs = [subgraph.Tensors(i).Name().decode()
                   for i in op.InputsAsNumpy()]
-        outputs = [subgraph.Tensors(i).Name().decode('utf-8')
+        outputs = [subgraph.Tensors(i).Name().decode()
                    for i in op.OutputsAsNumpy()]
 
         builtin_operator = self.model.OperatorCodes(
