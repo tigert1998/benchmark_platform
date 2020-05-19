@@ -25,7 +25,7 @@ BuiltinOperator_to_str = fbs_enum_to_str(BuiltinOperator)
 ActivationFunctionType_to_str = fbs_enum_to_str(ActivationFunctionType)
 
 OpDetail = namedtuple("OpDetail", [
-    "loc", "inputs", "outputs"
+    "loc", "type", "inputs", "outputs"
 ])
 
 
@@ -46,11 +46,21 @@ class ModelTraverser:
                   for i in op.InputsAsNumpy()]
         outputs = [subgraph.Tensors(i).Name().decode('utf-8')
                    for i in op.OutputsAsNumpy()]
-        return OpDetail(
+
+        builtin_operator = self.model.OperatorCodes(
+            op.OpcodeIndex()).BuiltinCode()
+
+        op_detail = OpDetail(
             loc=(subgraph_idx, op_idx),
+            type=BuiltinOperator_to_str(builtin_operator),
             inputs=inputs,
             outputs=outputs
         )
+        self.remind_op_detail(op_detail)
+        return op_detail
+
+    def remind_op_detail(self, op_detail: OpDetail):
+        ...
 
     def conv_2d(
         self,
@@ -80,6 +90,10 @@ class ModelTraverser:
 
     def add(self, op_detail: OpDetail, input_shapes: List[List[int]]):
         msg = f"Unimplemented Add: {input_shapes}"
+        logging.warn(msg)
+
+    def reshape(self, op_detail: OpDetail, from_shape: List[int], to_shape: List[int]):
+        msg = f"Unimplemented Reshape: {from_shape, to_shape}"
         logging.warn(msg)
 
     def _pool_2d(self, subgraph_idx, op_idx):
@@ -205,6 +219,21 @@ class ModelTraverser:
             input_tensors))
         self.add(op_detail, input_shapes)
 
+    def _reshape(self, subgraph_idx, op_idx):
+        from .tflite.ReshapeOptions import ReshapeOptions
+
+        subgraph, op = self._fetch_subgraph_and_op(subgraph_idx, op_idx)
+        op_detail = self._construct_op_detail(subgraph_idx, op_idx)
+        builtin_options = op.BuiltinOptions()
+        options = ReshapeOptions()
+        options.Init(builtin_options.Bytes, builtin_options.Pos)
+
+        assert op.InputsLength() == 2 and op.OutputsLength() == 1
+
+        to_shape = list(options.NewShapeAsNumpy())
+        from_shape = list(subgraph.Tensors(op.Inputs(0)).ShapeAsNumpy())
+        self.reshape(op_detail, from_shape, to_shape)
+
     def traverse(self):
         assert 1 == self.model.SubgraphsLength()
         subgraph = self.model.Subgraphs(0)
@@ -227,6 +256,8 @@ class ModelTraverser:
                 self._softmax(*args)
             elif builtin_operator == BuiltinOperator.ADD:
                 self._add(*args)
+            elif builtin_operator == BuiltinOperator.RESHAPE:
+                self._reshape(*args)
             else:
                 msg = f"Ignored operator: {BuiltinOperator_to_str(builtin_operator)}"
                 logging.warn(msg)
