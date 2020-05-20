@@ -6,7 +6,7 @@ import os
 import shutil
 import itertools
 from functools import reduce
-from typing import List, Union, Tuple
+from typing import List, Union, Tuple, Callable
 import logging
 
 
@@ -49,6 +49,38 @@ def load_graph_with_normalization(
         })
 
     return prune_graph(new_graph, [input_op_name], [output_op_name])
+
+
+def pad_graph(
+    graph: tf.Graph,
+    input_tensor_names: List[str],
+    output_tensor_names: List[str],
+    pad_before_input: Callable[[List[List[int]]], Tuple[List[tf.Tensor], List[tf.Tensor]]],
+    pad_after_output: Callable[[List[tf.Tensor]], List[tf.Tensor]]
+) -> Tuple[tf.Graph, List[str], List[str]]:
+    graph_def = graph.as_graph_def()
+    input_tensor_shapes = [
+        graph.get_tensor_by_name(name).get_shape().as_list()
+        for name in input_tensor_names
+    ]
+
+    with tf.Graph().as_default() as new_graph:
+        input_tensors, nets = pad_before_input(input_tensor_shapes)
+
+        tf.import_graph_def(graph_def, name="padded", input_map={
+            name: nets[i]
+            for i, name in enumerate(input_tensor_names)
+        })
+
+        nets = [
+            new_graph.get_tensor_by_name(f"padded/{name}")
+            for name in output_tensor_names
+        ]
+        output_tensors = pad_after_output(nets)
+        input_tensor_names = [i.name for i in input_tensors]
+        output_tensor_names = [i.name for i in output_tensors]
+
+        return new_graph, input_tensor_names, output_tensor_names
 
 
 def to_saved_model(
