@@ -148,6 +148,7 @@ class Rknn(InferenceSdk):
                             row["Layer id"], row["Name"], row["Operation id"],
                             row["Operator"], row["Target"], row["Uid"]
                         ),
+                        "type": row["Operator"],
                         "time": {
                             "avg_ms": float(row["avg(us)"]) / 1e3,
                             "std_ms": float(row["std"]) / 1e3

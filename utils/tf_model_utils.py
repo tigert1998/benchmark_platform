@@ -58,7 +58,13 @@ def pad_graph(
     pad_before_input: Callable[[List[List[int]]], Tuple[List[tf.Tensor], List[tf.Tensor]]],
     pad_after_output: Callable[[List[tf.Tensor]], List[tf.Tensor]]
 ) -> Tuple[tf.Graph, List[str], List[str]]:
-    graph_def = graph.as_graph_def()
+    with tf.Session(graph=graph) as sess:
+        op_names = set([graph.get_tensor_by_name(
+            name).op.name for name in output_tensor_names])
+        sess.run(tf.global_variables_initializer())
+        graph_def = tf.graph_util.convert_variables_to_constants(
+            sess, sess.graph_def, list(op_names))
+
     input_tensor_shapes = [
         graph.get_tensor_by_name(name).get_shape().as_list()
         for name in input_tensor_names
