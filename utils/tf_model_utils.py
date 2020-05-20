@@ -10,6 +10,16 @@ from typing import List, Union, Tuple, Callable
 import logging
 
 
+def freeze_graph(graph: tf.Graph, output_op_names: List[str]) -> tf.Graph:
+    with tf.Session(graph=graph) as sess:
+        sess.run(tf.global_variables_initializer())
+        graph_def = tf.graph_util.convert_variables_to_constants(
+            sess, sess.graph_def, output_op_names)
+    with tf.Graph().as_default() as new_graph:
+        tf.import_graph_def(graph_def, name="")
+        return new_graph
+
+
 def load_graph(frozen_graph_filepath: str) -> tf.Graph:
     with tf.compat.v1.gfile.GFile(frozen_graph_filepath, "rb") as f:
         graph_def = tf.compat.v1.GraphDef()
@@ -58,12 +68,11 @@ def pad_graph(
     pad_before_input: Callable[[List[List[int]]], Tuple[List[tf.Tensor], List[tf.Tensor]]],
     pad_after_output: Callable[[List[tf.Tensor]], List[tf.Tensor]]
 ) -> Tuple[tf.Graph, List[str], List[str]]:
-    with tf.Session(graph=graph) as sess:
-        op_names = set([graph.get_tensor_by_name(
-            name).op.name for name in output_tensor_names])
-        sess.run(tf.global_variables_initializer())
-        graph_def = tf.graph_util.convert_variables_to_constants(
-            sess, sess.graph_def, list(op_names))
+    output_op_names = list(set([
+        graph.get_tensor_by_name(name).op.name
+        for name in output_tensor_names
+    ]))
+    graph = freeze_graph(graph, output_op_names)
 
     input_tensor_shapes = [
         graph.get_tensor_by_name(name).get_shape().as_list()
@@ -73,7 +82,7 @@ def pad_graph(
     with tf.Graph().as_default() as new_graph:
         input_tensors, nets = pad_before_input(input_tensor_shapes)
 
-        tf.import_graph_def(graph_def, name="padded", input_map={
+        tf.import_graph_def(graph.as_graph_def(), name="padded", input_map={
             name: nets[i]
             for i, name in enumerate(input_tensor_names)
         })
@@ -86,7 +95,11 @@ def pad_graph(
         input_tensor_names = [i.name for i in input_tensors]
         output_tensor_names = [i.name for i in output_tensors]
 
-        return new_graph, input_tensor_names, output_tensor_names
+    new_graph = freeze_graph(new_graph, list(set([
+        tensor.op.name
+        for tensor in output_tensors
+    ])))
+    return new_graph, input_tensor_names, output_tensor_names
 
 
 def to_saved_model(
