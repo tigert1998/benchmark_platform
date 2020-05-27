@@ -2,7 +2,7 @@ from .model_traverser import ModelTraverser, OpDetail
 
 import inspect
 import logging
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Optional
 from functools import reduce
 from collections import deque
 import numpy as np
@@ -14,6 +14,7 @@ class ModelSplitter(ModelTraverser):
     def __init__(self, tflite_model_path: str):
         super().__init__(tflite_model_path)
         self.categories = {}
+        self.all_layers = []
 
     def _op_to_category(self, op_detail: OpDetail) -> str:
         return "default"
@@ -29,6 +30,7 @@ class ModelSplitter(ModelTraverser):
         if self.categories.get(key) is None:
             self.categories[key] = []
         self.categories[key].append(value)
+        self.all_layers.append(value)
 
     @classmethod
     def _gen_activation_func(cls, name: str):
@@ -127,8 +129,12 @@ class ModelSplitter(ModelTraverser):
         from_shape, to_shape = params[1:]
         return tf.reshape(nets[0], to_shape)
 
-    def construct_tf_graph(self, category_key: str) -> Tuple[List[tf.Tensor], List[tf.Tensor]]:
-        category = self.categories[category_key]
+    def construct_tf_graph(self, category_key: Optional[str]) \
+            -> Tuple[List[tf.Tensor], List[tf.Tensor]]:
+        if category_key is None:
+            category = self.all_layers
+        else:
+            category = self.categories[category_key]
 
         tensors = set()
         for i in category:
@@ -243,4 +249,6 @@ class ModelSplitter(ModelTraverser):
         )
 
     def split(self):
+        self.categories = {}
+        self.all_layers = []
         self.traverse()
