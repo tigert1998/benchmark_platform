@@ -34,7 +34,7 @@ if [ -t 1 ]; then
 fi
 
 function total_cpus() {
-        echo `ls -l $CPUDIR | grep "cpu[0-9]*$" | wc -l`
+        echo `ls -l $CPUDIR | grep "cpu[0-9]" | wc -l`
         return 0
 }
 
@@ -73,7 +73,7 @@ function inspect_freq() {
                 let cpu_id=$i-1
                 cpu_freq_path=$CPUDIR/cpu$cpu_id/cpufreq
                 related_cpus=`cat $cpu_freq_path/related_cpus`
-                if [ `echo $related_cpus | grep -o "^[0-9][0-9]*"` -ne $cpu_id ]; then
+                if [ `echo $related_cpus | cut -d " " -f1` -ne $cpu_id ]; then
                         continue
                 fi
                 echo "cpu$cpu_id:"
