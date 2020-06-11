@@ -113,6 +113,10 @@ class ModelTraverser:
         msg = f"Unimplemented Reshape: {from_shape, to_shape}"
         logging.warn(msg)
 
+    def mul(self, op_detail: OpDetail, input_shapes: List[List[int]]):
+        msg = f"Unimplemented Mul: {input_shapes}"
+        logging.warn(msg)
+
     def _pool_2d(self, subgraph_idx, op_idx):
         from .tflite.Pool2DOptions import Pool2DOptions
 
@@ -251,6 +255,26 @@ class ModelTraverser:
         from_shape = list(subgraph.Tensors(op.Inputs(0)).ShapeAsNumpy())
         self.reshape(op_detail, from_shape, to_shape)
 
+    def _mul(self, subgraph_idx, op_idx):
+        from .tflite.MulOptions import MulOptions
+
+        subgraph, op = self._fetch_subgraph_and_op(subgraph_idx, op_idx)
+        op_detail = self._construct_op_detail(subgraph_idx, op_idx)
+        builtin_options = op.BuiltinOptions()
+        options = MulOptions()
+        options.Init(builtin_options.Bytes, builtin_options.Pos)
+
+        assert op.OutputsLength() == 1
+
+        input_tensors = [
+            subgraph.Tensors(op.Inputs(i))
+            for i in range(op.InputsLength())
+        ]
+        input_shapes = list(map(
+            lambda tensor: list(tensor.ShapeAsNumpy()),
+            input_tensors))
+        self.mul(op_detail, input_shapes)
+
     def traverse(self):
         assert 1 == self.model.SubgraphsLength()
         subgraph = self.model.Subgraphs(0)
@@ -275,6 +299,8 @@ class ModelTraverser:
                 self._add(*args)
             elif builtin_operator == BuiltinOperator.RESHAPE:
                 self._reshape(*args)
+            elif builtin_operator == BuiltinOperator.MUL:
+                self._mul(*args)
             else:
                 msg = f"Ignored operator: {BuiltinOperator_to_str(builtin_operator)}"
                 logging.warn(msg)

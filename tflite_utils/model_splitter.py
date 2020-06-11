@@ -38,6 +38,9 @@ class ModelSplitter(ModelTraverser):
         if name == "RELU6":
             def ret(x):
                 return activations.relu(x, max_value=6)
+        elif name == "RELU":
+            def ret(x):
+                return activations.relu(x)
         elif name == "NONE":
             ret = None
         else:
@@ -129,6 +132,14 @@ class ModelSplitter(ModelTraverser):
         from_shape, to_shape = params[1:]
         return tf.reshape(nets[0], to_shape)
 
+    def mul(self, op_detail: OpDetail, input_shapes: List[List[int]]):
+        self._push_stack()
+
+    @classmethod
+    def _construct_mul(cls, nets: List[tf.Tensor], params) -> tf.Tensor:
+        assert len(nets) == 2
+        return tf.math.multiply(nets[0], nets[1])
+
     def construct_tf_graph(self, category_key: Optional[str]) \
             -> Tuple[List[tf.Tensor], List[tf.Tensor]]:
         if category_key is None:
@@ -181,6 +192,11 @@ class ModelSplitter(ModelTraverser):
         def fetch_tf_tensor(name: str, loc) -> tf.Tensor:
             if tensor_pool.get(name) is None:
                 tensor = self._fetch_tensor_with_name(name, *loc)
+                if self.model.Buffers(tensor.Buffer()).DataLength() >= 1:
+                    return tf.constant(
+                        value=np.random.randn(*tensor.ShapeAsNumpy()),
+                        dtype=np.float32
+                    )
                 tensor_pool[name] = tf.placeholder(
                     dtype=tf.float32,
                     shape=list(tensor.ShapeAsNumpy())
@@ -217,6 +233,10 @@ class ModelSplitter(ModelTraverser):
             "RESHAPE": {
                 "inputs": [0],
                 "func": self._construct_reshape
+            },
+            "MUL": {
+                "inputs": [0, 1],
+                "func": self._construct_mul
             }
         }
 
