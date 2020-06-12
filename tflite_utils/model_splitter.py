@@ -116,13 +116,17 @@ class ModelSplitter(ModelTraverser):
     def _construct_softmax(cls, nets: List[tf.Tensor], params) -> tf.Tensor:
         return tf.nn.softmax(nets[0])
 
-    def add(self, op_detail: OpDetail, input_shapes: List[List[int]]):
+    def add(self, op_detail: OpDetail, input_shapes: List[List[int]], activation: str):
         self._push_stack()
 
     @classmethod
     def _construct_add(cls, nets: List[tf.Tensor], params) -> tf.Tensor:
         assert len(nets) == 2
-        return tf.math.add(nets[0], nets[1])
+        net = tf.math.add(nets[0], nets[1])
+        activation_func = cls._gen_activation_func(params[2])
+        if activation_func is not None:
+            net = activation_func(net)
+        return net
 
     def reshape(self, op_detail: OpDetail, from_shape: List[int], to_shape: List[int]):
         self._push_stack()
@@ -132,13 +136,17 @@ class ModelSplitter(ModelTraverser):
         from_shape, to_shape = params[1:]
         return tf.reshape(nets[0], to_shape)
 
-    def mul(self, op_detail: OpDetail, input_shapes: List[List[int]]):
+    def mul(self, op_detail: OpDetail, input_shapes: List[List[int]], activation: str):
         self._push_stack()
 
     @classmethod
     def _construct_mul(cls, nets: List[tf.Tensor], params) -> tf.Tensor:
         assert len(nets) == 2
-        return tf.math.multiply(nets[0], nets[1])
+        net = tf.math.multiply(nets[0], nets[1])
+        activation_func = cls._gen_activation_func(params[2])
+        if activation_func is not None:
+            net = activation_func(net)
+        return net
 
     def construct_tf_graph(self, category_key: Optional[str]) \
             -> Tuple[List[tf.Tensor], List[tf.Tensor]]:

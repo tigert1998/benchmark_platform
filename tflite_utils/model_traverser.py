@@ -105,16 +105,16 @@ class ModelTraverser:
         msg = f"Unimplemented Softmax: {[1, num_inputs]}"
         logging.warn(msg)
 
-    def add(self, op_detail: OpDetail, input_shapes: List[List[int]]):
-        msg = f"Unimplemented Add: {input_shapes}"
+    def add(self, op_detail: OpDetail, input_shapes: List[List[int]], activation: str):
+        msg = f"Unimplemented Add: {input_shapes, activation}"
         logging.warn(msg)
 
     def reshape(self, op_detail: OpDetail, from_shape: List[int], to_shape: List[int]):
         msg = f"Unimplemented Reshape: {from_shape, to_shape}"
         logging.warn(msg)
 
-    def mul(self, op_detail: OpDetail, input_shapes: List[List[int]]):
-        msg = f"Unimplemented Mul: {input_shapes}"
+    def mul(self, op_detail: OpDetail, input_shapes: List[List[int]], activation: str):
+        msg = f"Unimplemented Mul: {input_shapes, activation}"
         logging.warn(msg)
 
     def _pool_2d(self, subgraph_idx, op_idx):
@@ -238,7 +238,10 @@ class ModelTraverser:
         input_shapes = list(map(
             lambda tensor: list(tensor.ShapeAsNumpy()),
             input_tensors))
-        self.add(op_detail, input_shapes)
+        activation = ActivationFunctionType_to_str(
+            options.FusedActivationFunction()
+        )
+        self.add(op_detail, input_shapes, activation)
 
     def _reshape(self, subgraph_idx, op_idx):
         from .tflite.ReshapeOptions import ReshapeOptions
@@ -273,7 +276,10 @@ class ModelTraverser:
         input_shapes = list(map(
             lambda tensor: list(tensor.ShapeAsNumpy()),
             input_tensors))
-        self.mul(op_detail, input_shapes)
+        activation = ActivationFunctionType_to_str(
+            options.FusedActivationFunction()
+        )
+        self.mul(op_detail, input_shapes, activation)
 
     def traverse(self):
         assert 1 == self.model.SubgraphsLength()
