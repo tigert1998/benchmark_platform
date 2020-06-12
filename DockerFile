@@ -1,0 +1,18 @@
+FROM ubuntu:18.04
+
+RUN apt update && apt upgrade -y && \
+    apt install wget unzip git -y
+
+RUN wget -O ~/platform-tools.zip https://dl.google.com/android/repository/platform-tools-latest-linux.zip && \
+    unzip ~/platform-tools.zip -d /opt && \
+    rm ~/platform-tools.zip && \
+    echo "export ADB_SERVER_SOCKET=tcp:host.docker.internal:5037" >> ~/.bashrc && \
+    echo "export PATH=$PATH:/opt/platform-tools" >> ~/.bashrc
+
+RUN wget -O ~/anaconda_installer.sh https://repo.anaconda.com/archive/Anaconda3-2020.02-Linux-x86_64.sh && \
+    chmod +x ~/anaconda_installer.sh && ~/anaconda_installer.sh -b -p /root/anaconda3 && \
+    rm ~/anaconda_installer.sh && \
+    /root/anaconda3/bin/conda init bash && \
+    /root/anaconda3/bin/conda update -n base -c defaults conda && \
+    /root/anaconda3/bin/conda create --name tf2 python=3.7 -y && \
+    /root/anaconda3/bin/conda install -n tf2 tensorflow=2.1 -y
