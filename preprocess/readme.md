@@ -37,6 +37,6 @@ It is an extremely simple and naive implementation and you may change it if a be
 `get_model_details` returns a list of `ModelDetail` and accepts the following parameters:
 
 - `model_names`: A list of strings. A model will be returned only if its name has an overlap with one of  `model_names`. If `None` is supplied, all models will be legit.
-- `model_format`: The model format to chose.
+- `model_format`: The model format to choose.
 - `versions`: A list of strings. The chosen versions.
-- `hardware`: The hardware that the model will run on (also used for filtering).
+- `hardware`: The hardware that the model will run on (also only used for filtering).

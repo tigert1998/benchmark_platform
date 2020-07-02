@@ -24,8 +24,8 @@ Two available implementations are `Ssh` and `Adb`.
 
 ## CSVWriter
 
-A normal CSV only permits the first row as the title. It makes logging data points with different schemes harder.
-This `CSVWriter` allows logging data points with different titles (schemes).
+A normal CSV only permits the first row as the title. It makes logging data points with different schemas harder.
+This `CSVWriter` allows logging data points with different titles (schemas).
 `update_data` is the only public method except `__init__`.
 It accepts 3 parameters:
 
@@ -42,7 +42,7 @@ It accepts 3 parameters:
 |load_graph_with_normalization|Loads a frozen pb from disk and appends additional normalization (subtract `mean` and divide `std`) operators in the front of the pb.|
 |pad_graph|Accepts a `tf.Graph` and then generates a new graph with new operators that are specified with `pad_before_input` and `pad_after_output`.|
 |to_saved_model|Convert current TF session graph to saved_model format.|
-|analyze_inputs_outputs|Analyzes a `tf.Graph` and then returns possible inputs and outputs.|
+|analyze_inputs_outputs|Analyzes a `tf.Graph` and then returns possible input/output operators.|
 |calc_graph_mac|Calculate the MAC (memory access cost) of a `tf.Graph`.|
-|load_graph_and_fix_shape|Loads a frozen pb from disk and fix the input shape of the graph.|
+|load_graph_and_fix_shape|Loads a frozen pb from disk and fix the shape (replace unknown shape dimension with constant value) of input node for the graph.|
 |prune_graph|Prune a `tf.Graph` (remove unused operators, constant folding, etc).|
