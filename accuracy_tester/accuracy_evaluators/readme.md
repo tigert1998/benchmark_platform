@@ -10,11 +10,13 @@ Note that `ModelDetail` type is specified in the preprocess folder.
 The latter parameter is a python generator that outputs an image path and an image label as one tuple at a time.
 The image label must be a stringified integer ranging from 0 to 999/1000, according to the number of model outputs.
 Also note that if the model gives 1001 outputs, the 0th logit must be the background.
+`evaluate_models` returns the number of correct answers (top 1 to top 10) instead of
+top 1 to top 10 *accuracy* to prevent precision problems.
 
 The followings are overview for evaluator implementations:
 
 - [onnx.py](onnx.py): Evaluates with ONNX Runtime framework.
 - [rknn.py](rknn.py)
 - [tf_evaluator.py](tf_evaluator.py): Evaluates TF frozen pb graphs.
-- [tflite.py](tflite.py): Evaluates TFLite models.
+- [tflite.py](tflite.py): Evaluates TFLite models. This evaluator supports model evaluation on host machine and guest SoC at the same time.
 - [tpu.py](tpu.py): Evaluates models on EdgeTPU.
