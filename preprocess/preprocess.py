@@ -65,6 +65,7 @@ class Preprocess(ClassWithSettings):
         return {
             **ClassWithSettings.default_settings(),
             "preprocessor": Preprocessor(),
+            # must be one of "imread", "resize", "preprocess"
             "func": "preprocess",
             "args": []
         }
